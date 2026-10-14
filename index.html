@@ -236,6 +236,8 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .two>*{min-width:0}
 .two .inp{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}
 .sheet{overflow-x:hidden}
+.pl{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.pl .pill{padding:3px 9px;font-size:12px;font-weight:700;font-style:normal;line-height:1.25}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -336,20 +338,15 @@ function Cropper(stage,img,init){
 
 /* ===== covers (generated) ===== */
 const PALS=[
- {bg:'#fff7e6',a:'#f9a8d4',b:'#b7a3f2',c:'#8fd5f5',d:'#ff9f6b',ink:'#4b2fbf'},
- {bg:'#ffffff',a:'#8fd5f5',b:'#b4f24f',c:'#f9b6dc',d:'#ffa77a',ink:'#0d0d0f'},
- {bg:'#fdeee0',a:'#ff9f6b',b:'#ffd84a',c:'#f9a8d4',d:'#7b4be0',ink:'#2a1a6e'},
- {bg:'#f4efff',a:'#b9a6f4',b:'#f9b6dc',c:'#b4f24f',d:'#4b2fbf',ink:'#3a1fa0'},
- {bg:'#eefbf1',a:'#4cc38a',b:'#8fd5f5',c:'#ffd84a',d:'#f9a8d4',ink:'#0f5a3c'},
- {bg:'#ffeef6',a:'#f06aa8',b:'#ffa77a',c:'#b9a6f4',d:'#ffffff',ink:'#8a1650'}];
-function flower(cx,cy,r,fill,rot){let s='';for(let i=0;i<8;i++)s+=`<ellipse cx="${cx}" cy="${cy-r*.62}" rx="${r*.3}" ry="${r*.46}" fill="${fill}" transform="rotate(${i*45+rot} ${cx} ${cy})"/>`;return s+`<circle cx="${cx}" cy="${cy}" r="${r*.22}" fill="#fff" opacity=".9"/>`}
-function coverSVG(i){const p=PALS[(i||0)%PALS.length];const m=(i||0)%2?-1:1;const X=x=>m>0?x:300-x;
- return `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="400" fill="${p.bg}"/>`+
- `<rect x="${m>0?-40:140}" y="292" width="200" height="34" rx="17" fill="${p.a}"/><rect x="${m>0?-10:110}" y="328" width="190" height="34" rx="17" fill="${p.b}"/><rect x="${m>0?20:80}" y="364" width="200" height="34" rx="17" fill="${p.c}"/>`+
- flower(X(238),70,74,p.d,10)+flower(X(56),318,40,p.d,0)+`<circle cx="${X(40)}" cy="60" r="26" fill="${p.c}"/><circle cx="${X(40)}" cy="60" r="9" fill="#fff" opacity=".8"/></svg>`}
-function coverHTML(n,big){const p=PALS[(n.pal||0)%PALS.length];
+ {bg:'#f1e6d0',ink:'#3b2f1e'},
+ {bg:'#f8f1e4',ink:'#3b2f1e'},
+ {bg:'#e6d5b8',ink:'#3a2c18'},
+ {bg:'#efdcd3',ink:'#4a2f2a'},
+ {bg:'#e4dfd6',ink:'#2f2c27'}];
+function coverSVG(i){const p=PALS[(i||0)%PALS.length];return `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="400" fill="${p.bg}"/></svg>`}
+function coverHTML(n,big){const pi=n.palN?(n.pal||0):0;const p=PALS[pi%PALS.length];
  if(n.cover)return `<div class="cover${big?' big':''}"><img src="${bu(n.cover)}" alt=""></div>`;
- return `<div class="cover${big?' big':''}">${coverSVG(n.pal)}<div class="ct" style="color:${p.ink}">${esc(n.title)}</div></div>`}
+ return `<div class="cover${big?' big':''}">${coverSVG(pi)}<div class="ct" style="color:${p.ink}">${esc(n.title)}</div></div>`}
 
 /* ===== stage 2: currencies, meetings, reminders, calendar, tasks ===== */
 const CURS=['AED','RUB','USD','EUR','TRY','AMD','HUF'];
@@ -644,13 +641,22 @@ function planMenu(n){const p=planOf(n);const rows=[{ic:'✅',t:'Написала
  menuSheet('Написать: '+nodeTitle(n)+(p&&p.ts?' · '+fmtPlan(p.ts):''),rows)}
 
 /* ----- lead card (header pills + sheet) ----- */
+const fmtShort=ts=>{const d=new Date(ts);return d.getDate()+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)};
+function leadRowPills(n){if(!isLead(n))return'';const ps=[];
+ const w=n.w||'ok';if(n.st)ps.push(`<i class="pill sm ${ST[n.st].c}">${WE[w]} ${ST[n.st].t}</i>`);else if(w!=='ok')ps.push(`<i class="pill sm ghost">${WE[w]} ${WT[w]}</i>`);
+ const ms=meetsOf(n).slice().sort((a,b)=>a.ts-b.ts);const sh=ms.slice(-6);if(ms.length>6)ps.push(`<i class="pill sm ghost">+${ms.length-6}</i>`);sh.forEach((m,i)=>ps.push(`<i class="pill sm c${i%5+1}">${fmtShort(m.ts)}</i>`));
+ const ds=citiesOf(n).map(c=>n.dist&&n.dist[c]).filter(Boolean);if(ds.length)ps.push(`<i class="pill sm c1">📍 ${esc(ds.join(', '))}</i>`);
+ const s=sumNode(n.id);if(s.aed>0)ps.push(`<i class="pill sm c2">💰 ${nf0.format(Math.round(s.aed))} AED = ${nf0.format(Math.round(s.rub))} ₽</i>`);
+ const p=planOf(n);if(p&&p.ts&&p.src!=='new')ps.push(`<i class="pill sm ghost">✉ ${fmtPlan(p.ts).replace(/^.{2}, /,'')}</i>`);
+ return ps.length?`<div class="pl">${ps.join('')}</div>`:''}
 const avgAed=n=>{const a=meetsOf(n).filter(m=>m.amount>0);return a.length?a.reduce((s,m)=>s+m.aed,0)/a.length:0};
 function leadHead(n){const p=planOf(n);const cs=citiesOf(n);const id=n.id;
  let h=`<div class="row lp"><button class="pill sm ${n.st?ST[n.st].c:'ghost'}" data-act="lcard" data-id="${id}">${n.st?ST[n.st].t:'Статус'}</button><button class="pill sm ghost" data-act="lwarm" data-id="${id}">${WE[n.w||'ok']} ${WT[n.w||'ok']}</button>`;
  h+=cs.length?cs.map(c=>`<button class="pill sm c1" data-act="lcard" data-id="${id}">📍 ${esc(c)}${n.dist&&n.dist[c]?' · '+esc(n.dist[c]):''}</button>`).join(''):`<button class="pill sm ghost" data-act="lcard" data-id="${id}">📍 Город и район</button>`;
  if(n.msgs&&n.msgs.length)h+=`<button class="pill sm ghost" data-act="lcard" data-id="${id}">${n.msgs.map(m=>MSGS[m]).join(' · ')}</button>`;
  h+='</div><div class="row lp">';
- if(p&&p.src==='new')h+=`<span class="pill sm ghost">ещё не писала</span>`;
+ if(p&&p.src==='new')h+=`<span class="pill sm ghost">ещё не писала</span><button class="pill sm c4" data-act="lplanset" data-id="${id}">＋ Выбрать дату</button>`;
+ else if(!p)h+=`<button class="pill sm c4" data-act="lplanset" data-id="${id}">＋ Выбрать дату</button>`;
  else if(p&&p.ts)h+=`<button class="pill sm ${p.ts<Date.now()?'c4':'c3'}" data-act="lplan" data-id="${id}">✉ Написать: ${fmtPlan(p.ts)}</button>`;
  if(n.tc)h+=`<span class="pill sm ghost">без ответа: ${n.tc}</span>`;
  h+=`<button class="pill sm c2" data-act="ltouch" data-id="${id}">Написала</button><button class="pill sm c5" data-act="lans" data-id="${id}">Ответил</button></div>`;
@@ -863,7 +869,8 @@ function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=
  let sub;if(n.type==='col'){sub=subText(n);const sm=sumNode(n.id);if(sm.c){const lm=lastMeet(n);const add=(lm?'встреча '+fmtDate(lm):'')+(sm.aed>0?' · '+nf0.format(Math.round(sm.aed))+' AED':'');sub=sub==='Пусто'?add.replace(/^ · /,''):sub+' · '+add.replace(/^ · /,'')}if(n.parent&&isLead(n)){const pr=[n.w&&n.w!=='ok'?WE[n.w]:'',n.st?ST[n.st].t:''].filter(Boolean).join(' ');const pp=planOf(n);const parts=[pr,sub==='Пусто'?'':sub,pp&&pp.ts?'✉ '+fmtPlan(pp.ts).replace(/^.{2}, /,''):''].filter(Boolean);sub=parts.join(' · ')||'Пусто'}}else if(n.type==='photo')sub=fmtDate(n.updated);else{const f=plainOf(n).split('\n').map(s=>s.trim()).filter(Boolean);sub=fmtDate(n.updated)+(f[1]?' · '+f[1]:(f[0]&&!n.title?'':f[0]?' · '+f[0]:''))}
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;
  if(grid)return `<div class="card" ${attrs}>${thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
- return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b><span>${esc(sub)}</span></div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${mn}</div>`}
+ const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
+ return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${mn}</div>`}
 function viewList(id){
  const n=id?N.get(id):null;const items=sortedKids(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
  let h=`<div class="wrap"><div class="topbar">${id?topBtn('back',ICON.back,id):'<span></span>'}<div class="ibs">${topBtn('search',ICON.search,id||'')}${topBtn('view',vm==='list'?ICON.grid:ICON.list)}${id?topBtn('nmenu',ICON.more,id):topBtn('settings',ICON.gear)}</div></div>`;
@@ -965,18 +972,19 @@ async function coverFromFile(file){const s=await makeSrc(file);const L=await loa
 /* ===== create / edit ===== */
 function pickFile(multi){return new Promise(res=>{holdLock();const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=!!multi;i.style.display='none';document.body.appendChild(i);
  i.onchange=()=>{res([...i.files]);setTimeout(()=>i.remove(),500)};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
-function editSheet(n,parent,type){const book=n?isBook(n):(type==='col'&&!parent);let pal=n?(n.pal||0):Math.floor(Math.random()*PALS.length),cover=n?n.cover:null,avatar=n?n.avatar:null;
+function editSheet(n,parent,type){const book=n?isBook(n):(type==='col'&&!parent);let pal=n?(n.palN?(n.pal||0):0):0,cover=n?n.cover:null,avatar=n?n.avatar:null;
  const draw=()=>{const el=sheet(`<h3>${n?'Изменить':(book?'Новая книжка':'Новая коллекция')}</h3><input class="inp" id="nm" placeholder="${book?'Например: Москва':'Например: имя'}" value="${esc(draw.title||(n?n.title:''))}" maxlength="80">
   ${book?`<div class="lbl">Обложка</div><div class="sw">${PALS.map((p,i)=>`<button class="c${!cover&&pal===i?' on':''}" data-p="${i}">${coverSVG(i)}</button>`).join('')}<button class="c up${cover?' on':''}" id="upc">${cover?`<img src="${bu(cover)}" alt="">`:'Своя<br>обложка'}</button></div>`:''}
+  ${!book&&!n?`<div class="lbl">Когда написать (необязательно)</div><input class="inp" type="date" id="npd" value="${draw.pd||''}">`:''}
   ${!book?`<div class="lbl">Фото (необязательно)</div><div class="sw"><button class="c up${avatar?' on':''}" id="upa" style="height:64px">${avatar?`<img src="${bu(avatar)}" alt="">`:'Выбрать<br>фото'}</button></div>`:''}
   <div class="row" style="margin-top:12px"><button class="btn pink wide" id="ok">${n?'Сохранить':'Создать'}</button></div>`);
-  const nm=el.querySelector('#nm');nm.oninput=()=>draw.title=nm.value;if(!n)setTimeout(()=>nm.focus(),80);
+  const nm=el.querySelector('#nm');nm.oninput=()=>draw.title=nm.value;const npd=el.querySelector('#npd');if(npd)npd.oninput=()=>draw.pd=npd.value;if(!n)setTimeout(()=>nm.focus(),80);
   el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{draw.title=nm.value;pal=+b.dataset.p;cover=null;draw()});
   const up=el.querySelector('#upc');if(up)up.onclick=async()=>{draw.title=nm.value;const f=(await pickFile(false))[0];if(f){const b=await coverFromFile(f);if(b)cover=b}draw()};
   const upa=el.querySelector('#upa');if(upa)upa.onclick=async()=>{draw.title=nm.value;const f=(await pickFile(false))[0];if(f){const sr=await makeSrc(f);const b=await avatarFromBlob(sr.blob);if(b)avatar=b}draw()};
   el.querySelector('#ok').onclick=async()=>{const title=nm.value.trim();if(!title){nm.focus();return}closeSheet();
-   if(n){n.title=title;if(book){n.pal=pal;n.cover=cover}else n.avatar=avatar;await saveNode(n)}else{const x=newNode('col',parent,book?{title,pal,cover}:{title,avatar});await saveNode(x);if(!book){go('/n/'+x.id);return}}render()}};
- draw.title='';draw()}
+   if(n){n.title=title;if(book){n.pal=pal;n.palN=1;n.cover=cover}else n.avatar=avatar;await saveNode(n)}else{const x=newNode('col',parent,book?{title,pal,palN:1,cover}:Object.assign({title,avatar},draw.pd?{plan:(()=>{const [y,m,d]=draw.pd.split('-').map(Number);return new Date(y,m-1,d,11,0).getTime()})()}:{}));await saveNode(x);if(!book){go('/n/'+x.id);return}}render()}};
+ draw.title='';draw.pd='';draw()}
 
 async function avatarFromBlob(blob){const L=await loadImg(blob);const res=await cropScreen({srcUrl:L.u,title:'Фото коллекции',allowFull:false,ar:1,last:true});if(!res){URL.revokeObjectURL(L.u);return null}
  const iw=L.im.naturalWidth,ih=L.im.naturalHeight,r=res.rect,sd=Math.min(r.w*iw,r.h*ih);const b=await drawTo(L.im,r.x*iw,r.y*ih,sd,sd,480,480,.86);URL.revokeObjectURL(L.u);return b}
