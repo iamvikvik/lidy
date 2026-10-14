@@ -233,6 +233,9 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .srow span,.srow b{position:relative;z-index:1}
 .edbar .pill.dark{background:#0d0d0f;color:#fff}
 .edbar .pill{padding:11px 15px}
+.two>*{min-width:0}
+.two .inp{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}
+.sheet{overflow-x:hidden}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -247,7 +250,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let SET=Object.assign({view:'list',views:{},sorts:{},pinHash:null,pinSalt:null,lastBackup:0,last:''},lsGet('leads_set',{}));
-const saveSet=()=>lsSet('leads_set',SET);
+const saveSet=()=>{TRC=null;lsSet('leads_set',SET)};
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const WDN=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 const todayRu=(d=new Date())=>WDN[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
@@ -268,7 +271,7 @@ const dbClear=st=>db?idb(st,'readwrite',s=>s.clear()):(MEM[st].clear(),Promise.r
 
 /* ===== nodes ===== */
 const N=new Map();let CH=null;const PLAIN=new Map();
-let RMC=null;function dirty(){CH=null;RMC=null}
+let RMC=null,TRC=null;function dirty(){CH=null;RMC=null;TRC=null}
 function rebuild(){CH=new Map();for(const n of N.values()){if(n.deleted||n.type==='task')continue;const k=n.parent||'';if(!CH.has(k))CH.set(k,[]);CH.get(k).push(n)}}
 function kids(pid){if(!CH)rebuild();return CH.get(pid||'')||[]}
 function allKids(pid){return [...N.values()].filter(n=>(n.parent||null)===(pid||null))}
@@ -547,7 +550,7 @@ const leads=()=>[...N.values()].filter(isLead);
 function guessCity(n){const low=pathOf(n.id).map(x=>nq(nodeTitle(x)));for(const c of cityList()){const k=nq(c);if(low.some(t=>t.includes(k)))return c}return''}
 function citiesOf(n){if(n.cities&&n.cities.length)return n.cities;const g=guessCity(n);return g?[g]:[]}
 function districtsOf(c){const s=new Set();for(const n of leads())if(n.dist&&n.dist[c])s.add(n.dist[c]);return[...s].sort((a,b)=>a.localeCompare(b,'ru'))}
-const here=()=>SET.here&&SET.here.until>Date.now()?SET.here:null;
+const here=()=>{if(SET.here&&SET.here.until>Date.now())return SET.here;const now=Date.now();const t=(SET.trips||[]).find(t=>sod(t.from)<=now&&eod(t.to)>=now);return t?{city:t.city,dist:'',until:eod(t.to),trip:1}:null};
 
 /* ----- plan: when to write ----- */
 function remMapAll(){if(RMC)return RMC;const m=new Map();for(const r of activeReminders())if(!m.has(r.n.id))m.set(r.n.id,r);return RMC=m}
@@ -556,6 +559,7 @@ function snapDow(ts,dw){const d=new Date(ts);d.setDate(d.getDate()+((dw-d.getDay
 function planOf(n,rm){
  if(n.st==='stop')return null;
  if(n.plan)return{ts:n.plan,src:'manual',why:'дата выбрана тобой'};
+ const tp=tripPlans().get(n.id);if(tp)return{ts:tp.ts,src:'trip',why:'поездка: '+tp.trip.city+', '+fmtTrip(tp.trip)};
  const r=(rm||remMapAll()).get(n.id);
  if(r){const c=remCfg(r.m);return{ts:r.due,src:'rem',why:'встреча '+fmtDate(r.m.ts)+' + '+c.w+' нед.'}}
  if(n.st==='self')return null;
@@ -565,6 +569,39 @@ function planOf(n,rm){
  const days=Math.round((INTD[n.st||'']||30)*WFAC[n.w||'ok']);let ts=base+days*864e5;let why=(n.st?'«'+ST[n.st].t+'»':'без статуса')+', каждые ~'+days+' дн.';
  const dw=prefDow(n);if(dw>=0){ts=snapDow(ts,dw);why+=' · день встреч: '+DOWF[dw]}
  return{ts:at11(ts),src:'auto',why}}
+
+/* ----- trips ----- */
+const addDays=(ts,k)=>{const d=new Date(ts);d.setDate(d.getDate()+k);return d.getTime()};
+function fmtTrip(t){const a=new Date(t.from),b=new Date(t.to);return a.getMonth()===b.getMonth()?(a.getDate()===b.getDate()?a.getDate():a.getDate()+'–'+b.getDate())+' '+MONTHS[b.getMonth()]:a.getDate()+' '+MONTHS[a.getMonth()].slice(0,3)+' – '+b.getDate()+' '+MONTHS[b.getMonth()].slice(0,3)}
+function tripEligible(t,rm){const ws=addDays(sod(t.from),-(t.lead||5));const out=[];for(const n of leads()){if(n.st==='stop'||n.plan)continue;if(n.st==='sleep'&&!t.sleep)continue;if(!citiesOf(n).includes(t.city))continue;if(Math.max(n.lt||0,n.la||0)>=ws)continue;out.push(n)}
+ out.sort((a,b)=>WRANK[a.w||'ok']-WRANK[b.w||'ok']||Math.max(a.lt||0,a.la||0,lastMeet(a))-Math.max(b.lt||0,b.la||0,lastMeet(b))||(a.created||0)-(b.created||0));return out}
+function tripPlans(){if(TRC)return TRC;const m=new Map(),s0=sod(Date.now());TRC=m;
+ for(const t of(SET.trips||[]).filter(t=>eod(t.to)>=Date.now()).sort((a,b)=>a.from-b.from)){const ws=addDays(sod(t.from),-(t.lead||5)),start=Math.max(s0,ws),per=t.per||dailyN();
+  tripEligible(t).filter(n=>!m.has(n.id)).forEach((n,i)=>m.set(n.id,{ts:at11(addDays(start,Math.floor(i/per))),trip:t}))}
+ return m}
+function tripsSheet(){const now=Date.now();const list=(SET.trips||[]).slice().sort((a,b)=>a.from-b.from);
+ const el=sheet(`<h3>Поездки</h3><div class="hint" style="text-align:left">Укажи, когда и куда едешь. Всем людям из этого города приложение само поставит даты «когда писать» перед приездом, по нескольку десятков в день.</div>
+ ${list.length?list.map((t,i)=>{const past=eod(t.to)<now;const k=past?0:tripEligible(t).length;return `<button class="act" data-i="${i}" style="${past?'opacity:.5':''}"><span class="ic">✈️</span><span>${esc(t.city)} · ${fmtTrip(t)}<small>${past?'поездка прошла':'писать с '+fmtPlan(Math.max(sod(now),addDays(sod(t.from),-(t.lead||5))))+' · людей: '+k}</small></span></button>`}).join(''):'<p class="hint">Поездок пока нет</p>'}
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="tnw">＋ Новая поездка</button></div>`);
+ el.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>tripEdit(list[+b.dataset.i]));el.querySelector('#tnw').onclick=()=>tripEdit(null)}
+function tripEdit(t,dr){const d1=addDays(sod(Date.now()),14);
+ const D=dr||(t?Object.assign({},t):{id:uid(),city:'',from:d1,to:addDays(d1,2),lead:5,per:dailyN(),sleep:0});
+ const cl=[...new Set([...cityList(),...(D.city?[D.city]:[])])];
+ const el=sheet(`<h3>${t?'Поездка':'Новая поездка'}</h3><div class="lbl">Город</div>${chips('tc',cl,D.city)}<div class="row"><button class="pill ghost" id="tac">＋ Другой город</button></div>
+ <div class="two"><label>Приезжаю<input class="inp" type="date" id="tf" value="${ymd(new Date(D.from))}"></label><label>Уезжаю<input class="inp" type="date" id="tt2" value="${ymd(new Date(D.to))}"></label></div>
+ <div class="lbl">За сколько дней начать писать</div>${chips('tl',[3,5,7,10,14],D.lead)}
+ <div class="lbl">Сколько людей в день</div>${chips('tp',[10,15,20,30,40],D.per)}
+ <div class="lbl">Писать спящим</div>${chips('ts',['0','1'],String(D.sleep?1:0),v=>v==='1'?'Да':'Нет')}
+ <div class="note" id="tpv"></div>
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="tsv">Сохранить</button></div>${t?'<div class="row"><button class="pill ghost" id="tdl" style="color:#d6264a">Удалить поездку</button></div>':''}`);
+ const rd=()=>{const f=el.querySelector('#tf').value.split('-').map(Number),g=el.querySelector('#tt2').value.split('-').map(Number);D.from=new Date(f[0],f[1]-1,f[2]).getTime();D.to=new Date(g[0],g[1]-1,g[2]).getTime();if(!isFinite(D.from)||!isFinite(D.to))return false;if(D.to<D.from)D.to=D.from;return true};
+ const pv=()=>{const box=el.querySelector('#tpv');if(!D.city||!rd()){box.textContent=D.city?'Проверь даты':'Выбери город';return}const k=tripEligible(D).length,days=Math.max(1,Math.ceil(k/D.per)),st=Math.max(sod(Date.now()),addDays(sod(D.from),-D.lead));
+  box.innerHTML=k?`Людей из «${esc(D.city)}»: <b>${k}</b>. Писать с <b>${fmtPlan(st)}</b>, примерно ${days} ${plural(days,'день','дня','дней')} по ${D.per} в день.`:`В «${esc(D.city)}» пока никого нет. Город берётся из карточки человека или из названия книжки.`};
+ chipsBind(el,'tc',v=>{D.city=v;pv()});chipsBind(el,'tl',v=>{D.lead=+v;pv()});chipsBind(el,'tp',v=>{D.per=+v;pv()});chipsBind(el,'ts',v=>{D.sleep=+v;pv()});
+ el.querySelector('#tf').onchange=()=>{rd();pv()};el.querySelector('#tt2').onchange=()=>{rd();pv()};pv();
+ el.querySelector('#tac').onclick=async()=>{rd();const v=await inputSheet({title:'Новый город',ph:'Например: Милан'});if(v&&v.trim()){const c=v.trim();SET.cities=[...cityList().filter(x=>x!==c),c];saveSet();D.city=c}tripEdit(t,D)};
+ el.querySelector('#tsv').onclick=()=>{if(!D.city){toast('Выбери город');return}if(!rd()){toast('Проверь даты');return}const l=(SET.trips||[]).filter(x=>x.id!==D.id);l.push(D);SET.trips=l;saveSet();closeSheet();render();toast('Поездка сохранена')};
+ const dl=el.querySelector('#tdl');if(dl)dl.onclick=async()=>{if(!await ask('Удалить поездку?','Даты «когда писать» от неё пропадут.','Удалить',true)){tripEdit(t,D);return}SET.trips=(SET.trips||[]).filter(x=>x.id!==D.id);saveSet();render()}}
 
 /* ----- touches ----- */
 const LF=['st','w','tc','lt','la','plan','ansAt','lk','tot'];
@@ -661,7 +698,7 @@ function leadRow(x){const n=x.n,p=x.p,id=n.id;const cs=citiesOf(n);const loc=cs.
  <div class="lacts"><button class="pill c2" data-act="ltouch" data-id="${id}">Написала</button><button class="pill c5" data-act="lans" data-id="${id}">Ответил</button><button class="pill c1" data-act="llater" data-id="${id}">Позже</button>${n.st?'':`<button class="pill ghost" data-act="lcard" data-id="${id}">Статус</button>`}</div></div>`}
 function viewToday(){const T=buildToday(),H=here();const total=dailyN()+TD.extra;
  let h=`<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('search',ICON.search,'')}${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Сегодня</h1>
- <div class="row"><span class="pill c2">Написала ${T.done.length} из ${total}</span><button class="pill ${H?'c3':'c4'}" data-act="here">📍 ${H?esc(H.city)+(H.dist?' · '+esc(H.dist):'')+' · до '+fmtDate(H.until).replace(/ \d{4}$/,''):'Я в городе'}</button><button class="pill ghost" data-act="tstats">📊 Статистика</button></div>`;
+ <div class="row"><span class="pill c2">Написала ${T.done.length} из ${total}</span><button class="pill ${H?'c3':'c4'}" data-act="here">📍 ${H?esc(H.city)+(H.dist?' · '+esc(H.dist):'')+' · до '+fmtDate(H.until).replace(/ \d{4}$/,''):'Я в городе'}</button><button class="pill c1" data-act="trips">✈️ Поездки</button><button class="pill ghost" data-act="tstats">📊 Статистика</button></div>`;
  if(H)h+=`<div class="hint" style="text-align:left">Сначала те, кто живёт в этом районе, потом остальные из города.</div>`;
  h+=`<div class="lbl">Написать · ${T.list.length}</div>`;
  h+=T.list.length?T.list.map(leadRow).join(''):`<div class="hint" style="text-align:left">${leads().length?'На сегодня всё. Можно взять ещё или поставить даты в календаре.':'Здесь появятся люди, которым пора написать. Создай в книжках коллекции с именами или добавь списком через «+» → «Быстро добавить людей».'}</div>`;
@@ -699,7 +736,7 @@ function viewPlanCal(){const ev=planEvents();const first=new Date(CAL.y,CAL.m,1)
   cells+=`<button class="dc${k===CAL.sel?' sel':''}${k===today?' today':''}" data-act="calday" data-day="${k}"><span class="dn">${d}</span><span class="avs">${av}</span></button>`}
  return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('search',ICON.search,'')}${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Календарь</h1>${calSeg()}
  <div class="calhead"><button class="ib" data-act="calprev">${ICON.back}</button><b>${MONF[CAL.m]} ${CAL.y}</b><button class="ib" data-act="calnext" style="transform:scaleX(-1)">${ICON.back}</button></div>
- <div class="row" style="justify-content:center"><span class="pill c3">${cnt} ${plural(cnt,'человек','человека','человек')} написать</span><button class="pill ghost" data-act="caltoday">Сегодня</button></div>
+ <div class="row" style="justify-content:center">${(SET.trips||[]).filter(t=>eod(t.to)>=Date.now()).map(t=>`<button class="pill c1" data-act="tripedit" data-id="${t.id}">✈️ ${esc(t.city)} · ${fmtTrip(t)}</button>`).join('')}<span class="pill c3">${cnt} ${plural(cnt,'человек','человека','человек')} написать</span><button class="pill ghost" data-act="caltoday">Сегодня</button></div>
  <div class="cal"><div class="dow">${DOW.map(d=>`<span>${d}</span>`).join('')}</div><div class="days">${cells}</div></div>
  <div class="legend"><span><i class="av" style="width:14px;height:14px;background:#8fd5f5"></i> твоя дата</span><span><i class="av dash" style="width:14px;height:14px"></i> подсказка приложения</span></div>
  ${planDay(CAL.sel,ev)}</div>${tabbar('/cal')}`}
@@ -743,6 +780,8 @@ async function act3(act,a,id,n){
   case'llater':if(n)laterMenu(n);break;
   case'here':hereSheet();break;
   case'tstats':statsSheet();break;
+  case'trips':tripsSheet();break;
+  case'tripedit':{const t=(SET.trips||[]).find(x=>x.id===id);if(t)tripEdit(t);break}
   case'textra':TD.extra+=10;render();break;
   case'calmode':CAL.mode=a.dataset.v;render();break;
   case'planadd':{const p=await pickPerson('Кому написать?');if(p){const [y,m,d]=a.dataset.day.split('-').map(Number);await setPlan(p,new Date(y,m-1,d,11,0).getTime())}break}
@@ -1031,7 +1070,7 @@ async function makeBackup(){const zip=new JSZip();const box=$('#bkbox');let i=0;
  for(const n of all){const o=Object.assign({},n);for(const k of['cover','thumb','avatar'])if(n[k]){zip.file(`m/${n.id}.${k}`,n[k],{binary:true,compression:'STORE'});o[k]=1}
   for(const k of['src','view'])if(n[k]){const b=await getBlob(n[k]);if(b)zip.file(`m/${n.id}.${k}`,b,{binary:true,compression:'STORE'})}
   meta.push(o);if(++i%10===0&&box)box.innerHTML=`<div class="hint">Собираю… ${i} из ${all.length}</div>`}
- zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter}}));
+ zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter,trips:SET.trips}}));
  return zip.generateAsync({type:'blob',compression:'STORE'})}
 async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=zip.file('data.json');if(!f)throw new Error('no data');const d=JSON.parse(await f.async('string'));if(d.app!=='leads')throw new Error('bad');
  const rd=async(p)=>{const z=zip.file(p);if(!z)return null;const b=await z.async('blob');return new Blob([b],{type:'image/jpeg'})};
@@ -1039,7 +1078,7 @@ async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=
  for(const o of d.nodes){if(o.cover===1)o.cover=await rd(`m/${o.id}.cover`);if(o.thumb===1)o.thumb=await rd(`m/${o.id}.thumb`);if(o.avatar===1)o.avatar=await rd(`m/${o.id}.avatar`);
   for(const k of['src','view'])if(o[k]){const b=await rd(`m/${o.id}.${k}`);if(b)await putBlob(o[k],b);else o[k]=''}
   await dbPut('nodes',o);N.set(o.id,o)}
- const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;saveSet();dirty()}
+ const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;if(s.trips)SET.trips=s.trips;saveSet();dirty()}
 
 /* ===== PIN ===== */
 let LOCKED=false;
