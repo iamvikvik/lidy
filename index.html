@@ -249,6 +249,64 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .mrow{padding:10px 0;border-top:1px solid var(--line)}.mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.mh span{color:var(--mut);font-size:13px}
 .mb{height:8px;border-radius:8px;background:var(--soft);margin:6px 0;overflow:hidden}.mb i{display:block;height:100%;background:var(--pink);border-radius:8px}
 .mv{font-weight:800;font-size:17px}.mv span{font-weight:500;color:var(--mut);font-size:14px}
+/* ===== stage 5: board ===== */
+.tab{padding:4px 6px}
+.hd .av{border-radius:50%}
+.stage .circ{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(25,20,35,.5);outline:2px solid #fff;pointer-events:none}
+.bwrap{position:fixed;left:0;right:0;top:0;bottom:calc(62px + var(--sab));display:flex;flex-direction:column;padding-top:calc(var(--sat) + 8px);background:#fff}
+.bhead{flex:none;padding:0 14px}
+.btop{display:flex;align-items:center;gap:8px}
+.btitle{flex:1;min-width:0;background:none;border:0;text-align:left;padding:4px 0}
+.btitle b{display:block;font-size:22px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btitle small{font-size:12px;color:var(--mut);font-weight:600}
+.bstat{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 0 6px;-webkit-overflow-scrolling:touch}
+.bstat::-webkit-scrollbar{display:none}.bstat .pill{flex:none;font-size:13px;padding:6px 11px}
+.pill.wh{background:#fff;box-shadow:inset 0 0 0 1.5px var(--line)}
+.btip{display:flex;align-items:center;gap:8px;background:#fff7e8;border-radius:14px;padding:7px 10px;margin:0 0 6px;font-size:13px;line-height:1.3}
+.btip>span{font-size:17px}.btip p{margin:0;flex:1;min-width:0}.btip .pill{flex:none}
+.bcols{flex:1;min-height:0;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:4px 14px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.bdmode .bcols{scroll-snap-type:none}
+.bcol{flex:none;width:min(76vw,290px);display:flex;flex-direction:column;background:var(--soft);border-radius:20px;max-height:100%;scroll-snap-align:start;transition:box-shadow .15s}
+.bcol header{display:flex;align-items:center;gap:6px;padding:10px 12px 6px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.bhn{flex:1;min-width:0}.bhn b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bhn small{font-size:12px;color:var(--mut);font-weight:700}
+.bmore{color:var(--mut);font-weight:900;font-size:18px;padding:0 2px}
+.bl{flex:1;min-height:70px;overflow-y:auto;padding:2px 8px 6px;-webkit-overflow-scrolling:touch}
+.bcard{display:flex;align-items:center;gap:9px;background:#fff;border-radius:14px;padding:8px 9px;margin-bottom:6px;box-shadow:0 1px 3px rgba(20,20,40,.08);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer}
+.bcard.g{box-shadow:none;border:1.5px dashed #c9c9d4;padding:6.5px 7.5px}
+.bcard .av img,.bp .av img{pointer-events:none;-webkit-user-drag:none}
+.bct{flex:1;min-width:0}.bct b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;font-weight:700;line-height:1.25;word-break:break-word}
+.bct span{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11.5px;color:var(--mut);font-weight:600}.bct em{font-style:normal}.bct i{font-style:normal}
+.btm{background:var(--lime);color:#0d0d0f;border-radius:6px;padding:0 5px;font-size:11.5px}
+.bdots{display:inline-flex;gap:2px}.bdots i{width:6px;height:6px;border-radius:50%;background:#dcdce4;display:block}.bdots i.on{background:#ff7a59}
+.qp .bdots i{width:8px;height:8px}
+.bempty{color:var(--mut);font-size:13px;padding:10px 6px;line-height:1.35;text-align:center}
+.badd{flex:none;margin:0 8px 8px;background:none;border:0;border-radius:12px;padding:8px;font-size:14px;font-weight:700;color:#6b6b76;text-align:left}
+.badd:active{background:#ebebf1}
+.bcol.t-todo{background:#f3f3f6}.bcol.t-wait{background:#f1edff}.bcol.t-next{background:#e9f6fd}.bcol.t-met{background:#effbe1}.bcol.t-rest{background:#f2f2f4}.bcol.t-own{background:#fff4ec}
+.bcol.today{background:#ffeef7;box-shadow:inset 0 0 0 2px var(--pink)}
+.bcol.past{opacity:.6}
+.bcol.over{box-shadow:inset 0 0 0 3px #0d0d0f}
+.bnew{background:none;border:2px dashed var(--line);width:160px}
+.bnew button{flex:1;background:none;border:0;font-size:16px;font-weight:800;color:#55555e;padding:14px}
+.bnew small{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-top:6px}
+.bph{height:52px;border-radius:14px;border:2px dashed #0d0d0f;margin-bottom:6px;background:rgba(255,255,255,.6)}
+.bdragging{opacity:.35}
+.bghost{position:fixed;left:0;top:0;z-index:90;pointer-events:none;display:flex;align-items:center;gap:8px;background:#fff;border-radius:14px;padding:7px 12px 7px 7px;box-shadow:0 12px 30px rgba(0,0,0,.25);max-width:240px;font-size:14px}
+.bghost b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bghost.h{padding:10px 14px;font-weight:800}
+.bdr{flex:none;height:44vh;display:flex;flex-direction:column;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.08);border-radius:22px 22px 0 0;padding:10px 12px 0}
+.bdrh{display:flex;gap:6px;align-items:center}.bdrh .inp{flex:1;min-width:0;padding:10px 14px;font-size:16px}.bdrh .pill{flex:none}
+.bks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:8px 0 4px}.bks::-webkit-scrollbar{display:none}.bks .chip{flex:none;padding:6px 12px;font-size:13px}
+.bdh{text-align:left;margin:2px 0 4px;font-size:12px}
+.bdl{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px}
+.bp{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid var(--line);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:pointer}
+.bp .bpt{flex:1;min-width:0}.bp b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bp small{display:block;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp.on{background:#f2ffe2}.ck{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:900;flex:none}.on>.ck{background:var(--lime);border-color:var(--lime)}
+.pmr.on{background:#f2ffe2}.pmbar{position:sticky;bottom:calc(-1 * var(--sab));background:#fff;padding:10px 0 4px}
+.qp{display:flex;align-items:center;gap:14px;margin:10px 0}.qp b{display:block;font-size:18px;line-height:1.25}.qp small{display:block;color:var(--mut);font-size:13px;margin:2px 0}.qpt{flex:1;min-width:0}.qp .qps{font-size:13px;color:#55555e;display:flex;align-items:center;gap:6px}
+
+.bwrap{-webkit-user-select:none;user-select:none}.bwrap .inp{-webkit-user-select:text;user-select:text}
+.onboard .toast{top:calc(var(--sat) + 10px);bottom:auto}
+.onboard .toast{width:max-content;max-width:calc(100vw - 32px)}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -414,7 +472,7 @@ async function shareICS(items,name){const ics=buildICS(items);const f=new File([
 const remItem=r=>({uid:r.m.id,start:Math.max(r.due,Date.now()+6e4),title:'Написать: '+nodeTitle(r.n),desc:'Встреча была '+fmtDT(r.m.ts)});
 
 /* ----- tab bar ----- */
-const tabbar=cur=>`<nav class="tabs">${[['/','Книжки',ICON.book],['/today','Сегодня',ICON.zap],['/cal','Календарь',ICON.cal],['/tasks','Задачи',ICON.check]].map(([h,t,ic])=>`<button class="tab${cur===h?' on':''}" data-go="${h}">${ic}<span>${t}</span></button>`).join('')}</nav>`;
+const tabbar=cur=>`<nav class="tabs">${[['/','Книжки',ICON.book],['/today','Сегодня',ICON.zap],['/b','Доска',ICON.board],['/cal','Календарь',ICON.cal],['/tasks','Задачи',ICON.check]].map(([h,t,ic])=>`<button class="tab${cur===h?' on':''}" data-go="${h}">${ic}<span>${t}</span></button>`).join('')}</nav>`;
 
 /* ----- calendar ----- */
 const _now=new Date();let CAL={y:_now.getFullYear(),m:_now.getMonth(),sel:dkey(Date.now()),mode:'meet'};
@@ -618,7 +676,7 @@ function snapLead(n){const o={};LF.forEach(k=>o[k]=Array.isArray(n[k])?n[k].slic
 function restoreLead(n,o){LF.forEach(k=>{if(o[k]===undefined)delete n[k];else n[k]=Array.isArray(o[k])?o[k].slice():o[k]});n.meets=o.meets}
 function doneRem(n){const r=remMapAll().get(n.id);if(r)r.m.rDone=Date.now()}
 async function undoLead(n,sn){restoreLead(n,sn);await saveNode(n,false);render()}
-async function doTouch(n){const sn=snapLead(n);n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;doneRem(n);await saveNode(n,false);
+async function doTouch(n){const sn=snapLead(n);n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;doneRem(n);logW();await saveNode(n,false);
  if(n.tc>=sleepN()&&!['sleep','half','stop'].includes(n.st)){render();
   if(await ask('Уже '+n.tc+' '+plural(n.tc,'касание','касания','касаний')+' без ответа','Перевести «'+nodeTitle(n)+'» в спящие? Тогда напомню писать реже, примерно раз в 4 месяца.','В спящие')){n.st='sleep';n.plan=0;await saveNode(n,false)}}
  render();toast('Записала: '+nodeTitle(n)+(n.tc>1?' · без ответа: '+n.tc:''),'Отменить',()=>undoLead(n,sn))}
@@ -918,6 +976,324 @@ async function act4(act,a,id,n){
   case'nuance':if(n)nuanceSheet(n);break;
   case'chats':if(n)chatsSheet(n);break;
   case'months':monthsSheet();break;
+  default:act5(act,a,id,n)
+ }}
+
+/* ===== stage 5: trip board (columns, drag & drop, people drawer, queue, assistant) ===== */
+const CT={todo:{t:'Написать',e:'📝'},wait:{t:'Написала · жду ответ',e:'✉️'},day:{t:'',e:'📅'},next:{t:'Следующий приезд',e:'✈️'},met:{t:'Встретились',e:'💚'},rest:{t:'Отдыхают',e:'😴'},own:{t:'Свой столбик',e:'📌'}};
+const dmy=ts=>{const d=new Date(ts);return p2(d.getDate())+'.'+p2(d.getMonth()+1)};
+const dayTitle=ts=>WDN[new Date(ts).getDay()]+' '+dmy(ts);
+const colTitle=c=>c.title||(c.type==='day'?dayTitle(c.date):CT[c.type].t);
+const boards=()=>SET.boards||(SET.boards=[]);
+const curBoard=()=>{const b=boards();return b.find(x=>x.id===SET.board)||b[b.length-1]||null};
+const boardTitle=b=>b.title||(b.city+' · '+fmtTrip(b));
+const colOf=(b,type)=>b.cols.find(c=>c.type===type);
+const liveItems=c=>c?c.items.filter(it=>{const n=N.get(it.id);return n&&!n.deleted}):[];
+function findItem(b,lid){if(!b)return null;for(const c of b.cols){const i=c.items.findIndex(x=>x.id===lid);if(i>=0)return{c,i,it:c.items[i]}}return null}
+const saveB=()=>saveSet();
+const relShort=ts=>{const k=Math.round((sod(Date.now())-sod(ts))/864e5);return k<=0?'сегодня':k===1?'вчера':k+' дн. назад'};
+const LOC={'Дубай':'Дубае','Москва':'Москве','Краснодар':'Краснодаре','Ростов':'Ростове','Париж':'Париже','Стамбул':'Стамбуле','Милан':'Милане','Сочи':'Сочи'};
+const DOWA=['в воскресенье','в понедельник','во вторник','в среду','в четверг','в пятницу','в субботу'];
+const BS={drawer:false,q:'',multi:false,sel:new Set(),sl:null,tops:{},dtop:0};
+
+/* ----- daily log & streak ----- */
+function logW(){const w=SET.wlog||(SET.wlog={});const k=dkey(Date.now());w[k]=(w[k]||0)+1;const keys=Object.keys(w).sort();while(keys.length>90)delete w[keys.shift()];saveSet()}
+const todayW=()=>{const s0=sod(Date.now());return leads().filter(n=>n.lt&&n.lt>=s0).length};
+function streak(){const w=SET.wlog||{};let d=new Date();d.setHours(12,0,0,0);if(!(w[dkey(d.getTime())]>0)&&!todayW())d.setDate(d.getDate()-1);let k=0;
+ for(;;){const v=w[dkey(d.getTime())]||(dkey(d.getTime())===dkey(Date.now())?todayW():0);if(v>0){k++;d.setDate(d.getDate()-1)}else break}return k}
+
+/* ----- contacts & templates ----- */
+function contactsOf(n){const tx=[nodeTitle(n),n.nuance||'',...kids(n.id).filter(k=>k.type==='note').slice(0,6).map(plainOf)].join('\n');
+ let ph=n.ph||'',ig=n.igu||'',tg=n.tgu||'';const B='(?:^|[^A-Za-zА-Яа-яЁё])';
+ if(!ph){const m=tx.match(/\+?\d[\d \-()]{7,}\d/);if(m){const d=m[0].replace(/\D/g,'');if(d.length>=9)ph=d}}
+ if(!ig){const m=tx.match(new RegExp(B+'(?:instagram|insta|inst|инстаграм|инста|инст|ig)\\s*[:\\-]?\\s*@?([A-Za-z0-9._]{2,30})','i'))||tx.match(/instagram\.com\/([A-Za-z0-9._]+)/i);if(m)ig=m[1]}
+ if(!tg){const m=tx.match(new RegExp(B+'(?:telegram|телеграм|tg|тг)\\s*[:\\-]?\\s*@?([A-Za-z0-9_]{4,32})','i'))||tx.match(/t\.me\/([A-Za-z0-9_]+)/i);if(m)tg=m[1]}
+ if(!ig&&!tg){const m=tx.match(/@([A-Za-z0-9._]{3,30})/);if(m){const ms=n.msgs||[];if(ms.includes('tg')&&!ms.includes('ig'))tg=m[1];else ig=m[1]}}
+ return{ph,ig,tg}}
+function contactsSheet(n,back){const c=contactsOf(n);
+ const el=sheet(`<h3>Контакты: ${esc(nodeTitle(n))}</h3><div class="hint" style="text-align:left">Я ищу телефон и ники в названии и заметках сама. Если нашла не то, поправь здесь.</div>
+ <div class="lbl">WhatsApp · телефон</div><input class="inp" id="cph" inputmode="tel" placeholder="+971 50 123 45 67" value="${esc(c.ph?'+'+c.ph:'')}">
+ <div class="lbl">Instagram · ник</div><input class="inp" id="cig" placeholder="ник без @" value="${esc(c.ig)}" autocapitalize="off">
+ <div class="lbl">Telegram · ник</div><input class="inp" id="ctg" placeholder="ник без @" value="${esc(c.tg)}" autocapitalize="off">
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="cok">Сохранить</button></div>`);
+ el.querySelector('#cok').onclick=async()=>{n.ph=el.querySelector('#cph').value.replace(/\D/g,'');n.igu=el.querySelector('#cig').value.trim().replace(/^@/,'').replace(/.*instagram\.com\//i,'').replace(/[/?].*$/,'');n.tgu=el.querySelector('#ctg').value.trim().replace(/^@/,'').replace(/.*t\.me\//i,'');
+  await saveNode(n,false);closeSheet();toast('Контакты сохранены');back&&back()}}
+const MT0=['Привет! 😊 Я {где} до {отъезд}. Увидимся?','Привет! Как ты? Я сейчас {где} 🌸 Давай встретимся','Привет! Я снова {где} 😊 Есть время на этой неделе?'];
+const CT0=['Привет! Мы {день} видимся? 😊','Привет! Всё в силе {день}?'];
+const mtpls=()=>SET.mtpl&&SET.mtpl.length?SET.mtpl:MT0,ctpls=()=>SET.ctpl&&SET.ctpl.length?SET.ctpl:CT0;
+function fillT(t,b,c){const to=b?new Date(b.to):null;let day='на днях';if(c&&c.type==='day'){const k=Math.round((sod(c.date)-sod(Date.now()))/864e5);day=k===0?'сегодня':k===1?'завтра':DOWA[new Date(c.date).getDay()]}
+ return t.replace(/\{где\}/g,b?'в '+(LOC[b.city]||b.city):'').replace(/\{город\}/g,b?b.city:'').replace(/\{отъезд\}/g,to?to.getDate()+' '+MONTHS[to.getMonth()]:'').replace(/\{день\}/g,day)}
+function openChat(n,k,text){const ct=contactsOf(n);let url='';
+ if(k==='wa')url='https://wa.me/'+ct.ph+(text?'?text='+encodeURIComponent(text):'');
+ else{if(text){copyText(text);toast('Текст скопирован, вставь его в чат')}url=k==='ig'?'https://ig.me/m/'+ct.ig:'https://t.me/'+ct.tg}
+ holdLock(600000);const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}
+function tplMsgSheet(){const el=sheet(`<h3>Шаблоны сообщений</h3><div class="hint" style="text-align:left">Каждый шаблон отделяй пустой строкой. Можно вставлять: <b>{где}</b> — «в Дубае», <b>{отъезд}</b> — дата отъезда, <b>{день}</b> — «сегодня», «завтра», «в пятницу».</div>
+ <div class="lbl">Первое сообщение и напоминание</div><textarea class="inp" id="tm1" style="min-height:150px">${esc(mtpls().join('\n\n'))}</textarea>
+ <div class="lbl">Подтвердить встречу</div><textarea class="inp" id="tm2" style="min-height:100px">${esc(ctpls().join('\n\n'))}</textarea>
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="tms">Сохранить</button></div><div class="row"><button class="pill ghost" id="tmr">Вернуть мои стандартные</button></div>`);
+ const sp=v=>v.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+ el.querySelector('#tms').onclick=()=>{SET.mtpl=sp(el.querySelector('#tm1').value);SET.ctpl=sp(el.querySelector('#tm2').value);saveSet();closeSheet();toast('Шаблоны сохранены')};
+ el.querySelector('#tmr').onclick=()=>{SET.mtpl=null;SET.ctpl=null;saveSet();tplMsgSheet()}}
+
+/* ----- lead updates from the board ----- */
+async function bTouch(n,it){n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;doneRem(n);logW();if(it){it.w=(it.w||0)+1;it.lt=Date.now()}await saveNode(n,false)}
+async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);return true}
+async function maybeRest(b,n){const f=findItem(b,n.id);if(!f||(n.tc||0)<sleepN()||['rest','met'].includes(f.c.type)||f.c.type==='day')return;const r=colOf(b,'rest');if(!r)return;
+ await placeItem(b,n.id,r.id,null,sleepN()+' сообщений без ответа — перенесла в «Отдыхают». Предложу снова в следующую поездку')}
+async function placeItem(b,lid,toId,idx,why){const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
+ const sB=JSON.stringify(b.cols),sN=snapLead(n);const f=findItem(b,lid);let it,from=null;
+ if(f){from=f.c;f.c.items.splice(f.i,1);it=f.it}else it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
+ if(idx==null||idx>to.items.length||idx<0)idx=to.items.length;to.items.splice(idx,0,it);
+ const ft=from?from.type:'new',nm=nodeTitle(n);let msg=why||'';
+ if(to.type==='wait'&&(ft==='new'||ft==='todo')){await bTouch(n,it);msg=msg||'Написала: '+nm+(n.tc>1?' · без ответа: '+n.tc:'')}
+ else if(['day','next','met','own'].includes(to.type)&&['wait','todo','new','rest'].includes(ft)){if(await bAnswered(n))msg=msg||'Ответил: '+nm}
+ if(to.type==='rest'&&!['stop','sleep','half'].includes(n.st)){n.st='sleep';await saveNode(n,false)}
+ if(to.type!=='day'){it.s=0;it.tm=''}
+ saveB();render();
+ const undo=async()=>{b.cols=JSON.parse(sB);restoreLead(n,sN);await saveNode(n,false);saveB();render()};
+ if(to.type==='met'&&from!==to)toast('Встретились: '+nm,'Записать встречу',()=>meetSheet(n,null,from&&from.type==='day'?dkey(from.date):dkey(Date.now())));
+ else if(from!==to)toast(msg||('«'+nm+'» → '+colTitle(to)),'Отменить',undo);
+ if(to.type==='wait'&&(ft==='new'||ft==='todo'))await maybeRest(b,n)}
+async function removeItem(b,lid){const f=findItem(b,lid);if(!f)return;const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
+
+/* ----- columns ----- */
+const dayCols=b=>b.cols.filter(c=>c.type==='day').sort((x,y)=>x.date-y.date);
+function suggestDates(b,k=4){const have=new Set(dayCols(b).map(c=>dkey(c.date)));const dc=dayCols(b);let d=dc.length?addDays(sod(dc[dc.length-1].date),1):sod(Math.max(Date.now(),b.from));
+ const out=[];let g=0;while(out.length<k&&g<60){if(!have.has(dkey(d)))out.push(d);d=addDays(d,1);g++}return out}
+function insertDayCol(b,c){const ds=b.cols.map((x,i)=>({x,i})).filter(o=>o.x.type==='day');let at;const after=ds.filter(o=>o.x.date<c.date);
+ if(after.length)at=after[after.length-1].i+1;else if(ds.length)at=ds[0].i;else{const w=b.cols.findIndex(x=>x.type==='wait');at=w>=0?w+1:b.cols.length}b.cols.splice(at,0,c)}
+function ensureDays(b){const have=new Set(dayCols(b).map(c=>dkey(c.date)));for(let d=sod(b.from);d<=sod(b.to);d=addDays(d,1))if(!have.has(dkey(d)))insertDayCol(b,{id:uid(),type:'day',title:'',date:d,items:[]})}
+function moveCol(b,cid,to){const i=b.cols.findIndex(c=>c.id===cid);if(i<0||to===i)return;const [c]=b.cols.splice(i,1);b.cols.splice(Math.max(0,Math.min(b.cols.length,to)),0,c);saveB();render()}
+function newColSheet(b){let type='day';const sug=suggestDates(b);let date=sug[0];
+ const draw=()=>{const el=sheet(`<h3>Новый столбик</h3><div class="seg"><button data-t="day" class="${type==='day'?'on':''}">📅 День</button><button data-t="own" class="${type==='own'?'on':''}">📌 Свой</button></div>
+  ${type==='day'?`<div class="lbl">Подсказываю дату</div><div class="chips">${sug.map(d=>`<button type="button" class="chip${dkey(d)===dkey(date)?' on':''}" data-d="${d}">${dayTitle(d)}</button>`).join('')}</div>
+  <div class="lbl">Или выбери сама</div><input class="inp" type="date" id="ncd" value="${ymd(new Date(date))}"><div class="lbl">Название</div><input class="inp" id="nct" placeholder="${esc(dayTitle(date))}" maxlength="40"><div class="hint" style="text-align:left">Можно оставить пустым — назову по дате.</div>`
+  :`<div class="lbl">Название</div><input class="inp" id="nct" placeholder="Например: Думает" maxlength="40">`}
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="ncok">Добавить</button></div>`);
+  el.querySelectorAll('[data-t]').forEach(x=>x.onclick=()=>{type=x.dataset.t;draw()});
+  el.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{date=+x.dataset.d;draw()});
+  const cd=el.querySelector('#ncd');if(cd)cd.onchange=()=>{const [y,m,d]=cd.value.split('-').map(Number);if(y){date=new Date(y,m-1,d).getTime();el.querySelector('#nct').placeholder=dayTitle(date)}};
+  el.querySelector('#ncok').onclick=()=>{const t=el.querySelector('#nct').value.trim();if(type==='own'&&!t){toast('Впиши название');return}
+   const c={id:uid(),type,title:t,date:type==='day'?date:0,items:[]};if(type==='day')insertDayCol(b,c);else{const nx=b.cols.findIndex(x=>x.type==='next');b.cols.splice(nx>=0?nx:b.cols.length,0,c)}
+   BS.goCol=c.id;saveB();closeSheet();render()}};draw()}
+function colSheet(b,cid){const c=b.cols.find(x=>x.id===cid);if(!c)return;const i=b.cols.indexOf(c);const items=liveItems(c);
+ const el=sheet(`<h3>${CT[c.type].e} ${esc(colTitle(c))}</h3>
+ <div class="lbl">Название</div><input class="inp" id="cst" value="${esc(c.title||'')}" placeholder="${esc(c.type==='day'?dayTitle(c.date):CT[c.type].t)}" maxlength="40">
+ ${c.type==='day'?`<div class="lbl">Дата</div><input class="inp" type="date" id="csd" value="${ymd(new Date(c.date))}"><div class="hint" style="text-align:left">Пустое название — подставлю день недели и дату сама.</div>`:''}
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="css">Сохранить</button></div>
+ <div class="row"><button class="pill ghost" id="csl"${i===0?' disabled':''}>← Левее</button><button class="pill ghost" id="csr"${i===b.cols.length-1?' disabled':''}>Правее →</button>${c.type==='day'?'<button class="pill c4" id="csn">＋ Следующий день</button>':''}</div>
+ ${items.length&&['todo','wait'].includes(c.type)?`<div class="row"><button class="pill c5" id="csq">▶ Написать всем по очереди · ${items.length}</button></div>`:''}
+ ${c.type==='day'&&items.length?`<div class="row"><button class="pill c3" id="csc">Подтвердить встречи · ${items.length}</button></div>`:''}
+ <div class="row"><button class="pill ghost" id="csx" style="color:#d6264a">Удалить столбик</button></div>`);
+ el.querySelector('#css').onclick=()=>{c.title=el.querySelector('#cst').value.trim();const d=el.querySelector('#csd');if(d&&d.value){const [y,m,dd]=d.value.split('-').map(Number);const nd=new Date(y,m-1,dd).getTime();if(nd!==c.date){b.cols.splice(b.cols.indexOf(c),1);c.date=nd;insertDayCol(b,c)}}saveB();closeSheet();render()};
+ el.querySelector('#csl').onclick=()=>moveCol(b,c.id,i-1);el.querySelector('#csr').onclick=()=>moveCol(b,c.id,i+1);
+ const n2=el.querySelector('#csn');if(n2)n2.onclick=()=>{const s=suggestDates(b,1)[0];const nc={id:uid(),type:'day',title:'',date:s,items:[]};insertDayCol(b,nc);BS.goCol=nc.id;saveB();closeSheet();render();toast('Добавила: '+dayTitle(s))};
+ const q=el.querySelector('#csq');if(q)q.onclick=()=>startQueue(items.map(x=>x.id),'write');
+ const cc=el.querySelector('#csc');if(cc)cc.onclick=()=>startQueue(items.map(x=>x.id),'confirm');
+ el.querySelector('#csx').onclick=async()=>{const k=liveItems(c).length;if(!await ask('Удалить «'+colTitle(c)+'»?',k?'Люди из него ('+k+') перейдут в «'+CT.wait.t+'».':'Столбик пустой.','Удалить',true))return;
+  const w=c.type==='wait'?colOf(b,'todo'):colOf(b,'wait');if(w&&w!==c)w.items.push(...c.items);b.cols=b.cols.filter(x=>x!==c);saveB();render()}}
+
+/* ----- boards ----- */
+function boardEdit(b0){const isNew=!b0;const d0=sod(Date.now());
+ const D=isNew?{id:uid(),city:(here()&&here().city)||cityList()[0]||'',from:d0,to:addDays(d0,13),title:'',cols:[]}:Object.assign({},b0);
+ const prev=boards().filter(x=>x.id!==D.id);let carry=isNew&&prev.length?1:0,carryR=0;
+ const draw=()=>{const cl=[...new Set([...cityList(),...(D.city?[D.city]:[])])];
+  const pv=prev.filter(x=>x.city===D.city);const nx=pv.reduce((s,x)=>s+liveItems(colOf(x,'next')).length,0),rs=pv.reduce((s,x)=>s+liveItems(colOf(x,'rest')).length,0);
+  const days=Math.max(1,Math.round((sod(D.to)-sod(D.from))/864e5)+1);
+  const el=sheet(`<h3>${isNew?'Новая доска поездки':'Поездка'}</h3><div class="lbl">Город</div>${chips('bc',cl,D.city)}<div class="row"><button class="pill ghost" id="bac">＋ Другой город</button></div>
+  <div class="two"><label>С какого дня<input class="inp" type="date" id="bf" value="${ymd(new Date(D.from))}"></label><label>Улетаю<input class="inp" type="date" id="bt" value="${ymd(new Date(D.to))}"></label></div>
+  <div class="note">Сделаю столбики: <b>Написать</b>, <b>Написала</b>, ${days} ${plural(days,'день','дня','дней')} с датами (${dayTitle(D.from)} … ${dayTitle(D.to)}), <b>Следующий приезд</b>, <b>Встретились</b>, <b>Отдыхают</b>. Всё можно переименовать, двигать и добавлять.</div>
+  ${isNew&&(nx||rs)?`<div class="lbl">Из прошлых поездок в «${esc(D.city)}»</div><div class="chips">${nx?`<button type="button" class="chip${carry?' on':''}" id="bcn">✈️ Следующий приезд · ${nx}</button>`:''}${rs?`<button type="button" class="chip${carryR?' on':''}" id="bcr">😴 Отдыхают · ${rs}</button>`:''}</div><div class="hint" style="text-align:left">Положу их в «Написать» — первыми в очередь.</div>`:''}
+  <div class="lbl">Название (необязательно)</div><input class="inp" id="bn" value="${esc(D.title)}" placeholder="${esc(D.city+' · '+fmtTrip(D))}" maxlength="50">
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="bok">${isNew?'Создать доску':'Сохранить'}</button></div>`);
+  const rd=()=>{const f=el.querySelector('#bf').value.split('-').map(Number),g=el.querySelector('#bt').value.split('-').map(Number);const a=new Date(f[0],f[1]-1,f[2]).getTime(),z=new Date(g[0],g[1]-1,g[2]).getTime();if(isFinite(a))D.from=a;if(isFinite(z))D.to=Math.max(z,D.from);D.title=el.querySelector('#bn').value.trim()};
+  chipsBind(el,'bc',v=>{rd();D.city=v;draw()});el.querySelector('#bf').onchange=()=>{rd();draw()};el.querySelector('#bt').onchange=()=>{rd();draw()};
+  el.querySelector('#bac').onclick=async()=>{rd();const v=await inputSheet({title:'Новый город',ph:'Например: Милан'});if(v&&v.trim()){const c=v.trim();SET.cities=[...cityList().filter(x=>x!==c),c];saveSet();D.city=c}draw()};
+  const cn=el.querySelector('#bcn');if(cn)cn.onclick=()=>{carry=carry?0:1;cn.classList.toggle('on')};const cr=el.querySelector('#bcr');if(cr)cr.onclick=()=>{carryR=carryR?0:1;cr.classList.toggle('on')};
+  el.querySelector('#bok').onclick=()=>{rd();if(!D.city){toast('Выбери город');return}
+   if(isNew){const mk=t=>({id:uid(),type:t,title:'',date:0,items:[]});D.cols=[mk('todo'),mk('wait'),mk('next'),mk('met'),mk('rest')];ensureDays(D);
+    const seen=new Set();const todo=D.cols[0];for(const x of pv){for(const t of[...(carry?['next']:[]),...(carryR?['rest']:[])])for(const it of liveItems(colOf(x,t)))if(!seen.has(it.id)){seen.add(it.id);todo.items.push({id:it.id,s:0,tm:'',w:0,lt:0,at:Date.now()})}}
+    boards().push(D);SET.board=D.id;BS.sl=null}
+   else{Object.assign(b0,{city:D.city,from:D.from,to:D.to,title:D.title});ensureDays(b0)}
+   saveB();closeSheet();if(parseHash().k!=='b')go('/b');else render();if(isNew)toast('Доска готова. Добавь людей из книжек 👥')}};draw()}
+function boardMenu(){const b=curBoard();if(!b)return boardEdit(null);const others=boards().filter(x=>x.id!==b.id).slice().sort((x,y)=>y.from-x.from);
+ menuSheet(boardTitle(b),[{ic:'✏️',t:'Город, даты, название',fn:()=>boardEdit(b)},{ic:'📊',t:'Итоги поездки',fn:()=>boardStats(b)},{ic:'💬',t:'Шаблоны сообщений',fn:tplMsgSheet},
+  {ic:b.hidePast?'👁️':'🙈',t:b.hidePast?'Показать прошедшие дни':'Скрыть прошедшие дни',fn:()=>{b.hidePast=b.hidePast?0:1;saveB();render()}},
+  ...others.map(x=>({ic:'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
+  {ic:'＋',t:'Новая доска поездки',fn:()=>boardEdit(null)},
+  {ic:'🗑️',t:'Удалить эту доску',red:1,fn:async()=>{if(!await ask('Удалить доску?','Люди останутся в книжках, удалится только эта доска.','Удалить',true))return;SET.boards=boards().filter(x=>x!==b);SET.board=null;saveB();render()}}])}
+function boardStats(b){let w=0,ans=0;const by={};for(const c of b.cols){const l=liveItems(c);by[c.type]=(by[c.type]||0)+l.length;for(const it of l)w+=it.w||0;if(['day','next','met','own'].includes(c.type))ans+=l.length}
+ const sure=b.cols.filter(c=>c.type==='day').reduce((s,c)=>s+liveItems(c).filter(x=>x.s).length,0),met=by.met||0;const per=(met+sure)?w/(met+sure):0;
+ const wl=SET.wlog||{};const days=[];for(let i=13;i>=0;i--){const t=addDays(sod(Date.now()),-i);days.push({t,v:dkey(t)===dkey(Date.now())?Math.max(wl[dkey(t)]||0,todayW()):(wl[dkey(t)]||0)})}const mx=Math.max(1,...days.map(x=>x.v));
+ sheet(`<h3>📊 ${esc(boardTitle(b))}</h3><div class="note" style="margin-top:0">Написала с доски: <b>${w}</b> ${plural(w,'сообщение','сообщения','сообщений')}<br>Ответили: <b>${ans}</b> · точно встречаемся: <b>${sure}</b> · встретились: <b>${met}</b><br>Ждут ответа: ${by.wait||0} · следующий приезд: ${by.next||0} · отдыхают: ${by.rest||0}</div>
+ ${per?`<div class="note" style="background:#eaffd0">💡 У тебя примерно <b>каждые ${Math.max(1,Math.round(per))} ${plural(Math.round(per),'сообщение','сообщения','сообщений')} = 1 встреча</b>. Каждое сообщение приближает работу.</div>`:'<div class="hint" style="text-align:left">Когда появятся встречи, посчитаю, сколько сообщений нужно на одну встречу.</div>'}
+ <div class="lbl">Сколько написала по дням</div>${days.map(x=>`<div class="srow"><span>${DOW[(new Date(x.t).getDay()+6)%7]} ${dmy(x.t)}</span><i style="width:${Math.round(x.v/mx*100)}%"></i><b>${x.v}</b></div>`).join('')}
+ <div class="hint" style="text-align:left">🔥 Дней подряд, когда писала: ${streak()}</div>`)}
+
+/* ----- people pickers ----- */
+const bookList=()=>[...N.values()].filter(n=>isBook(n)&&!n.deleted).sort((a,b)=>(a.order||0)-(b.order||0));
+function peopleList(book,q){const qq=nq(q||'');return leads().filter(n=>(!book||isDesc(n.id,book))&&(!qq||nq(nodeTitle(n)).includes(qq))).sort((a,b)=>b.updated-a.updated)}
+const bookChipsH=cur=>`<button type="button" class="chip${!cur?' on':''}" data-bk="">Все</button>`+bookList().map(k=>`<button type="button" class="chip${cur===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('');
+function whereOn(b,lid){const f=findItem(b,lid);return f?colTitle(f.c):''}
+function pickMany(b,title,ok){return new Promise(res=>{const sel=new Set();let book=SET.bdBook||'',q='';
+ const el=sheet(`<h3>${esc(title)}</h3><input class="inp" id="pmq" placeholder="Найти по имени" autocomplete="off"><div class="chips bks" id="pmb"></div><div id="pml"></div><div class="pmbar"><button class="btn pink wide" id="pmok">${esc(ok)}</button></div>`);
+ const draw=()=>{el.querySelector('#pmb').innerHTML=bookChipsH(book);el.querySelectorAll('#pmb [data-bk]').forEach(x=>x.onclick=()=>{book=x.dataset.bk;SET.bdBook=book;saveSet();draw()});
+  const list=peopleList(book,q).slice(0,200);el.querySelector('#pml').innerHTML=list.length?list.map(n=>{const w=whereOn(b,n.id);return `<button class="act pmr${sel.has(n.id)?' on':''}" data-pid="${n.id}"><span class="ic" style="background:none;padding:0">${avatarHTML(n,38)}</span><span>${esc(nodeTitle(n))}<small>${w?'на доске: '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span><i class="ck">${sel.has(n.id)?'✓':''}</i></button>`}).join(''):'<p class="hint">Никого не нашла</p>';
+  el.querySelectorAll('[data-pid]').forEach(x=>x.onclick=()=>{const id=x.dataset.pid;if(sel.has(id))sel.delete(id);else sel.add(id);x.classList.toggle('on');x.querySelector('.ck').textContent=sel.has(id)?'✓':'';el.querySelector('#pmok').textContent=ok+(sel.size?' · '+sel.size:'')})};
+ el.querySelector('#pmq').oninput=e=>{q=e.target.value;draw()};draw();
+ el.querySelector('#pmok').onclick=()=>{closeSheet();res([...sel])};SHEET.bg.onclick=()=>{closeSheet();res(null)}})}
+function newPersonSheet(b,cid){let book=SET.npBook&&N.get(SET.npBook)&&!N.get(SET.npBook).deleted?SET.npBook:((bookList().find(k=>nq(nodeTitle(k)).includes(nq(b.city)))||bookList()[0]||{}).id||'');let avatar=null,title='';
+ const draw=()=>{const el=sheet(`<h3>Новый человек</h3><input class="inp" id="npn" placeholder="Имя, ник, телефон…" value="${esc(title)}" maxlength="80">
+  <div class="lbl">В какую книжку</div><div class="chips">${bookList().map(k=>`<button type="button" class="chip${book===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('')||'<span class="hint">Сначала создай книжку на вкладке «Книжки»</span>'}</div>
+  <div class="lbl">Фото (необязательно)</div><div class="sw"><button class="c up${avatar?' on':''}" id="npa" style="height:64px;width:64px;border-radius:50%">${avatar?`<img src="${bu(avatar)}" alt="" style="border-radius:50%">`:'Фото'}</button></div>
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="npok">Добавить на доску</button></div>`);
+  const nm=el.querySelector('#npn');nm.oninput=()=>title=nm.value;if(!title)setTimeout(()=>nm.focus(),80);
+  el.querySelectorAll('[data-bk]').forEach(x=>x.onclick=()=>{book=x.dataset.bk;draw()});
+  el.querySelector('#npa').onclick=async()=>{const f=(await pickFile(false))[0];if(f){const sr=await makeSrc(f);const r=await avatarFromBlob(sr.blob);if(r)avatar=r}draw()};
+  el.querySelector('#npok').onclick=async()=>{const t=title.trim();if(!t){toast('Впиши имя');return}if(!book){toast('Выбери книжку');return}SET.npBook=book;saveSet();
+   const x=newNode('col',book,{title:t,avatar,cities:[b.city]});await saveNode(x);closeSheet();await placeItem(b,x.id,cid,null)}};draw()}
+async function addSheet(b,cid){const c=b.cols.find(x=>x.id===cid);menuSheet('Добавить в «'+colTitle(c)+'»',[
+ {ic:'👥',t:'Из книжек',sub:'Выбери сразу несколько человек',fn:async()=>{const ids=await pickMany(b,'Кого добавить в «'+colTitle(c)+'»?','Добавить');if(!ids||!ids.length)return;for(const id of ids)await placeItem(b,id,cid,null);if(ids.length>1)toast('Добавила: '+ids.length)}},
+ {ic:'🆕',t:'Новый человек',sub:'Создам коллекцию в книжке',fn:()=>newPersonSheet(b,cid)}])}
+
+/* ----- card menu ----- */
+function cardMenu(b,lid){const f=findItem(b,lid);if(!f)return;const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
+ if(ct.ph)rows.push({ic:'🟢',t:'Написать в WhatsApp',sub:'+'+ct.ph+' · с готовым текстом',fn:()=>openChat(n,'wa',tx)});
+ if(ct.ig)rows.push({ic:'📸',t:'Написать в Instagram',sub:'@'+ct.ig+' · текст скопирую',fn:()=>openChat(n,'ig',tx)});
+ if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg+' · текст скопирую',fn:()=>openChat(n,'tg',tx)});
+ const wc=colOf(b,'wait');
+ if(c.type==='todo'&&wc)rows.push({ic:'✉️',t:'Написала',sub:'перенесу в «Написала»',fn:()=>placeItem(b,lid,wc.id,null)});
+ else if(['wait','rest','next'].includes(c.type))rows.push({ic:'✉️',t:'Написала ещё раз',sub:'без ответа: '+(n.tc||0)+' из '+sleepN(),fn:async()=>{await bTouch(n,it);saveB();render();toast('Записала: '+nodeTitle(n)+' · без ответа: '+n.tc);await maybeRest(b,n)}});
+ if(c.type==='day'){rows.push({ic:it.s?'🤍':'💚',t:it.s?'Пометить «скорее всего»':'Пометить «точно»',sub:it.s?'догадка, день не назначен':'человек сам назвал день',fn:()=>{it.s=it.s?0:1;saveB();render()}});
+  rows.push({ic:'🕐',t:it.tm?'Время: '+it.tm:'Указать время',fn:()=>timeSheet(b,lid)})}
+ rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid)});
+ rows.push({ic:'📝',t:'Записать встречу',sub:'с суммой, в календарь встреч',fn:()=>meetSheet(n,null,c.type==='day'?dkey(c.date):dkey(Date.now()))});
+ rows.push({ic:'☎️',t:'Контакты',sub:[ct.ph?'+'+ct.ph:'',ct.ig?'IG @'+ct.ig:'',ct.tg?'TG @'+ct.tg:''].filter(Boolean).join(' · ')||'телефон, Instagram, Telegram',fn:()=>contactsSheet(n,()=>cardMenu(b,lid))});
+ rows.push({ic:'🖼️',t:'Фото',fn:()=>avatarMenu(n)});
+ rows.push({ic:'👤',t:'Открыть карточку',fn:()=>go('/n/'+n.id)});
+ rows.push({ic:'✖️',t:'Убрать с доски',red:1,fn:()=>removeItem(b,lid)});
+ menuSheet(nodeTitle(n)+' · '+colTitle(c),rows)}
+function moveToSheet(b,lid){const f=findItem(b,lid);menuSheet('Куда перенести?',b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:f&&f.c===c?'сейчас здесь':'',fn:()=>{if(!(f&&f.c===c))placeItem(b,lid,c.id,null)}})))}
+function timeSheet(b,lid){const f=findItem(b,lid);if(!f)return;const el=sheet(`<h3>Во сколько?</h3><input class="inp" type="time" id="tmv" value="${esc(f.it.tm||'19:00')}"><div class="hint" style="text-align:left">С временем встреча станет «точно» 💚</div><div class="row" style="margin-top:12px"><button class="btn pink wide" id="tmo">Сохранить</button></div>${f.it.tm?'<div class="row"><button class="pill ghost" id="tmx">Убрать время</button></div>':''}`);
+ el.querySelector('#tmo').onclick=()=>{f.it.tm=el.querySelector('#tmv').value;if(f.it.tm)f.it.s=1;saveB();closeSheet();render()};const x=el.querySelector('#tmx');if(x)x.onclick=()=>{f.it.tm='';saveB();closeSheet();render()}}
+
+/* ----- queue: write one by one ----- */
+let QU=null;
+function queueIds(b){const todo=liveItems(colOf(b,'todo')).map(x=>x.id);const wait=liveItems(colOf(b,'wait')).filter(x=>{const n=N.get(x.id);return(n.tc||0)<sleepN()&&(!n.lt||sod(Date.now())-sod(n.lt)>=3*864e5)}).map(x=>x.id);return[...todo,...wait]}
+function startQueue(ids,mode){ids=[...new Set(ids)].filter(id=>N.get(id)&&!N.get(id).deleted);if(!ids.length){toast(mode==='confirm'?'Подтверждать пока некого':'Сейчас писать некому. Добавь людей из книжек 👥');return}QU={ids,i:0,mode,done:0,ti:0};queueStep()}
+function queueStep(){const b=curBoard();if(!QU||!b||QU.i>=QU.ids.length){const d=QU?QU.done:0,m=QU?QU.mode:'';QU=null;closeSheet();render();if(d)toast((m==='confirm'?'Подтвердила: ':'Готово! Написала: ')+d+' 💪');return}
+ const n=N.get(QU.ids[QU.i]);if(!n||n.deleted){QU.i++;return queueStep()}const ct=contactsOf(n),f=findItem(b,n.id),conf=QU.mode==='confirm';const tp=conf?ctpls():mtpls();const tc=n.tc||0;
+ const el=sheet(`<div class="row" style="margin-top:0"><span class="pill ghost">${QU.i+1} из ${QU.ids.length}</span><span class="pill c2">✉ сегодня ${todayW()} из ${dailyN()}</span>${streak()?`<span class="pill ghost">🔥 ${streak()}</span>`:''}</div>
+ <div class="qp">${avatarHTML(n,72)}<div class="qpt"><b>${esc(nodeTitle(n))}</b><small>${f?esc(colTitle(f.c)):''}${f&&f.c.type==='day'&&f.it.tm?' · '+f.it.tm:''}</small><span class="qps"><span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span> ${n.lt?'писала '+relShort(n.lt):'ещё не писала'}</span></div></div>
+ <div class="chips" id="qt">${tp.map((t,i)=>`<button type="button" class="chip${i===QU.ti?' on':''}" data-v="${i}">${esc(fillT(t,b,f&&f.c).slice(0,26))}…</button>`).join('')}</div>
+ <textarea class="inp" id="qx" style="min-height:76px">${esc(fillT(tp[QU.ti]||tp[0]||'',b,f&&f.c))}</textarea>
+ <div class="row">${ct.ph?'<button class="pill c2" data-q="wa">🟢 WhatsApp</button>':''}${ct.ig?'<button class="pill c3" data-q="ig">📸 Instagram</button>':''}${ct.tg?'<button class="pill c1" data-q="tg">✈️ Telegram</button>':''}<button class="pill ghost" data-q="ct">${ct.ph||ct.ig||ct.tg?'☎️':'＋ Добавить контакт'}</button></div>
+ <div class="row" style="margin-top:12px"><button class="btn pink" id="qok" style="flex:2">✅ ${conf?'Подтвердила':'Написала'}</button><button class="btn soft" id="qsk" style="flex:1">Пропустить</button></div>
+ <div class="row"><button class="pill ghost" id="qend">Закончить</button></div>`);
+ SHEET.bg.onclick=()=>{QU=null;closeSheet();render()};
+ el.querySelectorAll('#qt [data-v]').forEach(x=>x.onclick=()=>{QU.ti=+x.dataset.v;queueStep()});
+ el.querySelectorAll('[data-q]').forEach(x=>x.onclick=()=>{const k=x.dataset.q;if(k==='ct'){contactsSheet(n,()=>queueStep());return}openChat(n,k,el.querySelector('#qx').value.trim())});
+ el.querySelector('#qsk').onclick=()=>{QU.i++;queueStep()};el.querySelector('#qend').onclick=()=>{const d=QU.done,c=QU.mode;QU=null;closeSheet();render();if(d)toast((c==='confirm'?'Подтвердила: ':'Написала: ')+d+' 💪')};
+ el.querySelector('#qok').onclick=async()=>{const q=QU;if(!q)return;
+  if(!conf){if(f&&f.c.type==='todo'&&colOf(b,'wait'))await placeItem(b,n.id,colOf(b,'wait').id,null);else{await bTouch(n,f?f.it:null);saveB();await maybeRest(b,n)}}
+  q.done++;q.i++;QU=q;queueStep()}}
+
+/* ----- assistant tips ----- */
+function tipsOf(b){const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b);
+ const tc=days.find(c=>sod(c.date)===t0);if(tc){const l=liveItems(tc);if(l.length)out.push({e:'☀️',t:'Сегодня: '+l.slice(0,3).map(x=>esc(nodeTitle(N.get(x.id)).split(' ')[0])+(x.s?' 💚':' 🤍')).join(', ')+(l.length>3?' и ещё '+(l.length-3):'')+'. Подтверди встречи',b:'Подтвердить',act:'bconf',c:tc.id})}
+ if(eod(b.to)<now){const k=['wait','todo'].reduce((s,t)=>s+liveItems(colOf(b,t)).length,0)+days.reduce((s,c)=>s+liveItems(c).length,0);if(k)out.push({e:'🧳',t:'Поездка закончилась. Перенести '+k+' '+plural(k,'человека','человек','человек')+', с кем не встретились, в «Следующий приезд»?',b:'Перенести',act:'bnextall'})}
+ else{const left=Math.round((sod(b.to)-t0)/864e5);const g=days.filter(c=>c.date>=t0).reduce((s,c)=>s+liveItems(c).filter(x=>!x.s).length,0);
+  if(left<=3&&g)out.push({e:'⏳',t:(left===0?'Сегодня улетаешь':'До отъезда '+left+' '+plural(left,'день','дня','дней'))+'. '+g+' «скорее всего» без точного дня — уточни',b:'Уточнить',act:'bguess'})}
+ const st=liveItems(colOf(b,'wait')).filter(x=>{const n=N.get(x.id);return(n.tc||0)<sleepN()&&n.lt&&sod(now)-sod(n.lt)>=3*864e5}).length;if(st)out.push({e:'🔁',t:st+' '+plural(st,'человек','человека','человек')+' молчат больше 3 дней. Можно напомнить',b:'Напомнить',act:'bqueue'});
+ const any=b.cols.some(c=>liveItems(c).length);
+ if(any&&eod(b.to)>=now){const e=days.filter(c=>c.date>=t0&&c.date<=addDays(t0,3)&&!liveItems(c).length);if(e.length)out.push({e:'🫧',t:e.map(c=>colTitle(c)).slice(0,2).join(', ')+' пока '+(e.length>1?'пустые':'пустой')+'. Напиши тем, кто ещё не ответил',b:'Писать',act:'bqueue'})}
+ const tw=todayW();if(tw<dailyN()&&!queueIds(b).length&&eod(b.to)>=now)out.push({e:'👥',t:'Сегодня написала '+tw+' из '+dailyN()+'. Добавь людей из книжек в «Написать»',b:'Из книжек',act:'bdrawer'});
+ return out}
+
+/* ----- view ----- */
+function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait','todo','next','rest'].includes(c.type);
+ const dots=wt?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
+ const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
+ const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'&&it.tm?`<b class="btm">${esc(it.tm)}</b>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div></div>`}
+const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто'};
+function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
+ const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
+ return `<section class="bcol t-${c.type}${isT?' today':''}${past?' past':''}" data-col="${c.id}"><header data-bh="${c.id}" data-act="bcol" data-c="${c.id}"><span class="bhn"><b>${CT[c.type].e} ${esc(colTitle(c))}</b><small>${sub}</small></span><span class="bmore">⋯</span></header>
+ <div class="bl">${items.map(it=>cardHTML(b,c,it)).join('')||`<div class="bempty">${emptyT[c.type]}</div>`}</div><button class="badd" data-act="badd" data-c="${c.id}">＋ Добавить</button></section>`}
+function drawerList(b){const list=peopleList(SET.bdBook||'',BS.q).slice(0,150);return list.map(n=>{const w=whereOn(b,n.id);return `<div class="bp${BS.sel.has(n.id)?' on':''}" data-bp="${n.id}" data-act="bpp" data-id="${n.id}">${avatarHTML(n,40)}<span class="bpt"><b>${esc(nodeTitle(n))}</b><small>${w?'📌 '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span>${BS.multi?`<i class="ck">${BS.sel.has(n.id)?'✓':''}</i>`:''}</div>`}).join('')||'<p class="hint">Никого не нашла</p>'}
+function drawerHTML(b){
+ return `<div class="bdr" id="bdr"><div class="bdrh"><input class="inp" id="bdq" placeholder="Найти человека" value="${esc(BS.q)}" autocomplete="off"><button class="pill ${BS.multi?'c2':'ghost'}" data-act="bmulti">${BS.multi?'✓ '+BS.sel.size:'Несколько'}</button><button class="ib" data-act="bdrawer">${ICON.close}</button></div>
+ <div class="chips bks" id="bdb">${bookChipsH(SET.bdBook||'')}</div>
+ <div class="hint bdh">${BS.multi?(BS.sel.size?`<button class="pill c4" data-act="bmultiadd">Добавить ${BS.sel.size} → выбрать столбик</button>`:'Отметь людей, потом выбери столбик'):'Зажми человека и перетащи в столбик. Или просто нажми на него'}</div>
+ <div class="bdl" id="bdl">${drawerList(b)}</div></div>`}
+function viewBoard(){const b=curBoard();
+ const ob=$('#bcols');if(ob){BS.sl=ob.scrollLeft;document.querySelectorAll('.bcol[data-col]').forEach(s=>{const l=s.querySelector('.bl');if(l)BS.tops[s.dataset.col]=l.scrollTop})}const od=$('#bdl');if(od)BS.dtop=od.scrollTop;
+ if(!b)return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Доска поездки</h1>
+  <div class="empty" style="padding-top:20px"><img src="lidy.png" alt=""><b>Как Trello, только для твоих людей</b>Столбики: кому написать, кому написала, дни поездки с датами, следующий приезд. Людей берёшь прямо из своих книжек и перетаскиваешь.</div>
+  <div class="row" style="justify-content:center"><button class="btn pink" data-act="bnew">＋ Создать доску поездки</button></div></div>${tabbar('/b')}`;
+ const tw=todayW(),sk=streak(),q=queueIds(b).length,tips=tipsOf(b).slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
+ const cols=b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
+ return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btop"><button class="btitle" data-act="bmenu"><b>✈️ ${esc(boardTitle(b))}</b><small>${boards().length>1?'⌄ другие доски, настройки':'⌄ даты, итоги, шаблоны'}</small></button>${topBtn('settings',ICON.gear)}</div>
+ <div class="bstat"><span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]).id}">⇤ В начало</button></div>
+ ${tips.map(t=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><button class="pill sm c4" data-act="${t.act}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button></div>`).join('')}</div>
+ <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>подскажу дату: ${dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
+ ${BS.drawer?drawerHTML(b):''}</div>${tabbar('/b')}`}
+function afterBoard(){const bc=$('#bcols');if(!bc)return;
+ document.querySelectorAll('.bcol[data-col]').forEach(s=>{const l=s.querySelector('.bl');if(l&&BS.tops[s.dataset.col])l.scrollTop=BS.tops[s.dataset.col]});
+ if(BS.goCol){const el=bc.querySelector(`[data-col="${BS.goCol}"]`);BS.goCol=null;if(el){bc.scrollLeft=el.offsetLeft-12;BS.sl=bc.scrollLeft}}
+ else if(BS.sl!=null)bc.scrollLeft=BS.sl;else{const t=bc.querySelector('.bcol.t-wait');if(t)bc.scrollLeft=Math.max(0,t.offsetLeft-14)}
+ const dl=$('#bdl');if(dl)dl.scrollTop=BS.dtop||0;
+ const q=$('#bdq');if(q)q.oninput=()=>{BS.q=q.value;clearTimeout(afterBoard.t);afterBoard.t=setTimeout(()=>{const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}},150)};
+ const bb=$('#bdb');if(bb)bb.onclick=e=>{const x=e.target.closest('[data-bk]');if(!x)return;SET.bdBook=x.dataset.bk;saveSet();bb.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===x));const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}}}
+
+/* ----- drag & drop on the board ----- */
+let BD=null;
+function bdTarget(x,y){const els=document.elementsFromPoint(x,y);for(const e of els){if(e.closest&&e.closest('#bdr'))return null;const c=e.closest&&e.closest('.bcol[data-col]');if(c)return c}return null}
+function bdPlace(col,y){let ph=document.querySelector('.bph');if(!ph){ph=document.createElement('div');ph.className='bph'}
+ const l=col.querySelector('.bl');const cards=[...l.querySelectorAll('.bcard')].filter(c=>c.dataset.bc!==BD.id);let before=null;for(const c of cards){const r=c.getBoundingClientRect();if(y<r.top+r.height/2){before=c;break}}
+ const em=l.querySelector('.bempty');if(em)em.style.display='none';if(before)l.insertBefore(ph,before);else l.appendChild(ph);BD.col=col.dataset.col;BD.idx=before?cards.indexOf(before):cards.length}
+function bdOver(x,y){document.querySelectorAll('.bcol.over').forEach(o=>o.classList.remove('over'));const col=bdTarget(x,y);
+ if(!col){const ph=document.querySelector('.bph');if(ph)ph.remove();BD.col=null;return}col.classList.add('over');if(BD.kind==='h'){BD.col=col.dataset.col;return}bdPlace(col,y)}
+document.addEventListener('pointerdown',e=>{if(LOCKED||BD||DR)return;const t=e.target.closest&&e.target.closest('[data-bc],[data-bp],[data-bh]');if(!t||!$('.bwrap'))return;if(e.pointerType==='mouse'&&e.button!==0)return;if(t.dataset.bp&&BS.multi)return;
+ const kind=t.dataset.bc?'c':t.dataset.bp?'p':'h',id=t.dataset.bc||t.dataset.bp||t.dataset.bh;const sx=e.clientX,sy=e.clientY;let lx=sx,ly=sy,started=false,iv=null;
+ const clean=()=>{clearTimeout(timer);clearInterval(iv);document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cx)};
+ const end=()=>{if(BD){BD.g.remove();BD.t.classList.remove('bdragging');document.querySelectorAll('.bcol.over').forEach(o=>o.classList.remove('over'));const ph=document.querySelector('.bph');if(ph)ph.remove();document.body.classList.remove('bdmode');document.querySelectorAll('.bempty').forEach(x=>x.style.display='')}};
+ const timer=setTimeout(()=>{started=true;const g=document.createElement('div');g.className='bghost'+(kind==='h'?' h':'');
+  g.innerHTML=kind==='h'?esc(t.querySelector('b').textContent):(()=>{const n=N.get(id);return avatarHTML(n,34)+'<b>'+esc(nodeTitle(n))+'</b>'})();document.body.appendChild(g);
+  BD={kind,id,t,g,col:null,idx:0};t.classList.add('bdragging');document.body.classList.add('bdmode');navigator.vibrate&&navigator.vibrate(12);pos();bdOver(lx,ly);
+  iv=setInterval(()=>{const bc=$('#bcols');if(!bc)return;let mvd=false;const br=bc.getBoundingClientRect();if(ly<br.bottom&&ly>br.top-40){if(lx<34){bc.scrollLeft-=13;mvd=true}else if(lx>innerWidth-34){bc.scrollLeft+=13;mvd=true}}
+   const col=bdTarget(lx,ly);if(col&&kind!=='h'){const l=col.querySelector('.bl'),r=l.getBoundingClientRect();if(ly<r.top+36&&l.scrollTop>0){l.scrollTop-=10;mvd=true}else if(ly>r.bottom-36){l.scrollTop+=10;mvd=true}}if(mvd)bdOver(lx,ly)},16)},e.pointerType==='mouse'?160:330);
+ const pos=()=>{if(BD)BD.g.style.transform=`translate(${lx-24}px,${ly-28}px) rotate(-2deg)`};
+ const mv=ev=>{lx=ev.clientX;ly=ev.clientY;if(!started){if(Math.hypot(lx-sx,ly-sy)>9)clean();return}pos();bdOver(lx,ly)};
+ const up=async()=>{const was=started;const st=BD?{kind:BD.kind,id:BD.id,col:BD.col,idx:BD.idx}:null;clean();end();BD=null;if(!was||!st)return;NOCLICK=Date.now()+450;const b=curBoard();if(!b||!st.col)return;
+  if(st.kind==='h'){const to=b.cols.findIndex(c=>c.id===st.col);if(to>=0)moveCol(b,st.id,to);return}
+  const f=findItem(b,st.id);if(f&&f.c.id===st.col){f.c.items.splice(f.i,1);f.c.items.splice(Math.min(st.idx,f.c.items.length),0,f.it);saveB();render();return}
+  await placeItem(b,st.id,st.col,st.idx)};
+ const cx=()=>{clean();end();BD=null};
+ document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cx)});
+document.addEventListener('touchmove',e=>{if(BD)e.preventDefault()},{passive:false});
+document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('.bcard,.bp,.bcol header'))e.preventDefault()});
+
+/* ----- actions ----- */
+async function act5(act,a,id,n){const b=curBoard();
+ switch(act){
+  case'bnew':boardEdit(null);break;
+  case'bgo':{const bc=$('#bcols'),el=bc&&bc.querySelector(`[data-col="${a.dataset.c}"]`);if(el)bc.scrollTo({left:el.offsetLeft-14,behavior:'smooth'});break}
+  case'bmenu':boardMenu();break;
+  case'bcard':if(b&&n)cardMenu(b,n.id);break;
+  case'bcol':if(b)colSheet(b,a.dataset.c);break;
+  case'badd':if(b)addSheet(b,a.dataset.c);break;
+  case'bnewcol':if(b)newColSheet(b);break;
+  case'bdrawer':BS.drawer=!BS.drawer;BS.multi=false;BS.sel.clear();render();break;
+  case'bmulti':BS.multi=!BS.multi;BS.sel.clear();render();break;
+  case'bpp':if(!b||!n)break;if(BS.multi){if(BS.sel.has(n.id))BS.sel.delete(n.id);else BS.sel.add(n.id);render();break}
+   menuSheet('Куда добавить «'+nodeTitle(n)+'»?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:whereOn(b,n.id)===colTitle(c)?'уже здесь':'',fn:()=>placeItem(b,n.id,c.id,null)})));break;
+  case'bmultiadd':if(!b)break;menuSheet('Куда добавить '+BS.sel.size+' '+plural(BS.sel.size,'человека','человек','человек')+'?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),fn:async()=>{const ids=[...BS.sel];BS.sel.clear();BS.multi=false;for(const i of ids)await placeItem(b,i,c.id,null);toast('Добавила: '+ids.length+' → '+colTitle(c))}})));break;
+  case'bqueue':if(b)startQueue(queueIds(b),'write');break;
+  case'bconf':if(b){const c=b.cols.find(x=>x.id===a.dataset.c);if(c)startQueue(liveItems(c).map(x=>x.id),'confirm')}break;
+  case'bguess':if(b)startQueue(dayCols(b).filter(c=>c.date>=sod(Date.now())).flatMap(c=>liveItems(c).filter(x=>!x.s).map(x=>x.id)),'confirm');break;
+  case'bnextall':{if(!b)break;const nx=colOf(b,'next');if(!nx)break;const sB=JSON.stringify(b.cols);let k=0;for(const c of b.cols){if(c===nx||!['wait','todo','day'].includes(c.type))continue;const l=liveItems(c);nx.items.push(...l.map(x=>Object.assign(x,{s:0,tm:''})));k+=l.length;c.items=[]}saveB();render();toast('Перенесла в «Следующий приезд»: '+k,'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});break}
  }}
 
 /* ===== icons ===== */
@@ -927,7 +1303,7 @@ const ICON={back:sv('<path d="M15 5l-7 7 7 7"/>'),search:sv('<circle cx="11" cy=
  list:sv('<path d="M4 7h16M4 12h16M4 17h16"/>'),more:sv('<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>'),
  gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>'),
  plus:sv('<path d="M12 5v14M5 12h14"/>'),close:sv('<path d="M6 6l12 12M18 6L6 18"/>'),note:sv('<path d="M6 7h12M6 12h12M6 17h7"/>'),
- book:sv('<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>'),cal:sv('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>'),check:sv('<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>'),sort:sv('<path d="M8 5v14M8 5L5 8M8 5l3 3M16 19V5M16 19l-3-3M16 19l3-3"/>'),zap:sv('<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>')};
+ book:sv('<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>'),cal:sv('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>'),check:sv('<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>'),sort:sv('<path d="M8 5v14M8 5L5 8M8 5l3 3M16 19V5M16 19l-3-3M16 19l3-3"/>'),zap:sv('<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'),board:sv('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M15 4v16"/>')};
 
 /* ===== layers: sheet, toast ===== */
 let SHEET=null;
@@ -968,10 +1344,10 @@ function render(){
  if(r.k==='n'||r.k==='root'){if(r.k==='n'){const n=N.get(r.id);if(!n||n.deleted||n.type!=='col')return go('/')}html=viewList(r.k==='n'?r.id:null)}
  else if(r.k==='e'){const n=N.get(r.id);if(!n||n.deleted)return go('/');html=viewNote(n)}
  else if(r.k==='p'){const n=N.get(r.id);if(!n||n.deleted)return go('/');html=viewPhoto(n)}
- else if(r.k==='today')html=viewToday();else if(r.k==='cal')html=viewCal();else if(r.k==='tasks')html=viewTasks();else if(r.k==='s')html=viewSettings();else if(r.k==='t')html=viewTrash();else if(r.k==='bk')html=viewBackup();else return go('/');
+ else if(r.k==='today')html=viewToday();else if(r.k==='b')html=viewBoard();else if(r.k==='cal')html=viewCal();else if(r.k==='tasks')html=viewTasks();else if(r.k==='s')html=viewSettings();else if(r.k==='t')html=viewTrash();else if(r.k==='bk')html=viewBackup();else return go('/');
  APP.innerHTML=html;window.scrollTo(0,sy);
  if(['root','n','e','p'].includes(r.k)){SET.last=r.k==='root'?'':r.raw;saveSet()}
- if(r.k==='e')afterNote(N.get(r.id));if(r.k==='p')afterPhoto(N.get(r.id));
+ document.body.classList.toggle('onboard',r.k==='b');if(r.k==='b')afterBoard();if(r.k==='e')afterNote(N.get(r.id));if(r.k==='p')afterPhoto(N.get(r.id));
 }
 
 /* ===== list screen ===== */
@@ -1063,12 +1439,12 @@ function cropScreen(o){return new Promise(res=>{
  const el=document.createElement('div');el.className='ovl';
  el.innerHTML=`<div class="cwrap"><div class="topbar"><button class="ib" id="cx">${ICON.close}</button><b style="font-size:17px">${esc(o.title||'')}</b><span style="width:46px"></span></div>
   ${o.allowFull?`<div class="seg"><button data-m="square">Квадрат</button><button data-m="full">Целиком</button></div>`:'<div style="height:12px"></div>'}
-  <div id="cb"></div><div class="row" style="justify-content:center;margin-top:16px"><button class="btn pink" id="cok" style="min-width:200px">${o.last?'Готово':'Далее'}</button></div></div>`;
+  <div id="cb"></div>${o.circle?'<div class="hint">Всё, что внутри круга, станет фото человека</div>':''}<div class="row" style="justify-content:center;margin-top:16px"><button class="btn pink" id="cok" style="min-width:200px">${o.last?'Готово':'Далее'}</button></div></div>`;
  document.body.appendChild(el);let mode=o.allowFull?(o.mode||'square'):'square',cr=null;
  const seg=()=>el.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
  async function draw(){seg();const body=el.querySelector('#cb');
   if(mode==='square'){const W=Math.min(el.clientWidth-32,420),H=Math.round(W/(o.ar||1));
-   body.innerHTML=`<div class="stage" id="stg" style="width:${W}px;height:${H}px"><img id="cim" src="${o.srcUrl}" alt=""><div class="grid3"></div></div><input type="range" id="zm" min="1" max="6" step="0.01" value="1"><div class="hint">Двигай фото пальцем, приближай двумя пальцами или ползунком</div>`;
+   body.innerHTML=`<div class="stage" id="stg" style="width:${W}px;height:${H}px"><img id="cim" src="${o.srcUrl}" alt="">${o.circle?'<div class="circ"></div>':'<div class="grid3"></div>'}</div><input type="range" id="zm" min="1" max="6" step="0.01" value="1"><div class="hint">Двигай фото пальцем, приближай двумя пальцами или ползунком</div>`;
    const im=body.querySelector('#cim');try{await im.decode()}catch(e){}cr=Cropper(body.querySelector('#stg'),im,(o.rect&&o.mode===mode)?o.rect:null);
    const zm=body.querySelector('#zm');zm.value=cr.zoom();zm.oninput=()=>cr.setZoom(+zm.value);cr.onZoom(z=>{zm.value=z})}
   else{cr=null;body.innerHTML=`<img class="fullimg" src="${o.srcUrl}" alt="" style="max-height:62vh"><div class="hint">Фото сохранится целиком, без обрезки. Подходит для скриншотов.</div>`}}
@@ -1111,7 +1487,7 @@ function editSheet(n,parent,type){const book=n?isBook(n):(type==='col'&&!parent)
    if(n){n.title=title;if(book){n.pal=pal;n.palN=1;n.cover=cover}else n.avatar=avatar;await saveNode(n)}else{const x=newNode('col',parent,book?{title,pal,palN:1,cover}:Object.assign({title,avatar},draw.bd?{bd:(()=>{const [y,m,d]=draw.bd.split('-').map(Number);return{m,d,y:draw.bny?0:y}})()}:{},draw.pd?{plan:(()=>{const [y,m,d]=draw.pd.split('-').map(Number);return new Date(y,m-1,d,11,0).getTime()})()}:{}));await saveNode(x);if(!book){go('/n/'+x.id);return}}render()}};
  draw.title='';draw.pd='';draw.bd='';draw.bdo=false;draw.bny=0;draw()}
 
-async function avatarFromBlob(blob){const L=await loadImg(blob);const res=await cropScreen({srcUrl:L.u,title:'Фото коллекции',allowFull:false,ar:1,last:true});if(!res){URL.revokeObjectURL(L.u);return null}
+async function avatarFromBlob(blob){const L=await loadImg(blob);const res=await cropScreen({srcUrl:L.u,title:'Фото человека',allowFull:false,ar:1,last:true,circle:true});if(!res){URL.revokeObjectURL(L.u);return null}
  const iw=L.im.naturalWidth,ih=L.im.naturalHeight,r=res.rect,sd=Math.min(r.w*iw,r.h*ih);const b=await drawTo(L.im,r.x*iw,r.y*ih,sd,sd,480,480,.86);URL.revokeObjectURL(L.u);return b}
 function avatarMenu(n){const ph=kids(n.id).filter(k=>k.type==='photo');const rows=[{ic:'🖼️',t:'Выбрать из галереи',fn:async()=>{const f=(await pickFile(false))[0];if(!f)return;const sr=await makeSrc(f);const b=await avatarFromBlob(sr.blob);if(b){n.avatar=b;await saveNode(n,false);render()}}}];
  if(ph.length)rows.push({ic:'📷',t:'Взять из фото внутри',fn:()=>{const el=sheet(`<h3>Какое фото?</h3><div class="pgrid">${ph.map((p,i)=>`<button data-i="${i}"><img src="${bu(p.thumb)}" alt=""></button>`).join('')}</div>`);
@@ -1204,7 +1580,7 @@ async function makeBackup(){const zip=new JSZip();const box=$('#bkbox');let i=0;
   for(const k of['src','view'])if(n[k]){const b=await getBlob(n[k]);if(b)zip.file(`m/${n.id}.${k}`,b,{binary:true,compression:'STORE'})}
   for(const ch of(n.chats||[]))if(ch.img){const b=await getBlob(ch.img);if(b)zip.file('c/'+ch.img,b,{binary:true,compression:'STORE'})}
   meta.push(o);if(++i%10===0&&box)box.innerHTML=`<div class="hint">Собираю… ${i} из ${all.length}</div>`}
- zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter,trips:SET.trips}}));
+ zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter,trips:SET.trips,boards:SET.boards,board:SET.board,wlog:SET.wlog,mtpl:SET.mtpl,ctpl:SET.ctpl}}));
  return zip.generateAsync({type:'blob',compression:'STORE'})}
 async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=zip.file('data.json');if(!f)throw new Error('no data');const d=JSON.parse(await f.async('string'));if(d.app!=='leads')throw new Error('bad');
  const rd=async(p)=>{const z=zip.file(p);if(!z)return null;const b=await z.async('blob');return new Blob([b],{type:'image/jpeg'})};
@@ -1213,7 +1589,7 @@ async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=
   for(const k of['src','view'])if(o[k]){const b=await rd(`m/${o.id}.${k}`);if(b)await putBlob(o[k],b);else o[k]=''}
   for(const ch of(o.chats||[]))if(ch.img){const z=zip.file('c/'+ch.img);if(z){const b=await z.async('blob');await putBlob(ch.img,new Blob([b],{type:'image/jpeg'}))}}
   await dbPut('nodes',o);N.set(o.id,o)}
- const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;if(s.trips)SET.trips=s.trips;saveSet();dirty()}
+ const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;if(s.trips)SET.trips=s.trips;for(const k of['boards','board','wlog','mtpl','ctpl'])if(s[k])SET[k]=s[k];saveSet();dirty()}
 
 /* ===== PIN ===== */
 let LOCKED=false;
