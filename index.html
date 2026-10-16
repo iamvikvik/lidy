@@ -313,6 +313,18 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .qchat{display:flex;align-items:center;gap:10px;width:100%;margin-top:8px;background:var(--soft);border:0;border-radius:14px;padding:8px;text-align:left}
 .qchat img{width:44px;height:60px;object-fit:cover;object-position:top;border-radius:8px;flex:none}.qchat>span:first-child{font-size:22px;width:44px;text-align:center}
 .qchat b{display:block;font-size:14px}.qchat small{display:block;font-size:12px;color:var(--mut)}
+.btabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 0 6px;margin-right:-14px;padding-right:14px}.btabs::-webkit-scrollbar{display:none}
+.btab{flex:none;border:0;background:var(--soft);border-radius:12px;padding:6px 12px;font-size:14px;font-weight:800;color:#55555e;text-align:left;line-height:1.15}
+.btab small{display:block;font-size:11px;font-weight:600;color:var(--mut)}.btab.on{background:#0d0d0f;color:#fff}.btab.on small{color:#c9c9d4}
+.btab.add{background:#fff;box-shadow:inset 0 0 0 1.5px var(--line);color:#0d0d0f;align-self:stretch}
+.btm.g{background:var(--soft);color:#55555e}
+.bpl{background:#e9f6fd;color:#0d0d0f;border-radius:6px;padding:0 5px;font-size:11.5px;white-space:nowrap}.bpl.due{background:var(--peach)}
+.btb{display:flex;flex-direction:column;gap:4px;flex:none;align-items:flex-end}
+.mimp{display:flex;align-items:flex-start;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.mimp .ck{margin-top:2px;cursor:pointer}.mimp.off{opacity:.45}
+.mimp .mi1{flex:1;min-width:0}.mimp .mi1 b{display:block;font-size:14px}.mimp .mi1 small{display:block;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mimp .mi2{display:flex;gap:4px;flex:none}.mimp .mi2 input{width:76px;padding:7px 8px;font-size:15px;border-radius:10px}.mimp .mi2 select{border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:14px;padding:0 4px}
+.mimph{display:flex;align-items:center;gap:10px;margin:14px 0 2px}.mimph b{font-size:15px}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -348,7 +360,7 @@ const dbClear=st=>db?idb(st,'readwrite',s=>s.clear()):(MEM[st].clear(),Promise.r
 
 /* ===== nodes ===== */
 const N=new Map();let CH=null;const PLAIN=new Map();
-let RMC=null,TRC=null;function dirty(){CH=null;RMC=null;TRC=null}
+let RMC=null,TRC=null;const HBC=new Map();function dirty(){CH=null;RMC=null;TRC=null;HBC.clear()}
 function rebuild(){CH=new Map();for(const n of N.values()){if(n.deleted||n.type==='task')continue;const k=n.parent||'';if(!CH.has(k))CH.set(k,[]);CH.get(k).push(n)}}
 function kids(pid){if(!CH)rebuild();return CH.get(pid||'')||[]}
 function allKids(pid){return [...N.values()].filter(n=>(n.parent||null)===(pid||null))}
@@ -533,7 +545,7 @@ function meetSheet(n,m,dayKey){const isNew=!m;const d0=m?new Date(m.ts):(()=>{co
   const o=m||{id:uid(),rDone:0,rSnooze:0};const changed=!m||m.ts!==t||m.w!==st.w||m.rh!==st.h;
   if(m&&(m.ts!==t||m.rw!==st.w||m.rh!==st.h)){o.rDone=0;o.rSnooze=0}
   Object.assign(o,{ts:t,amount:amt,cur:st.cur,rw:st.w,rh:st.h,rOn:st.on});if(!m||m.amount!==amt||m.cur!==st.cur)snap(o);
-  const list=n.meets||[];if(!m)list.push(o);n.meets=list;SET.lastCur=st.cur;saveSet();await saveNode(n);closeSheet();CAL.y=new Date(t).getFullYear();CAL.m=new Date(t).getMonth();render();toast('Встреча сохранена')};
+  const list=n.meets||[];if(!m)list.push(o);n.meets=list;SET.lastCur=st.cur;saveSet();await saveNode(n);closeSheet();onMeetSaved(n,[o]);CAL.y=new Date(t).getFullYear();CAL.m=new Date(t).getMonth();render();toast('Встреча сохранена')};
  if(!isNew){el.querySelector('#mdel').onclick=async()=>{if(!await ask('Удалить встречу?','Сумма уберётся из подсчётов.','Удалить',true))return;n.meets=n.meets.filter(x=>x.id!==m.id);await saveNode(n);render()};
   el.querySelector('#mics').onclick=()=>shareICS([remItem({n,m,due:dueOf(m)})],'napomni.ics')}}
 function meetsSheet(n){const list=meetsOf(n).slice().sort((a,b)=>b.ts-a.ts);const s=sumNode(n.id);
@@ -612,7 +624,19 @@ const cityList=()=>SET.cities&&SET.cities.length?SET.cities:CITIES0;
 const dailyN=()=>SET.dailyN||20,sleepN=()=>SET.sleepAfter||5;
 const sod=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()};
 const eod=ts=>sod(ts)+864e5-1;
-const at11=ts=>{const d=new Date(ts);d.setHours(11,0,0,0);return d.getTime()};
+const at11=ts=>{const d=new Date(ts);d.setHours(18,0,0,0);return d.getTime()};
+/* ----- habit: usual weekday & time of meetings ----- */
+const leadH=()=>SET.leadH||4;
+const fmtMi=mi=>p2(Math.floor(mi/60)%24)+':'+p2(mi%60);
+function habitOf(n){if(HBC.has(n.id))return HBC.get(n.id);let r=null;const ms=meetsOf(n).filter(m=>!m.nt);
+ if(ms.length>=2){const pts=ms.map(m=>{const d=new Date(m.ts);let mi=d.getHours()*60+d.getMinutes(),dw=d.getDay();if(d.getHours()<5){mi+=1440;dw=(dw+6)%7}return{mi,dw,ts:m.ts}});
+  let best=null,bc=0;for(const p of pts){const c=pts.filter(q=>Math.abs(q.mi-p.mi)<=60).length;if(c>bc||(c===bc&&p.ts>best.ts)){bc=c;best=p}}
+  const cl=pts.filter(q=>Math.abs(q.mi-best.mi)<=60).map(q=>q.mi).sort((a,b)=>a-b);const mi=Math.round(cl[Math.floor(cl.length/2)]/15)*15;
+  const cd={};pts.forEach(p=>cd[p.dw]=(cd[p.dw]||0)+1);const last=pts.slice().sort((a,b)=>b.ts-a.ts)[0].dw;let dw=-1,dn=0;for(const k in cd)if(cd[k]>dn||(cd[k]===dn&&+k===last)){dn=cd[k];dw=+k}
+  r={mi,dw,n:ms.length,sure:bc>=2}}
+ HBC.set(n.id,r);return r}
+function atW(n,ts){const h=n?habitOf(n):null;const d=new Date(ts);d.setHours(0,0,0,0);if(!h){d.setHours(18,0,0,0);return d.getTime()}return d.getTime()+Math.max(0,h.mi-leadH()*60)*6e4}
+const habitTxt=h=>h?'обычно '+DOWF[h.dw]+' ~'+fmtMi(h.mi)+' → писать в ~'+fmtMi(Math.max(0,h.mi-leadH()*60)):'';
 const fmtPlan=ts=>{const d=new Date(ts);return DOW[(d.getDay()+6)%7]+', '+d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)};
 const ymd=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 function relDay(ts){const k=Math.round((sod(ts)-sod(Date.now()))/864e5);return k===0?'сегодня':k===1?'завтра':k===-1?'вчера':k<0?(-k)+' дн. назад':'через '+k+' дн.'}
@@ -627,7 +651,7 @@ const here=()=>{if(SET.here&&SET.here.until>Date.now())return SET.here;const now
 
 /* ----- plan: when to write ----- */
 function remMapAll(){if(RMC)return RMC;const m=new Map();for(const r of activeReminders())if(!m.has(r.n.id))m.set(r.n.id,r);return RMC=m}
-function prefDow(n){const ms=meetsOf(n);if(!ms.length)return-1;const c={};ms.forEach(m=>{const d=new Date(m.ts).getDay();c[d]=(c[d]||0)+1});const ld=new Date(lastMeet(n)).getDay();let best=-1,bn=0;for(const k of Object.keys(c)){if(c[k]>bn||(c[k]===bn&&+k===ld)){bn=c[k];best=+k}}return best}
+function prefDow(n){const hb=habitOf(n);if(hb)return hb.dw;const ms=meetsOf(n);if(!ms.length)return-1;const c={};ms.forEach(m=>{const d=new Date(m.ts).getDay();c[d]=(c[d]||0)+1});const ld=new Date(lastMeet(n)).getDay();let best=-1,bn=0;for(const k of Object.keys(c)){if(c[k]>bn||(c[k]===bn&&+k===ld)){bn=c[k];best=+k}}return best}
 function snapDow(ts,dw){const d=new Date(ts);d.setDate(d.getDate()+((dw-d.getDay()+7)%7));return d.getTime()}
 function planOf(n,rm){
  if(n.st==='stop')return null;
@@ -640,8 +664,8 @@ function planOf(n,rm){
  if(!base&&!n.st)return{ts:0,src:'new',why:'ещё не писала'};
  if(!base)return{ts:Date.now(),src:'auto',why:'статус задан, ещё не писала'};
  const days=Math.round((INTD[n.st||'']||30)*WFAC[n.w||'ok']);let ts=base+days*864e5;let why=(n.st?'«'+ST[n.st].t+'»':'без статуса')+', каждые ~'+days+' дн.';
- const dw=prefDow(n);if(dw>=0){ts=snapDow(ts,dw);why+=' · день встреч: '+DOWF[dw]}
- return{ts:at11(ts),src:'auto',why}}
+ const dw=prefDow(n);const hb=habitOf(n);if(dw>=0){ts=snapDow(ts,dw);why+=hb?' · '+habitTxt(hb):' · день встреч: '+DOWF[dw]}
+ return{ts:atW(n,ts),src:'auto',why}}
 
 /* ----- trips ----- */
 const addDays=(ts,k)=>{const d=new Date(ts);d.setDate(d.getDate()+k);return d.getTime()};
@@ -650,7 +674,7 @@ function tripEligible(t,rm){const ws=addDays(sod(t.from),-(t.lead||5));const out
  out.sort((a,b)=>WRANK[a.w||'ok']-WRANK[b.w||'ok']||Math.max(a.lt||0,a.la||0,lastMeet(a))-Math.max(b.lt||0,b.la||0,lastMeet(b))||(a.created||0)-(b.created||0));return out}
 function tripPlans(){if(TRC)return TRC;const m=new Map(),s0=sod(Date.now());TRC=m;
  for(const t of(SET.trips||[]).filter(t=>eod(t.to)>=Date.now()).sort((a,b)=>a.from-b.from)){const ws=addDays(sod(t.from),-(t.lead||5)),start=Math.max(s0,ws),per=t.per||dailyN();
-  tripEligible(t).filter(n=>!m.has(n.id)).forEach((n,i)=>m.set(n.id,{ts:at11(addDays(start,Math.floor(i/per))),trip:t}))}
+  tripEligible(t).filter(n=>!m.has(n.id)).forEach((n,i)=>m.set(n.id,{ts:atW(n,addDays(start,Math.floor(i/per))),trip:t}))}
  return m}
 function tripsSheet(){const now=Date.now();const list=(SET.trips||[]).slice().sort((a,b)=>a.from-b.from);
  const el=sheet(`<h3>Поездки</h3><div class="hint" style="text-align:left">Укажи, когда и куда едешь. Всем людям из этого города приложение само поставит даты «когда писать» перед приездом, по нескольку десятков в день.</div>
@@ -691,24 +715,24 @@ async function doAnswered(n){const sn=snapLead(n);n.ansAt=[...(n.ansAt||[]),n.tc
  toast('Ответил: '+nodeTitle(n),'Отменить',()=>undoLead(n,sn));
  menuSheet('Что дальше с «'+nodeTitle(n)+'»?',[
   {ic:'📅',t:'Записать встречу',fn:()=>meetSheet(n,null)},
-  {ic:'⏱️',t:'Написать снова через 3 дня',fn:()=>setPlan(n,at11(Date.now()+3*864e5))},
-  {ic:'📆',t:'Через неделю',fn:()=>setPlan(n,at11(Date.now()+7*864e5))},
+  {ic:'⏱️',t:'Написать снова через 3 дня',fn:()=>setPlan(n,atW(n,Date.now()+3*864e5))},
+  {ic:'📆',t:'Через неделю',fn:()=>setPlan(n,atW(n,Date.now()+7*864e5))},
   {ic:'🗓️',t:'Выбрать дату…',fn:()=>planDateSheet(n)},
   {ic:'👌',t:'Пока ничего'}])}
 async function setPlan(n,ts){n.plan=ts||0;await saveNode(n,false);render();if(ts)toast('Напомню: '+fmtPlan(ts))}
-function laterMenu(n){const d=k=>at11(Date.now()+k*864e5);menuSheet('Написать позже: '+nodeTitle(n),[
+function laterMenu(n){const d=k=>atW(n,Date.now()+k*864e5);menuSheet('Написать позже: '+nodeTitle(n),[
  {ic:'🌅',t:'Завтра',fn:()=>setPlan(n,d(1))},{ic:'⏱️',t:'Через 3 дня',fn:()=>setPlan(n,d(3))},{ic:'📆',t:'Через неделю',fn:()=>setPlan(n,d(7))},
  {ic:'🗓️',t:'Через 2 недели',fn:()=>setPlan(n,d(14))},{ic:'🌙',t:'Через месяц',fn:()=>setPlan(n,d(30))},{ic:'✏️',t:'Выбрать дату…',fn:()=>planDateSheet(n)}])}
-function planDateSheet(n){const p=planOf(n);let d0=new Date(p&&p.ts>Date.now()?p.ts:Date.now()+864e5);if(!(p&&p.ts>Date.now()))d0.setHours(11,0,0,0);
+function planDateSheet(n){const p=planOf(n);let d0=new Date(p&&p.ts>Date.now()?p.ts:Date.now()+864e5);if(!(p&&p.ts>Date.now()))d0=new Date(atW(n,d0.getTime()));
  const el=sheet(`<h3>Когда написать: ${esc(nodeTitle(n))}</h3>${p&&p.ts?`<div class="hint" style="text-align:left">Сейчас: ${fmtPlan(p.ts)} · ${esc(p.why)}</div>`:''}
  <div class="two" style="margin-top:10px"><label>Дата<input class="inp" type="date" id="pd" value="${ymd(d0)}"></label><label>Время<input class="inp" type="time" id="pt" value="${hhmm(d0.getTime())}"></label></div>
  <div class="hint" id="pdw" style="text-align:left"></div>
  <div class="row">${[[1,'Завтра'],[3,'3 дня'],[7,'Неделя'],[14,'2 нед.'],[21,'3 нед.'],[30,'Месяц']].map(([k,t],i)=>`<button class="pill c${i%5+1}" data-q="${k}">${t}</button>`).join('')}</div>
  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="ps">Поставить дату</button></div>${n.plan?'<div class="row"><button class="pill ghost" id="pc">Убрать мою дату</button></div>':''}`);
- const val=()=>{const [y,m,d]=el.querySelector('#pd').value.split('-').map(Number),[hh,mm]=(el.querySelector('#pt').value||'11:00').split(':').map(Number);return new Date(y,m-1,d,hh,mm).getTime()};
+ const val=()=>{const [y,m,d]=el.querySelector('#pd').value.split('-').map(Number),[hh,mm]=(el.querySelector('#pt').value||'18:00').split(':').map(Number);return new Date(y,m-1,d,hh,mm).getTime()};
  const dw=()=>{const t=val();el.querySelector('#pdw').textContent=isFinite(t)?DOWF[new Date(t).getDay()]+' · '+relDay(t):''};dw();
  el.querySelector('#pd').onchange=dw;el.querySelector('#pt').onchange=dw;
- el.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{el.querySelector('#pd').value=ymd(new Date(Date.now()+ +b.dataset.q*864e5));dw()});
+ el.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const t=atW(n,Date.now()+ +b.dataset.q*864e5);el.querySelector('#pd').value=ymd(new Date(t));el.querySelector('#pt').value=hhmm(t);dw()});
  el.querySelector('#ps').onclick=()=>{const t=val();if(!isFinite(t)){toast('Проверь дату');return}closeSheet();setPlan(n,t)};
  const pc=el.querySelector('#pc');if(pc)pc.onclick=()=>{closeSheet();setPlan(n,0)}}
 function planMenu(n){const p=planOf(n);const rows=[{ic:'✅',t:'Написала',fn:()=>doTouch(n)},{ic:'💬',t:'Ответил',fn:()=>doAnswered(n)},{ic:'🗓️',t:'Перенести…',fn:()=>planDateSheet(n)}];
@@ -732,6 +756,8 @@ function leadHead(n){const p=planOf(n);const cs=citiesOf(n);const id=n.id;
  h+=cs.length?cs.map(c=>`<button class="pill sm ghost" data-act="lcard" data-id="${id}">📍 ${esc(c)}${n.dist&&n.dist[c]?' · '+esc(n.dist[c]):''}</button>`).join(''):`<button class="pill sm ghost" data-act="lcard" data-id="${id}">📍 Город и район</button>`;
  h+=bdOf(n)?`<button class="pill sm ghost" data-act="lbd" data-id="${id}">🎂 ${bdLabel(n)}</button>`:`<button class="pill sm ghost" data-act="lbd" data-id="${id}">🎂 ＋ День рождения</button>`;
  if(n.msgs&&n.msgs.length)h+=`<button class="pill sm ghost" data-act="lcard" data-id="${id}">${n.msgs.map(m=>MSGS[m]).join(' · ')}</button>`;
+ {const hb=habitOf(n);if(hb)h+=`<span class="pill sm ghost">🕐 обычно ${DOW[(hb.dw+6)%7].toLowerCase()} ~${fmtMi(hb.mi)} · писать ~${fmtMi(Math.max(0,hb.mi-leadH()*60))}</span>`}
+ if(kids(n.id).some(k=>k.type==='note'))h+=`<button class="pill sm ghost" data-act="mscan" data-id="${id}">🔎 Встречи из заметок</button>`;
  h+='</div><div class="row lp">';
  if(p&&p.src==='new')h+=`<span class="pill sm ghost">ещё не писала</span><button class="pill sm c4" data-act="lplanset" data-id="${id}">＋ Выбрать дату</button>`;
  else if(!p)h+=`<button class="pill sm c4" data-act="lplanset" data-id="${id}">＋ Выбрать дату</button>`;
@@ -763,7 +789,7 @@ function leadSheet(n,dr){
 let TD={extra:0};
 function buildToday(){const rm=remMapAll(),now=Date.now(),e=eod(now),s0=sod(now),H=here();const done=[],cand=[];
  for(const n of leads()){if(n.lt&&n.lt>=s0){done.push(n);continue}
-  let p=planOf(n,rm);const bl=n.st==='stop'?null:bdLeft(n);let bdHit=false;if(bl!==null&&bl<=3&&!(n.lt&&n.lt>=sod(now)-3*864e5)){const bd=nextBd(n);p={ts:at11(bd.getTime()),src:'bd',why:'🎂 день рождения '+(bl===0?'сегодня':bl===1?'завтра':'через '+bl+' дн.')};bdHit=true}
+  let p=planOf(n,rm);const bl=n.st==='stop'?null:bdLeft(n);let bdHit=false;if(bl!==null&&bl<=3&&!(n.lt&&n.lt>=sod(now)-3*864e5)){const bd=nextBd(n);p={ts:atW(n,bd.getTime()),src:'bd',why:'🎂 день рождения '+(bl===0?'сегодня':bl===1?'завтра':'через '+bl+' дн.')};bdHit=true}
   if(!p)continue;const cs=citiesOf(n),inCity=!!H&&cs.includes(H.city);
   const dm=inCity&&!!H.dist&&nq((n.dist&&n.dist[H.city])||'').includes(nq(H.dist));let b;
   if(bdHit)b=0;
@@ -908,7 +934,8 @@ async function act3(act,a,id,n){
   case'tripedit':{const t=(SET.trips||[]).find(x=>x.id===id);if(t)tripEdit(t);break}
   case'textra':TD.extra+=10;render();break;
   case'calmode':CAL.mode=a.dataset.v;render();break;
-  case'planadd':{const p=await pickPerson('Кому написать?');if(p){const [y,m,d]=a.dataset.day.split('-').map(Number);await setPlan(p,new Date(y,m-1,d,11,0).getTime())}break}
+  case'planadd':{const p=await pickPerson('Кому написать?');if(p){const [y,m,d]=a.dataset.day.split('-').map(Number);await setPlan(p,atW(p,new Date(y,m-1,d).getTime()))}break}
+  case'leadh':menuSheet('За сколько часов до обычной встречи писать',[2,3,4,5,6,8].map(v=>({ic:leadH()===v?'✔️':'',t:v+' '+plural(v,'час','часа','часов')+(v===4?' (советую)':''),fn:()=>{SET.leadH=v;saveSet();dirty();render()}})));break;
   case'dailyn':menuSheet('Сколько людей в списке на день',[10,15,20,30,40,50].map(v=>({ic:dailyN()===v?'✔️':'',t:String(v),fn:()=>{SET.dailyN=v;saveSet();render()}})));break;
   case'sleepn':menuSheet('Предлагать «спящий» после',[3,4,5,6,8,10].map(v=>({ic:sleepN()===v?'✔️':'',t:v+' '+plural(v,'касания','касаний','касаний')+' без ответа',fn:()=>{SET.sleepAfter=v;saveSet();render()}})));break;
   case'citiesset':citiesSheet();break;
@@ -1054,14 +1081,23 @@ async function placeItem(b,lid,toId,idx,why){const n=N.get(lid),to=b.cols.find(c
  if(to.type==='wait'&&(ft==='new'||ft==='todo')){await bTouch(n,it);msg=msg||'Написала: '+nm+(n.tc>1?' · без ответа: '+n.tc:'')}
  else if(['day','next','met','own'].includes(to.type)&&['wait','todo','new','rest'].includes(ft)){if(await bAnswered(n))msg=msg||'Ответил: '+nm}
  if(to.type==='rest'&&!['stop','sleep','half'].includes(n.st)){n.st='sleep';await saveNode(n,false)}
- if(to.type!=='day'){it.s=0;it.tm=''}
+ if(to.type!=='day'){it.s=0;it.tm='';it.ht=''}else if(!it.tm){const hb=habitOf(n);it.ht=hb?fmtMi(hb.mi):''}
  saveB();render();
  const undo=async()=>{b.cols=JSON.parse(sB);restoreLead(n,sN);await saveNode(n,false);saveB();render()};
  if(to.type==='met'&&from!==to)toast('Встретились: '+nm,'Записать встречу',()=>meetSheet(n,null,from&&from.type==='day'?dkey(from.date):dkey(Date.now())));
  else if(from!==to)toast(msg||('«'+nm+'» → '+colTitle(to)),'Отменить',undo);
  if(to.type==='wait'&&(ft==='new'||ft==='todo'))await maybeRest(b,n)}
-async function removeItem(b,lid){const f=findItem(b,lid);if(!f)return;const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
+async function removeItem(b,lid){const f=findItem(b,lid);if(!f)return;const n0=N.get(lid);if(n0&&n0.plan){b.dis=b.dis||{};b.dis[lid]=n0.plan}const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
 
+/* ----- your "write on" dates appear on the board ----- */
+function syncPlans(b){if(!b||eod(b.to)<Date.now())return;const todo=colOf(b,'todo');if(!todo)return;b.dis=b.dis||{};let ch=false;
+ for(const n of leads()){if(!n.plan||n.st==='stop'||b.dis[n.id]===n.plan||n.plan>eod(b.to)||findItem(b,n.id)||!citiesOf(n).includes(b.city))continue;
+  let i=todo.items.findIndex(x=>{const m=N.get(x.id);return m&&m.plan&&m.plan>n.plan});if(i<0)i=todo.items.length;todo.items.splice(i,0,{id:n.id,s:0,tm:'',w:0,lt:0,at:Date.now(),auto:1});ch=true}
+ if(ch)saveSet()}
+const planDue=n=>n.plan&&n.plan<=eod(Date.now());
+function suggestIds(b){if(!b||eod(b.to)<Date.now())return[];const rm=remMapAll(),e=eod(Date.now());return leads().filter(n=>{if(n.st==='stop'||findItem(b,n.id)||!citiesOf(n).includes(b.city))return false;if(n.lt&&n.lt>=sod(Date.now()))return false;const p=planOf(n,rm);return p&&p.ts&&p.src!=='new'&&p.src!=='manual'&&p.ts<=e}).map(n=>n.id)}
+function onMeetSaved(n,ms){for(const b of boards()){const f=findItem(b,n.id);const met=colOf(b,'met');if(!f||!met||f.c===met)continue;if(!ms.some(m=>m.ts>=sod(b.from)-864e5&&m.ts<=eod(b.to)+864e5))continue;
+ f.c.items.splice(f.i,1);f.it.s=0;met.items.push(f.it);saveB();toast('«'+nodeTitle(n)+'» → Встретились 💚')}}
 /* ----- columns ----- */
 const dayCols=b=>b.cols.filter(c=>c.type==='day').sort((x,y)=>x.date-y.date);
 function suggestDates(b,k=4){const have=new Set(dayCols(b).map(c=>dkey(c.date)));const dc=dayCols(b);let d=dc.length?addDays(sod(dc[dc.length-1].date),1):sod(Math.max(Date.now(),b.from));
@@ -1138,15 +1174,17 @@ function boardStats(b){let w=0,ans=0;const by={};for(const c of b.cols){const l=
 
 /* ----- people pickers ----- */
 const bookList=()=>[...N.values()].filter(n=>isBook(n)&&!n.deleted).sort((a,b)=>(a.order||0)-(b.order||0));
-function peopleList(book,q){const qq=nq(q||'');return leads().filter(n=>(!book||isDesc(n.id,book))&&(!qq||nq(nodeTitle(n)).includes(qq))).sort((a,b)=>b.updated-a.updated)}
-const bookChipsH=cur=>`<button type="button" class="chip${!cur?' on':''}" data-bk="">Все</button>`+bookList().map(k=>`<button type="button" class="chip${cur===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('');
+const bkOf=b=>b&&b.bk!=null?b.bk:'city';
+function setBk(b,v){if(b){b.bk=v;saveB()}}
+function peopleList(book,q,b){const qq=nq(q||'');const city=b&&b.city;return leads().filter(n=>(book==='city'?(city&&citiesOf(n).includes(city)):(!book||isDesc(n.id,book)))&&(!qq||nq(nodeTitle(n)).includes(qq))).sort((a,b)=>b.updated-a.updated)}
+const bookChipsH=(cur,b)=>(b?`<button type="button" class="chip${cur==='city'?' on':''}" data-bk="city">📍 ${esc(b.city)}</button>`:'')+`<button type="button" class="chip${!cur?' on':''}" data-bk="">Все</button>`+bookList().map(k=>`<button type="button" class="chip${cur===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('');
 function whereOn(b,lid){const f=findItem(b,lid);return f?colTitle(f.c):''}
-function pickMany(b,title,ok){return new Promise(res=>{const sel=new Set();let book=SET.bdBook||'',q='';
- const el=sheet(`<h3>${esc(title)}</h3><input class="inp" id="pmq" placeholder="Найти по имени" autocomplete="off"><div class="chips bks" id="pmb"></div><div id="pml"></div><div class="pmbar"><button class="btn pink wide" id="pmok">${esc(ok)}</button></div>`);
- const draw=()=>{el.querySelector('#pmb').innerHTML=bookChipsH(book);el.querySelectorAll('#pmb [data-bk]').forEach(x=>x.onclick=()=>{book=x.dataset.bk;SET.bdBook=book;saveSet();draw()});
-  const list=peopleList(book,q).slice(0,200);el.querySelector('#pml').innerHTML=list.length?list.map(n=>{const w=whereOn(b,n.id);return `<button class="act pmr${sel.has(n.id)?' on':''}" data-pid="${n.id}"><span class="ic" style="background:none;padding:0">${avatarHTML(n,38)}</span><span>${esc(nodeTitle(n))}<small>${w?'на доске: '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span><i class="ck">${sel.has(n.id)?'✓':''}</i></button>`}).join(''):'<p class="hint">Никого не нашла</p>';
+function pickMany(b,title,ok,opt){opt=opt||{};return new Promise(res=>{const sel=new Set(opt.pre||[]);let book=opt.only?'':bkOf(b),q='';
+ const el=sheet(`<h3>${esc(title)}</h3>${opt.hint?`<div class="hint" style="text-align:left">${opt.hint}</div>`:''}<input class="inp" id="pmq" placeholder="Найти по имени" autocomplete="off"><div class="chips bks${opt.only?' hide':''}" id="pmb"></div><div id="pml"></div><div class="pmbar"><button class="btn pink wide" id="pmok">${esc(ok)}</button></div>`);
+ const draw=()=>{el.querySelector('#pmb').innerHTML=bookChipsH(book,b);el.querySelectorAll('#pmb [data-bk]').forEach(x=>x.onclick=()=>{book=x.dataset.bk;setBk(b,book);draw()});
+  const list=(opt.only?opt.only.map(i=>N.get(i)).filter(n=>n&&(!q||nq(nodeTitle(n)).includes(nq(q)))):peopleList(book,q,b)).slice(0,200);el.querySelector('#pml').innerHTML=list.length?list.map(n=>{const w=whereOn(b,n.id);return `<button class="act pmr${sel.has(n.id)?' on':''}" data-pid="${n.id}"><span class="ic" style="background:none;padding:0">${avatarHTML(n,38)}</span><span>${esc(nodeTitle(n))}<small>${w?'на доске: '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span><i class="ck">${sel.has(n.id)?'✓':''}</i></button>`}).join(''):'<p class="hint">Никого не нашла</p>';
   el.querySelectorAll('[data-pid]').forEach(x=>x.onclick=()=>{const id=x.dataset.pid;if(sel.has(id))sel.delete(id);else sel.add(id);x.classList.toggle('on');x.querySelector('.ck').textContent=sel.has(id)?'✓':'';el.querySelector('#pmok').textContent=ok+(sel.size?' · '+sel.size:'')})};
- el.querySelector('#pmq').oninput=e=>{q=e.target.value;draw()};draw();
+ el.querySelector('#pmq').oninput=e=>{q=e.target.value;draw()};draw();if(sel.size)el.querySelector('#pmok').textContent=ok+' · '+sel.size;
  el.querySelector('#pmok').onclick=()=>{closeSheet();res([...sel])};SHEET.bg.onclick=()=>{closeSheet();res(null)}})}
 function newPersonSheet(b,cid){let book=SET.npBook&&N.get(SET.npBook)&&!N.get(SET.npBook).deleted?SET.npBook:((bookList().find(k=>nq(nodeTitle(k)).includes(nq(b.city)))||bookList()[0]||{}).id||'');let avatar=null,title='';
  const draw=()=>{const el=sheet(`<h3>Новый человек</h3><input class="inp" id="npn" placeholder="Имя, ник, телефон…" value="${esc(title)}" maxlength="80">
@@ -1196,7 +1234,11 @@ function timeSheet(b,lid){const f=findItem(b,lid);if(!f)return;const el=sheet(`<
 
 /* ----- queue: write one by one ----- */
 let QU=null;
-function queueIds(b){const todo=liveItems(colOf(b,'todo')).map(x=>x.id);const wait=liveItems(colOf(b,'wait')).filter(x=>{const n=N.get(x.id);return(n.tc||0)<sleepN()&&(!n.lt||sod(Date.now())-sod(n.lt)>=3*864e5)}).map(x=>x.id);return[...todo,...wait]}
+function queueIds(b){const e=eod(Date.now()),s0=sod(Date.now());const wrote=n=>n.lt&&n.lt>=s0;
+ const todo=liveItems(colOf(b,'todo')).map(x=>N.get(x.id)).filter(n=>!wrote(n)&&(!n.plan||n.plan<=e));
+ const due=todo.filter(n=>n.plan).sort((a,b)=>a.plan-b.plan),rest=todo.filter(n=>!n.plan);
+ const wait=liveItems(colOf(b,'wait')).map(x=>N.get(x.id)).filter(n=>!wrote(n)&&(n.tc||0)<sleepN()&&(n.plan?n.plan<=e:(!n.lt||s0-sod(n.lt)>=3*864e5)));
+ return[...due,...rest,...wait].map(n=>n.id)}
 function startQueue(ids,mode){ids=[...new Set(ids)].filter(id=>N.get(id)&&!N.get(id).deleted);if(!ids.length){toast(mode==='confirm'?'Подтверждать пока некого':'Сейчас писать некому. Добавь людей из книжек 👥');return}QU={ids,i:0,mode,done:0,ti:0};queueStep()}
 function queueStep(){const b=curBoard();if(!QU||!b||QU.i>=QU.ids.length){const d=QU?QU.done:0,m=QU?QU.mode:'';QU=null;closeSheet();render();if(d)toast((m==='confirm'?'Подтвердила: ':'Готово! Написала: ')+d+' 💪');return}
  const n=N.get(QU.ids[QU.i]);if(!n||n.deleted){QU.i++;return queueStep()}const ct=contactsOf(n),f=findItem(b,n.id),conf=QU.mode==='confirm';const tp=conf?ctpls():mtpls();const tc=n.tc||0;
@@ -1219,6 +1261,12 @@ function queueStep(){const b=curBoard();if(!QU||!b||QU.i>=QU.ids.length){const d
 
 /* ----- assistant tips ----- */
 function tipsOf(b){const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b);
+ if(eod(b.to)>=now){const soon=[];for(const c of b.cols)for(const it of liveItems(c)){const n=N.get(it.id);if(n.lt&&n.lt>=t0)continue;let w=0;
+   if(n.plan&&n.plan<=now+90*6e4&&n.plan>=t0)w=n.plan;else if(c.type==='day'&&sod(c.date)===t0&&!it.s){const hb=habitOf(n);if(hb){const x=atW(n,c.date);if(x<=now+90*6e4)w=x}}
+   if(w)soon.push({n,w})}
+  soon.sort((a,b)=>a.w-b.w);if(soon.length){const f=soon[0];const hb=habitOf(f.n);out.push({e:'⏰',t:(f.w<=now?'Пора написать: ':'В '+hhmm(f.w)+' написать: ')+soon.slice(0,3).map(x=>esc(nodeTitle(x.n).split(' ')[0])).join(', ')+(hb?' · обычно видитесь в ~'+fmtMi(hb.mi):''),b:'Писать',act:'bsoon',ids:soon.map(x=>x.n.id)})}
+  const bds=leads().filter(n=>{const k=bdLeft(n);return k!==null&&k<=3&&(findItem(b,n.id)||citiesOf(n).includes(b.city))&&!(n.lt&&n.lt>=t0)});
+  if(bds.length)out.push({e:'🎂',t:bds.slice(0,2).map(n=>{const k=bdLeft(n);return(k===0?'Сегодня':k===1?'Завтра':bdLabel(n))+' день рождения у '+esc(nodeTitle(n).split(' ')[0])}).join(', ')+'. Хороший повод написать',b:'Написать',act:'bsoon',ids:bds.map(n=>n.id)})}
  const tc=days.find(c=>sod(c.date)===t0);if(tc){const l=liveItems(tc);if(l.length)out.push({e:'☀️',t:'Сегодня: '+l.slice(0,3).map(x=>esc(nodeTitle(N.get(x.id)).split(' ')[0])+(x.s?' 💚':' 🤍')).join(', ')+(l.length>3?' и ещё '+(l.length-3):'')+'. Подтверди встречи',b:'Подтвердить',act:'bconf',c:tc.id})}
  if(eod(b.to)<now){const k=['wait','todo'].reduce((s,t)=>s+liveItems(colOf(b,t)).length,0)+days.reduce((s,c)=>s+liveItems(c).length,0);if(k)out.push({e:'🧳',t:'Поездка закончилась. Перенести '+k+' '+plural(k,'человека','человек','человек')+', с кем не встретились, в «Следующий приезд»?',b:'Перенести',act:'bnextall'})}
  else{const left=Math.round((sod(b.to)-t0)/864e5);const g=days.filter(c=>c.date>=t0).reduce((s,c)=>s+liveItems(c).filter(x=>!x.s).length,0);
@@ -1226,6 +1274,7 @@ function tipsOf(b){const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b)
  const st=liveItems(colOf(b,'wait')).filter(x=>{const n=N.get(x.id);return(n.tc||0)<sleepN()&&n.lt&&sod(now)-sod(n.lt)>=3*864e5}).length;if(st)out.push({e:'🔁',t:st+' '+plural(st,'человек','человека','человек')+' молчат больше 3 дней. Можно напомнить',b:'Напомнить',act:'bqueue'});
  const any=b.cols.some(c=>liveItems(c).length);
  if(any&&eod(b.to)>=now){const e=days.filter(c=>c.date>=t0&&c.date<=addDays(t0,3)&&!liveItems(c).length);if(e.length)out.push({e:'🫧',t:e.map(c=>colTitle(c)).slice(0,2).join(', ')+' пока '+(e.length>1?'пустые':'пустой')+'. Напиши тем, кто ещё не ответил',b:'Писать',act:'bqueue'})}
+ const sg=suggestIds(b);if(sg.length)out.push({e:'💡',t:'Ещё '+sg.length+' '+plural(sg.length,'человеку','людям','людям')+' из «'+esc(b.city)+'» советую написать сегодня',b:'Посмотреть',act:'bsugg'});
  const tw=todayW();if(tw<dailyN()&&!queueIds(b).length&&eod(b.to)>=now)out.push({e:'👥',t:'Сегодня написала '+tw+' из '+dailyN()+'. Добавь людей из книжек в «Написать»',b:'Из книжек',act:'bdrawer'});
  return out}
 
@@ -1233,18 +1282,19 @@ function tipsOf(b){const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b)
 function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait','todo','next','rest'].includes(c.type);
  const dots=wt?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
  const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
- const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'&&it.tm?`<b class="btm">${esc(it.tm)}</b>`:'';
+ const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
+ const pl=n.plan&&c.type!=='day'&&c.type!=='met'?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div>${ch}</div>`}
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div>${ch}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
  return `<section class="bcol t-${c.type}${isT?' today':''}${past?' past':''}" data-col="${c.id}"><header data-bh="${c.id}" data-act="bcol" data-c="${c.id}"><span class="bhn"><b>${CT[c.type].e} ${esc(colTitle(c))}</b><small>${sub}</small></span><span class="bmore">⋯</span></header>
  <div class="bl">${items.map(it=>cardHTML(b,c,it)).join('')||`<div class="bempty">${emptyT[c.type]}</div>`}</div><button class="badd" data-act="badd" data-c="${c.id}">＋ Добавить</button></section>`}
-function drawerList(b){const list=peopleList(SET.bdBook||'',BS.q).slice(0,150);return list.map(n=>{const w=whereOn(b,n.id);return `<div class="bp${BS.sel.has(n.id)?' on':''}" data-bp="${n.id}" data-act="bpp" data-id="${n.id}">${avatarHTML(n,40)}<span class="bpt"><b>${esc(nodeTitle(n))}</b><small>${w?'📌 '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span>${BS.multi?`<i class="ck">${BS.sel.has(n.id)?'✓':''}</i>`:''}</div>`}).join('')||'<p class="hint">Никого не нашла</p>'}
+function drawerList(b){const list=peopleList(bkOf(b),BS.q,b).slice(0,150);return list.map(n=>{const w=whereOn(b,n.id);return `<div class="bp${BS.sel.has(n.id)?' on':''}" data-bp="${n.id}" data-act="bpp" data-id="${n.id}">${avatarHTML(n,40)}<span class="bpt"><b>${esc(nodeTitle(n))}</b><small>${w?'📌 '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span>${BS.multi?`<i class="ck">${BS.sel.has(n.id)?'✓':''}</i>`:''}</div>`}).join('')||'<p class="hint">Никого не нашла</p>'}
 function drawerHTML(b){
  return `<div class="bdr" id="bdr"><div class="bdrh"><input class="inp" id="bdq" placeholder="Найти человека" value="${esc(BS.q)}" autocomplete="off"><button class="pill ${BS.multi?'c2':'ghost'}" data-act="bmulti">${BS.multi?'✓ '+BS.sel.size:'Несколько'}</button><button class="ib" data-act="bdrawer">${ICON.close}</button></div>
- <div class="chips bks" id="bdb">${bookChipsH(SET.bdBook||'')}</div>
+ <div class="chips bks" id="bdb">${bookChipsH(bkOf(b),b)}</div>
  <div class="hint bdh">${BS.multi?(BS.sel.size?`<button class="pill c4" data-act="bmultiadd">Добавить ${BS.sel.size} → выбрать столбик</button>`:'Отметь людей, потом выбери столбик'):'Зажми человека и перетащи в столбик. Или просто нажми на него'}</div>
  <div class="bdl" id="bdl">${drawerList(b)}</div></div>`}
 function viewBoard(){const b=curBoard();
@@ -1252,11 +1302,11 @@ function viewBoard(){const b=curBoard();
  if(!b)return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Доска поездки</h1>
   <div class="empty" style="padding-top:20px"><img src="lidy.png" alt=""><b>Как Trello, только для твоих людей</b>Столбики: кому написать, кому написала, дни поездки с датами, следующий приезд. Людей берёшь прямо из своих книжек и перетаскиваешь.</div>
   <div class="row" style="justify-content:center"><button class="btn pink" data-act="bnew">＋ Создать доску поездки</button></div></div>${tabbar('/b')}`;
- const tw=todayW(),sk=streak(),q=queueIds(b).length,tips=tipsOf(b).slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
+ syncPlans(b);const tw=todayW(),sk=streak(),q=queueIds(b).length,allT=tipsOf(b);BS.tips=allT;const tips=allT.slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
  const cols=b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
- return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btop"><button class="btitle" data-act="bmenu"><b>✈️ ${esc(boardTitle(b))}</b><small>${boards().length>1?'⌄ другие доски, настройки':'⌄ даты, итоги, шаблоны'}</small></button>${topBtn('settings',ICON.gear)}</div>
+ return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${dmy(x.from)}–${dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>✈️ ${esc(boardTitle(b))}</b><small>⌄ даты, итоги, шаблоны</small></button>${topBtn('settings',ICON.gear)}</div>
  <div class="bstat"><span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]).id}">⇤ В начало</button></div>
- ${tips.map(t=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><button class="pill sm c4" data-act="${t.act}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button></div>`).join('')}</div>
+ ${tips.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><div class="btb"><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button>${i===0&&allT.length>1?`<button class="pill sm ghost" data-act="btips">ещё ${allT.length-1}</button>`:''}</div></div>`).join('')}</div>
  <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>подскажу дату: ${dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
  ${BS.drawer?drawerHTML(b):''}</div>${tabbar('/b')}`}
 function afterBoard(){const bc=$('#bcols');if(!bc)return;
@@ -1265,7 +1315,7 @@ function afterBoard(){const bc=$('#bcols');if(!bc)return;
  else if(BS.sl!=null)bc.scrollLeft=BS.sl;else{const t=bc.querySelector('.bcol.t-wait');if(t)bc.scrollLeft=Math.max(0,t.offsetLeft-14)}
  const dl=$('#bdl');if(dl)dl.scrollTop=BS.dtop||0;chatThumbs(bc);
  const q=$('#bdq');if(q)q.oninput=()=>{BS.q=q.value;clearTimeout(afterBoard.t);afterBoard.t=setTimeout(()=>{const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}},150)};
- const bb=$('#bdb');if(bb)bb.onclick=e=>{const x=e.target.closest('[data-bk]');if(!x)return;SET.bdBook=x.dataset.bk;saveSet();bb.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===x));const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}}}
+ const bb=$('#bdb');if(bb)bb.onclick=e=>{const x=e.target.closest('[data-bk]');if(!x)return;setBk(curBoard(),x.dataset.bk);bb.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===x));const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}}}
 
 /* ----- drag & drop on the board ----- */
 let BD=null;
@@ -1299,6 +1349,10 @@ document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closes
 async function act5(act,a,id,n){const b=curBoard();
  switch(act){
   case'bnew':boardEdit(null);break;
+  case'bswitch':SET.board=a.dataset.id;BS.sl=null;BS.tops={};BS.q='';saveB();render();break;
+  case'bsoon':{const t=(BS.tips||[]).find(x=>x.act==='bsoon'&&(a.dataset.ti==null||BS.tips.indexOf(x)>=0));const tt=a.dataset.ti!=null?BS.tips[+a.dataset.ti]:t;if(tt&&tt.ids)startQueue(tt.ids,'write');break}
+  case'bsugg':{if(!b)break;const ids=suggestIds(b);const sel=await pickMany(b,'Кому ещё написать сегодня','В «Написать»',{only:ids,pre:ids,hint:'Приложение считает, что им пора: по статусу, давности и вашим встречам. Сними галочки, кого не нужно.'});if(sel&&sel.length){const td=colOf(b,'todo');for(const i of sel)await placeItem(b,i,td.id,null);toast('Добавила в «Написать»: '+sel.length)}break}
+  case'btips':{const T=BS.tips||[];const el=sheet('<h3>Подсказки</h3>'+T.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button></div>`).join(''));break}
   case'bgo':{const bc=$('#bcols'),el=bc&&bc.querySelector(`[data-col="${a.dataset.c}"]`);if(el)bc.scrollTo({left:el.offsetLeft-14,behavior:'smooth'});break}
   case'bmenu':boardMenu();break;
   case'bcard':if(b&&n)cardMenu(b,n.id);break;
@@ -1315,7 +1369,70 @@ async function act5(act,a,id,n){const b=curBoard();
   case'bconf':if(b){const c=b.cols.find(x=>x.id===a.dataset.c);if(c)startQueue(liveItems(c).map(x=>x.id),'confirm')}break;
   case'bguess':if(b)startQueue(dayCols(b).filter(c=>c.date>=sod(Date.now())).flatMap(c=>liveItems(c).filter(x=>!x.s).map(x=>x.id)),'confirm');break;
   case'bnextall':{if(!b)break;const nx=colOf(b,'next');if(!nx)break;const sB=JSON.stringify(b.cols);let k=0;for(const c of b.cols){if(c===nx||!['wait','todo','day'].includes(c.type))continue;const l=liveItems(c);nx.items.push(...l.map(x=>Object.assign(x,{s:0,tm:''})));k+=l.length;c.items=[]}saveB();render();toast('Перенесла в «Следующий приезд»: '+k,'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});break}
+  default:act6(act,a,id,n)
  }}
+
+/* ===== stage 6: meetings from notes ===== */
+const WDR='(?:пн|вт|ср|чт|пт|сб|вс|понедельник|вторник|среда|среду|четверг|пятница|пятницу|суббота|субботу|воскресенье)';
+const MONW=[['январ',1],['феврал',2],['март',3],['апрел',4],['ма',5],['июн',6],['июл',7],['август',8],['сентябр',9],['октябр',10],['ноябр',11],['декабр',12]];
+const CURW=[[/^\$|^usd|^долл/i,'USD'],[/^€|^eur|^евро/i,'EUR'],[/^₽|^руб/i,'RUB'],[/^aed|^дирх/i,'AED'],[/^₺|^лир/i,'TRY']];
+const curOfTok=t=>{for(const [r,c] of CURW)if(r.test(t))return c;return null};
+const numOf=s=>parseFloat(String(s).replace(/[\s ]/g,'').replace(',','.'));
+const NUM='(\\d{1,3}(?:[ \\u00a0]\\d{3})+|\\d+)(?:[.,](\\d+))?';
+function moneyIn(s){const S=' '+s.replace(/(?:^|[^\d])([01]?\d|2[0-3]):[0-5]\d(?!\d)/g,' ')+' ';let m;
+ const val=(a,b)=>numOf(a+(b?'.'+b:''));
+ if((m=S.match(new RegExp('(\\$|€|₽)\\s?'+NUM+'\\s?(к|k)?(?![a-zа-яё])','i'))))return{a:val(m[2],m[3])*(m[4]?1000:1),c:curOfTok(m[1]),raw:m[0].trim()};
+ if((m=S.match(new RegExp('(?:^|[^\\d.,:])'+NUM+'\\s?(к|k|тыс\\.?)?\\s?(\\$|€|₽|₺|aed|дирх[а-яё]*|usd|долл[а-яё]*|eur|евро|руб[а-яё]*|лир[а-яё]*)(?![a-zа-яё])','i'))))return{a:val(m[1],m[2])*(m[3]?1000:1),c:curOfTok(m[4]),raw:m[0].trim()};
+ if((m=S.match(/(?:^|[^\d.,:])(\d+(?:[.,]\d+)?)\s?(к|k)(?![a-zа-яё])/i)))return{a:Math.round(numOf(m[1])*1000),c:'AED',raw:m[0].trim()};
+ if((m=S.match(/(?:^|[^\d.,:])0[.,](\d)(?![\d.,:])/)))return{a:+m[1]*100,c:'AED',raw:m[0].trim()};
+ return null}
+function timeIn(s){const m=s.match(/(?:^|[^\d])([01]?\d|2[0-3]):([0-5]\d)(?!\d)/);return m?{h:+m[1],mi:+m[2]}:null}
+function dateIn(line){let m=line.match(new RegExp('^\\s*(?:дата\\s*:?\\s*)?(?:'+WDR+'\\.?,?\\s*)?(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4}|\\d{2})(?!\\d)(.*)$','i'));
+ if(m){const y=+m[3]<100?2000+ +m[3]:+m[3];return{d:+m[1],mo:+m[2],y,rest:m[4]||''}}
+ m=line.match(new RegExp('^\\s*(?:дата\\s*:?\\s*)?(?:'+WDR+'\\.?,?\\s*)?(\\d{1,2})\\s+([а-яё]+)\\s+(\\d{4})(.*)$','i'));
+ if(m){const w=m[2].toLowerCase();const mo=(MONW.find(x=>w.startsWith(x[0])&&(x[0]!=='ма'||/^ма[йя]/.test(w)))||[])[1];if(mo)return{d:+m[1],mo,y:+m[3],rest:m[4]||''}}
+ return null}
+function mkTs(D,t){const d=new Date(D.y,D.mo-1,D.d,t?t.h:12,t?t.mi:0);if(d.getMonth()!==D.mo-1||d.getDate()!==D.d)return null;return d.getTime()}
+/* scan one person: returns found meetings (not yet saved) */
+function scanLead(n){const out=[];const notes=kids(n.id).filter(k=>k.type==='note');const now=Date.now()+864e5;
+ for(const nt of notes){const lines=plainOf(nt).split('\n').map(x=>x.replace(/ /g,' ').trim()).filter(Boolean);
+  const dl=lines.findIndex(l=>/^дата\s*:/i.test(l));
+  if(dl>=0){const D=dateIn(lines[dl]);if(D){const tl=lines.find(l=>/^время\s*:/i.test(l));const t=timeIn(tl?tl.replace(/^время\s*:/i,''):D.rest);const ul=lines.find(l=>/^(условия|сумма|деньги)\s*:/i.test(l));
+    const mo=moneyIn(ul?ul.replace(/^[^:]+:/,''):lines.filter((l,i)=>i!==dl&&!/^(время|продолжительность)\s*:/i.test(l)).join(' '));const ts=mkTs(D,t);
+    if(ts&&ts<=now)out.push({n,ts,nt:!t,a:mo?mo.a:0,c:mo&&mo.c?mo.c:'AED',line:lines[dl].slice(0,80),note:nt.id})}continue}
+  for(const l of lines){const D=dateIn(l);if(!D)continue;const t=timeIn(D.rest);const mo=moneyIn(D.rest);const ts=mkTs(D,t);if(!ts||ts>now)continue;
+   out.push({n,ts,nt:!t,a:mo?mo.a:0,c:mo&&mo.c?mo.c:'AED',line:l.slice(0,90),note:nt.id})}}
+ const ms=meetsOf(n);for(const x of out)x.dup=ms.some(m=>Math.abs(m.ts-x.ts)<6*36e5||dkey(m.ts)===dkey(x.ts));
+ const seen=new Set();return out.filter(x=>{const k=dkey(x.ts);if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>a.ts-b.ts)}
+function scanAll(){let all=[];for(const n of leads())all=all.concat(scanLead(n).filter(x=>!x.dup));return all}
+/* review & save */
+const fmtShortDT=(ts,nt)=>{const d=new Date(ts);return DOW[(d.getDay()+6)%7]+' '+d.getDate()+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)+(nt?'':' · '+hhmm(ts))};
+function meetImport(list,title){const items=list.map(x=>Object.assign({on:!x.dup},x));
+ if(!items.length){toast('Новых встреч в заметках не нашла');return}
+ const groups=[];for(const x of items){let g=groups.find(g=>g.n===x.n);if(!g){g={n:x.n,l:[]};groups.push(g)}g.l.push(x)}
+ const cnt=()=>items.filter(x=>x.on).length;
+ const el=sheet(`<h3>${esc(title||'Встречи из заметок')}</h3><div class="hint" style="text-align:left">Проверь даты и суммы. «1к» и «0,7» считаю дирхамами, $ — долларами, € — евро. Сними галочку, если это не встреча. Уже записанные встречи не трогаю.</div>
+ ${groups.map(g=>`<div class="mimph">${avatarHTML(g.n,30)}<b>${esc(nodeTitle(g.n))}</b></div>`+g.l.map(x=>{const i=items.indexOf(x);return `<div class="mimp${x.on?'':' off'}" data-r="${i}"><i class="ck" data-ck="${i}">${x.on?'✓':''}</i><div class="mi1"><b>${fmtShortDT(x.ts,x.nt)}${x.dup?' · уже записана':''}</b><small>${esc(x.line)}</small></div><div class="mi2"><input class="inp" inputmode="decimal" data-am="${i}" value="${x.a||''}" placeholder="сумма"><select data-cu="${i}">${CURS.map(c=>`<option${c===x.c?' selected':''}>${c}</option>`).join('')}</select></div></div>`}).join('')).join('')}
+ <div class="pmbar"><button class="btn pink wide" id="miok">Записать · ${cnt()}</button></div>`);
+ const upd=()=>{el.querySelector('#miok').textContent='Записать · '+cnt()};
+ el.querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>{const x=items[+b.dataset.ck];x.on=!x.on;b.textContent=x.on?'✓':'';b.closest('.mimp').classList.toggle('off',!x.on);upd()});
+ el.querySelectorAll('[data-am]').forEach(i=>i.oninput=()=>{items[+i.dataset.am].a=numOf(i.value)||0});
+ el.querySelectorAll('[data-cu]').forEach(s=>s.onchange=()=>{items[+s.dataset.cu].c=s.value});
+ el.querySelector('#miok').onclick=async()=>{const ok=items.filter(x=>x.on);if(!ok.length){closeSheet();return}const by=new Map();
+  for(const x of ok){const n=x.n;const m={id:uid(),rDone:0,rSnooze:0,ts:x.ts,amount:x.a>0?x.a:0,cur:x.c,rw:SET.remW||3,rh:SET.remH||4,rOn:true,src:'note'};if(x.nt)m.nt=1;snap(m);
+   if(dueOf(m)<Date.now())m.rDone=Date.now();(n.meets=n.meets||[]).push(m);if(!by.has(n))by.set(n,[]);by.get(n).push(m)}
+  for(const [n,ms] of by){await saveNode(n,false);onMeetSaved(n,ms)}dirty();closeSheet();render();
+  let a=0,r=0;ok.forEach(x=>{if(x.a>0){a+=conv(x.a,x.c,'AED');r+=conv(x.a,x.c,'RUB')}});
+  toast('Записала встреч: '+ok.length+(a>0?' · '+nf0.format(Math.round(a))+' AED':''))}}
+/* hint after editing a note */
+const NHS=new Set();
+function noteHint(nt){if(!nt||!N.has(nt.id)||N.get(nt.id).deleted)return;const n=N.get(nt.parent);if(!n||!isLead(n))return;
+ const f=scanLead(n).filter(x=>!x.dup&&x.note===nt.id&&!NHS.has(n.id+dkey(x.ts)));if(!f.length)return;f.forEach(x=>NHS.add(n.id+dkey(x.ts)));
+ const x=f[f.length-1];toast('Нашла встречу '+fmtShortDT(x.ts,x.nt)+(x.a?' · '+money(x.a,x.c):'')+(f.length>1?' и ещё '+(f.length-1):'')+'. Записать?','Проверить',()=>meetImport(f,'Встречи: '+nodeTitle(n)))}
+async function act6(act,a,id,n){switch(act){
+ case'mscan':if(n){const l=scanLead(n);if(!l.length){toast('В заметках не нашла строк с датой вроде «Пт 11.07.25 14:44 $300»');break}if(!l.some(x=>!x.dup)){toast('Все встречи из заметок уже записаны ✓');break}meetImport(l,'Встречи: '+nodeTitle(n))}break;
+ case'mscanall':{toast('Ищу встречи в заметках…');await sleep(30);meetImport(scanAll(),'Встречи из всех заметок');break}
+}}
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -1368,7 +1485,7 @@ function render(){
  else if(r.k==='today')html=viewToday();else if(r.k==='b')html=viewBoard();else if(r.k==='cal')html=viewCal();else if(r.k==='tasks')html=viewTasks();else if(r.k==='s')html=viewSettings();else if(r.k==='t')html=viewTrash();else if(r.k==='bk')html=viewBackup();else return go('/');
  APP.innerHTML=html;window.scrollTo(0,sy);
  if(['root','n','e','p'].includes(r.k)){SET.last=r.k==='root'?'':r.raw;saveSet()}
- document.body.classList.toggle('onboard',r.k==='b');if(r.k==='b')afterBoard();if(r.k==='e')afterNote(N.get(r.id));if(r.k==='p')afterPhoto(N.get(r.id));
+ document.body.classList.toggle('onboard',r.k==='b');if(was&&r.id!==was.id&&r.k!=='e')setTimeout(()=>noteHint(was),350);if(r.k==='b')afterBoard();if(r.k==='e')afterNote(N.get(r.id));if(r.k==='p')afterPhoto(N.get(r.id));
 }
 
 /* ===== list screen ===== */
@@ -1580,6 +1697,8 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
+ <button class="act" data-act="leadh"><span class="ic">🕐</span><span>Когда писать по времени<small>За ${leadH()} ${plural(leadH(),'час','часа','часов')} до вашего обычного времени встречи. Если привычки ещё нет — в 18:00</small></span></button>
+ <button class="act" data-act="mscanall"><span class="ic">🔎</span><span>Найти встречи во всех заметках<small>Даты, время и суммы из строк вроде «Пт 11.07.25 14:44 $300». Сначала покажу список на проверку</small></span></button>
  <button class="act" data-act="sleepn"><span class="ic">😴</span><span>Предлагать «спящий»<small>После ${sleepN()} касаний без ответа</small></span></button>
  <button class="act" data-act="citiesset"><span class="ic">📍</span><span>Мои города<small>${cityList().join(', ')}</small></span></button>
  <h2>Данные</h2><button class="act" data-go="/bk"><span class="ic">💾</span><span>Резервная копия<small>${SET.lastBackup?'Последняя: '+fmtDate(SET.lastBackup):'Ещё не делала'}</small></span></button>
@@ -1601,7 +1720,7 @@ async function makeBackup(){const zip=new JSZip();const box=$('#bkbox');let i=0;
   for(const k of['src','view'])if(n[k]){const b=await getBlob(n[k]);if(b)zip.file(`m/${n.id}.${k}`,b,{binary:true,compression:'STORE'})}
   for(const ch of(n.chats||[]))if(ch.img){const b=await getBlob(ch.img);if(b)zip.file('c/'+ch.img,b,{binary:true,compression:'STORE'})}
   meta.push(o);if(++i%10===0&&box)box.innerHTML=`<div class="hint">Собираю… ${i} из ${all.length}</div>`}
- zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter,trips:SET.trips,boards:SET.boards,board:SET.board,wlog:SET.wlog,mtpl:SET.mtpl,ctpl:SET.ctpl}}));
+ zip.file('data.json',JSON.stringify({v:1,app:'leads',exported:Date.now(),nodes:meta,settings:{views:SET.views,sorts:SET.sorts,view:SET.view,remW:SET.remW,remH:SET.remH,lastCur:SET.lastCur,cities:SET.cities,dailyN:SET.dailyN,sleepAfter:SET.sleepAfter,trips:SET.trips,leadH:SET.leadH,boards:SET.boards,board:SET.board,wlog:SET.wlog,mtpl:SET.mtpl,ctpl:SET.ctpl}}));
  return zip.generateAsync({type:'blob',compression:'STORE'})}
 async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=zip.file('data.json');if(!f)throw new Error('no data');const d=JSON.parse(await f.async('string'));if(d.app!=='leads')throw new Error('bad');
  const rd=async(p)=>{const z=zip.file(p);if(!z)return null;const b=await z.async('blob');return new Blob([b],{type:'image/jpeg'})};
@@ -1610,7 +1729,7 @@ async function importBackup(file){const zip=await JSZip.loadAsync(file);const f=
   for(const k of['src','view'])if(o[k]){const b=await rd(`m/${o.id}.${k}`);if(b)await putBlob(o[k],b);else o[k]=''}
   for(const ch of(o.chats||[]))if(ch.img){const z=zip.file('c/'+ch.img);if(z){const b=await z.async('blob');await putBlob(ch.img,new Blob([b],{type:'image/jpeg'}))}}
   await dbPut('nodes',o);N.set(o.id,o)}
- const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;if(s.trips)SET.trips=s.trips;for(const k of['boards','board','wlog','mtpl','ctpl'])if(s[k])SET[k]=s[k];saveSet();dirty()}
+ const s=d.settings||{};SET.views=s.views||{};SET.sorts=s.sorts||{};SET.view=s.view||'list';if(s.remW)SET.remW=s.remW;if(s.remH)SET.remH=s.remH;if(s.lastCur)SET.lastCur=s.lastCur;if(s.cities)SET.cities=s.cities;if(s.dailyN)SET.dailyN=s.dailyN;if(s.sleepAfter)SET.sleepAfter=s.sleepAfter;if(s.trips)SET.trips=s.trips;for(const k of['boards','board','wlog','mtpl','ctpl','leadH'])if(s[k])SET[k]=s[k];saveSet();dirty()}
 
 /* ===== PIN ===== */
 let LOCKED=false;
