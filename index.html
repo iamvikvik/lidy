@@ -307,6 +307,12 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .bwrap{-webkit-user-select:none;user-select:none}.bwrap .inp{-webkit-user-select:text;user-select:text}
 .onboard .toast{top:calc(var(--sat) + 10px);bottom:auto}
 .onboard .toast{width:max-content;max-width:calc(100vw - 32px)}
+.bchat{flex:none;position:relative;width:34px;height:46px;border:0;padding:0;border-radius:8px;overflow:hidden;background:var(--soft);box-shadow:inset 0 0 0 1px var(--line);display:grid;place-items:center;font-size:16px}
+.bchat img{width:100%;height:100%;object-fit:cover;object-position:top;pointer-events:none;-webkit-user-drag:none}
+.bchat i{position:absolute;right:2px;bottom:2px;background:#0d0d0f;color:#fff;font-style:normal;font-size:10px;font-weight:800;border-radius:99px;padding:0 4px;line-height:14px}
+.qchat{display:flex;align-items:center;gap:10px;width:100%;margin-top:8px;background:var(--soft);border:0;border-radius:14px;padding:8px;text-align:left}
+.qchat img{width:44px;height:60px;object-fit:cover;object-position:top;border-radius:8px;flex:none}.qchat>span:first-child{font-size:22px;width:44px;text-align:center}
+.qchat b{display:block;font-size:14px}.qchat small{display:block;font-size:12px;color:var(--mut)}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -1156,11 +1162,22 @@ async function addSheet(b,cid){const c=b.cols.find(x=>x.id===cid);menuSheet('Д�
  {ic:'👥',t:'Из книжек',sub:'Выбери сразу несколько человек',fn:async()=>{const ids=await pickMany(b,'Кого добавить в «'+colTitle(c)+'»?','Добавить');if(!ids||!ids.length)return;for(const id of ids)await placeItem(b,id,cid,null);if(ids.length>1)toast('Добавила: '+ids.length)}},
  {ic:'🆕',t:'Новый человек',sub:'Создам коллекцию в книжке',fn:()=>newPersonSheet(b,cid)}])}
 
+/* ----- chat screenshots on cards ----- */
+const lastChat=n=>(n.chats||[]).slice().sort((a,b)=>b.ts-a.ts)[0]||null;
+const CHU=new Map();
+async function chatThumbs(root){for(const im of (root||document).querySelectorAll('img[data-chimg]')){const id=im.dataset.chimg;let u=CHU.get(id);if(!u){const b=await getBlob(id);if(!b)continue;u=URL.createObjectURL(b);CHU.set(id,u)}im.src=u}}
+async function addShots(n,after){const fs=await pickFiles('image/*',true);if(!fs.length)return;const ms=n.msgs||[];const src=ms.length===1?ms[0]:'ot';
+ for(const f of fs){const id='ch_'+uid();await putBlob(id,f);(n.chats=n.chats||[]).push({id:uid(),ts:Date.now(),src,img:id,text:'',title:(SRC[src]||'Переписка')+' · '+fmtDate(Date.now())})}
+ await saveNode(n);render();toast(fs.length>1?'Скриншотов добавлено: '+fs.length:'Скриншот переписки добавлен','Открыть',()=>chatView(n,lastChat(n)));after&&after()}
 /* ----- card menu ----- */
 function cardMenu(b,lid){const f=findItem(b,lid);if(!f)return;const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
  if(ct.ph)rows.push({ic:'🟢',t:'Написать в WhatsApp',sub:'+'+ct.ph+' · с готовым текстом',fn:()=>openChat(n,'wa',tx)});
  if(ct.ig)rows.push({ic:'📸',t:'Написать в Instagram',sub:'@'+ct.ig+' · текст скопирую',fn:()=>openChat(n,'ig',tx)});
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg+' · текст скопирую',fn:()=>openChat(n,'tg',tx)});
+ const lc=lastChat(n),nc=(n.chats||[]).length;
+ if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
+ rows.push({ic:'📸',t:'Добавить скриншот переписки',sub:'можно выбрать несколько',fn:()=>addShots(n)});
+ if(nc>1)rows.push({ic:'🗂️',t:'Все переписки · '+nc,fn:()=>chatsSheet(n)});
  const wc=colOf(b,'wait');
  if(c.type==='todo'&&wc)rows.push({ic:'✉️',t:'Написала',sub:'перенесу в «Написала»',fn:()=>placeItem(b,lid,wc.id,null)});
  else if(['wait','rest','next'].includes(c.type))rows.push({ic:'✉️',t:'Написала ещё раз',sub:'без ответа: '+(n.tc||0)+' из '+sleepN(),fn:async()=>{await bTouch(n,it);saveB();render();toast('Записала: '+nodeTitle(n)+' · без ответа: '+n.tc);await maybeRest(b,n)}});
@@ -1188,9 +1205,11 @@ function queueStep(){const b=curBoard();if(!QU||!b||QU.i>=QU.ids.length){const d
  <div class="chips" id="qt">${tp.map((t,i)=>`<button type="button" class="chip${i===QU.ti?' on':''}" data-v="${i}">${esc(fillT(t,b,f&&f.c).slice(0,26))}…</button>`).join('')}</div>
  <textarea class="inp" id="qx" style="min-height:76px">${esc(fillT(tp[QU.ti]||tp[0]||'',b,f&&f.c))}</textarea>
  <div class="row">${ct.ph?'<button class="pill c2" data-q="wa">🟢 WhatsApp</button>':''}${ct.ig?'<button class="pill c3" data-q="ig">📸 Instagram</button>':''}${ct.tg?'<button class="pill c1" data-q="tg">✈️ Telegram</button>':''}<button class="pill ghost" data-q="ct">${ct.ph||ct.ig||ct.tg?'☎️':'＋ Добавить контакт'}</button></div>
+ ${lastChat(n)?`<button class="qchat" id="qch">${lastChat(n).img?`<img data-chimg="${lastChat(n).img}" alt="">`:'<span>💬</span>'}<span><b>Последняя переписка</b><small>${fmtDate(lastChat(n).ts)} · нажми, чтобы вспомнить</small></span></button>`:`<button class="pill ghost" id="qsh" style="margin-top:6px">📸 Добавить скриншот переписки</button>`}
  <div class="row" style="margin-top:12px"><button class="btn pink" id="qok" style="flex:2">✅ ${conf?'Подтвердила':'Написала'}</button><button class="btn soft" id="qsk" style="flex:1">Пропустить</button></div>
  <div class="row"><button class="pill ghost" id="qend">Закончить</button></div>`);
  SHEET.bg.onclick=()=>{QU=null;closeSheet();render()};
+ chatThumbs(el);const qch=el.querySelector('#qch');if(qch)qch.onclick=()=>chatView(n,lastChat(n));const qsh=el.querySelector('#qsh');if(qsh)qsh.onclick=()=>addShots(n,()=>queueStep());
  el.querySelectorAll('#qt [data-v]').forEach(x=>x.onclick=()=>{QU.ti=+x.dataset.v;queueStep()});
  el.querySelectorAll('[data-q]').forEach(x=>x.onclick=()=>{const k=x.dataset.q;if(k==='ct'){contactsSheet(n,()=>queueStep());return}openChat(n,k,el.querySelector('#qx').value.trim())});
  el.querySelector('#qsk').onclick=()=>{QU.i++;queueStep()};el.querySelector('#qend').onclick=()=>{const d=QU.done,c=QU.mode;QU=null;closeSheet();render();if(d)toast((c==='confirm'?'Подтвердила: ':'Написала: ')+d+' 💪')};
@@ -1215,7 +1234,8 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const dots=wt?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
  const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'&&it.tm?`<b class="btm">${esc(it.tm)}</b>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div></div>`}
+ const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div>${ch}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
@@ -1243,7 +1263,7 @@ function afterBoard(){const bc=$('#bcols');if(!bc)return;
  document.querySelectorAll('.bcol[data-col]').forEach(s=>{const l=s.querySelector('.bl');if(l&&BS.tops[s.dataset.col])l.scrollTop=BS.tops[s.dataset.col]});
  if(BS.goCol){const el=bc.querySelector(`[data-col="${BS.goCol}"]`);BS.goCol=null;if(el){bc.scrollLeft=el.offsetLeft-12;BS.sl=bc.scrollLeft}}
  else if(BS.sl!=null)bc.scrollLeft=BS.sl;else{const t=bc.querySelector('.bcol.t-wait');if(t)bc.scrollLeft=Math.max(0,t.offsetLeft-14)}
- const dl=$('#bdl');if(dl)dl.scrollTop=BS.dtop||0;
+ const dl=$('#bdl');if(dl)dl.scrollTop=BS.dtop||0;chatThumbs(bc);
  const q=$('#bdq');if(q)q.oninput=()=>{BS.q=q.value;clearTimeout(afterBoard.t);afterBoard.t=setTimeout(()=>{const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}},150)};
  const bb=$('#bdb');if(bb)bb.onclick=e=>{const x=e.target.closest('[data-bk]');if(!x)return;SET.bdBook=x.dataset.bk;saveSet();bb.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===x));const l=$('#bdl');if(l){l.innerHTML=drawerList(curBoard());l.scrollTop=0}}}
 
@@ -1282,6 +1302,7 @@ async function act5(act,a,id,n){const b=curBoard();
   case'bgo':{const bc=$('#bcols'),el=bc&&bc.querySelector(`[data-col="${a.dataset.c}"]`);if(el)bc.scrollTo({left:el.offsetLeft-14,behavior:'smooth'});break}
   case'bmenu':boardMenu();break;
   case'bcard':if(b&&n)cardMenu(b,n.id);break;
+  case'bchat':if(n&&lastChat(n))chatView(n,lastChat(n));break;
   case'bcol':if(b)colSheet(b,a.dataset.c);break;
   case'badd':if(b)addSheet(b,a.dataset.c);break;
   case'bnewcol':if(b)newColSheet(b);break;
