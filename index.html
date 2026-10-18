@@ -339,6 +339,9 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .bsum span{font-size:11px;font-weight:800;color:#6b8a4a;text-transform:uppercase;letter-spacing:.06em}.bsum b{font-size:15px;font-weight:800}.bsum small{font-size:12px;color:var(--mut);font-weight:600}
 .bcol.t-own{background:#f3f3f6}.bcol.r-lead{background:#f1edff}.bcol.r-met{background:#effbe1}
 .mv{font-size:15px;font-weight:700;margin-top:2px}
+.bmn{display:inline-block;max-width:100%}.bmn .bmr,.bsum .bmr{display:block;font-size:10.5px;font-weight:600;color:#7a8a6a;margin-top:1px;letter-spacing:0}
+.bsum .bmr{flex-basis:100%;color:var(--mut);font-size:12px}
+.bmn{border-radius:14px}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -454,7 +457,7 @@ const CURS=['AED','RUB','USD','EUR','TRY','AMD','HUF'];
 const SYM={AED:'AED',RUB:'₽',USD:'$',EUR:'€',TRY:'₺',AMD:'֏',HUF:'Ft'};
 const _rc=lsGet('leads_rates',{});
 let RATES=Object.assign({USD:1,RUB:84.989692,EUR:0.892383,AED:3.6725,AMD:361.957381,TRY:49.339277,HUF:335},_rc.r||{});let RATES_T=_rc.t||0;
-async function loadRates(force){if(!force&&Date.now()-RATES_T<3*36e5)return true;
+async function loadRates(force){if(!force&&Date.now()-RATES_T<30*6e4)return true;
  for(const url of['https://open.er-api.com/v6/latest/USD','https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json']){
   try{const r=await fetch(url,{cache:'no-store'});const j=await r.json();let rt=j.rates;if(!rt&&j.usd){rt={};for(const k in j.usd)rt[k.toUpperCase()]=j.usd[k]}
    if(rt&&rt.RUB&&rt.AED){CURS.forEach(c=>{if(rt[c])RATES[c]=rt[c]});RATES_T=Date.now();lsSet('leads_rates',{t:RATES_T,r:RATES});return true}}catch(e){}}
@@ -1480,19 +1483,21 @@ function rangeOf(b,c){if(c.ym&&c.ym[0]==='<')return{from:0,to:new Date(+c.ym.sli
  if(c.ym){const a=c.ym.split('-').map(Number);return{from:new Date(a[0],a[1]-1,1).getTime(),to:new Date(a[0],a[1],1).getTime()-1}}
  if(c.type==='met'&&!b.free&&b.from)return{from:sod(b.from)-864e5,to:eod(b.to)+864e5};return null}
 const meetsIn=(n,r)=>meetsOf(n).filter(m=>m.amount>0&&m.ts>=r.from&&m.ts<=r.to);
-function sumOf(list){const by={};let aed=0;for(const m of list){by[m.cur]=(by[m.cur]||0)+m.amount;aed+=m.aed||conv(m.amount,m.cur,'AED')}return{by,aed}}
+function sumOf(list){const by={};let aed=0,rub=0;for(const m of list){by[m.cur]=(by[m.cur]||0)+m.amount;aed+=m.aed||conv(m.amount,m.cur,'AED');rub+=m.rub||conv(m.amount,m.cur,'RUB')}return{by,aed,rub}}
+const onlyRub=by=>Object.keys(by).every(c=>c==='RUB');
+const rubLine=s=>onlyRub(s.by)?'':`<small class="bmr">≈ ${nf0.format(Math.round(s.rub))} ₽</small>`;
 const byStr=by=>Object.keys(by).map(c=>nf0.format(Math.round(by[c]))+' '+(SYM[c]||c)).join(' + ');
 function cardMeets(b,c,n,it,all){const r=rangeOf(b,c);if(!r)return null;const ms=meetsOf(n).filter(m=>(all||m.amount>0)&&m.ts>=r.from&&m.ts<=r.to).sort((x,y)=>x.ts-y.ts);
  const ii=c.items.indexOf(it);const same=[];c.items.forEach((x,i)=>{if(x.id===n.id)same.push(i)});const cnt=same.length,j=same.indexOf(ii);
  if(cnt<=1||j<0)return ms;return j<cnt-1?(ms[j]?[ms[j]]:[]):ms.slice(j)}
 const uniqItems=c=>{const seen=new Set(),out=[];for(const it of liveItems(c)){if(seen.has(it.id))continue;seen.add(it.id);out.push(it)}return out};
 function cardMoneyHTML(b,c,n,it){const r=rangeOf(b,c);if(!r)return '';const l=cardMeets(b,c,n,it);const ii=c.items.indexOf(it);
- if(l.length)return `<b class="bmn" data-act="bsum" data-id="${n.id}" data-cc="${c.id}" data-ii="${ii}">💰 ${byStr(sumOf(l).by)}</b>`;
+ if(l.length)return `<b class="bmn" data-act="bsum" data-id="${n.id}" data-cc="${c.id}" data-ii="${ii}">💰 ${byStr(sumOf(l).by)}${rubLine(sumOf(l))}</b>`;
  if(c.role==='met'||c.type==='met')return `<b class="bmn z" data-act="bsum" data-id="${n.id}" data-cc="${c.id}" data-ii="${ii}">＋ сумма</b>`;return ''}
 function colSumHTML(b,c){const r=rangeOf(b,c);if(!r)return '';let all=[];for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}
- if(!all.length)return '';const s=sumOf(all);const multi=Object.keys(s.by).length>1||!s.by.AED;
- return `<div class="bsum"><span>Итого</span><b>${byStr(s.by)}</b>${multi?`<small>≈ ${nf0.format(Math.round(s.aed))} AED</small>`:''}</div>`}
-function sumFromCard(b,n,cid,ii){const c=b.cols.find(x=>x.id===cid)||{};const r=rangeOf(b,c);const day=c.ym&&c.ym[0]!=='<'&&c.ym!==ymOf(Date.now())?c.ym+'-01':dkey(Date.now());
+ if(!all.length)return '';const s=sumOf(all);const multi=Object.keys(s.by).length>1||(!s.by.AED&&!onlyRub(s.by));
+ return `<div class="bsum"><span>Итого</span><b>${byStr(s.by)}</b>${multi?`<small>≈ ${nf0.format(Math.round(s.aed))} AED</small>`:''}${rubLine(s)}</div>`}
+function sumFromCard(b,n,cid,ii){loadRates();const c=b.cols.find(x=>x.id===cid)||{};const r=rangeOf(b,c);const day=c.ym&&c.ym[0]!=='<'&&c.ym!==ymOf(Date.now())?c.ym+'-01':dkey(Date.now());
  const it=c.items&&c.items[+ii]&&c.items[+ii].id===n.id?c.items[+ii]:(c.items||[]).find(x=>x.id===n.id);
  const list=r&&it?cardMeets(b,c,n,it,true):[];
  if(!list.length)return meetSheet(n,null,day);if(list.length===1)return meetSheet(n,list[0]);
@@ -1528,9 +1533,9 @@ function freeBoardMenu(b){const others=boards().filter(x=>x.id!==b.id);
  menuSheet(boardTitle(b),[{ic:'✏️',t:'Название',fn:()=>freeBoardEdit(b)},{ic:'＋',t:'Новый столбец',fn:()=>newFreeColSheet(b)},{ic:'📅',t:'Новый месяц',sub:'создам «лиды» и «виделись»',fn:()=>newMonthSheet(b)},{ic:'📊',t:'Суммы по столбцам',fn:()=>freeStats(b)},
   ...others.map(x=>({ic:x.free?'📋':'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
   {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},{ic:'🗑️',t:'Удалить эту доску',red:1,fn:()=>deleteBoard(b)}])}
-function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${uniqItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||!s.by.AED?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
+function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${uniqItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||(!s.by.AED&&!onlyRub(s.by))?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}${onlyRub(s.by)?'':' · ≈ '+nf0.format(Math.round(s.rub))+' ₽'}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
  let tot=[];for(const c of b.cols){if(c.role!=='met')continue;const r=rangeOf(b,c);if(r)for(const it of uniqItems(c))tot=tot.concat(meetsIn(N.get(it.id),r))}const ts=sumOf(tot);
- sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${tot.length?`<div class="note" style="margin-top:0">Всего со всех «виделись»: <b>${byStr(ts.by)}</b>${Object.keys(ts.by).length>1||!ts.by.AED?' · ≈ '+nf0.format(Math.round(ts.aed))+' AED':''}</div>`:''}${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
+ sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${tot.length?`<div class="note" style="margin-top:0">Всего со всех «виделись»: <b>${byStr(ts.by)}</b>${Object.keys(ts.by).length>1||(!ts.by.AED&&!onlyRub(ts.by))?' · ≈ '+nf0.format(Math.round(ts.aed))+' AED':''}${onlyRub(ts.by)?'':' · ≈ '+nf0.format(Math.round(ts.rub))+' ₽'}</div>`:''}${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
 function newFreeColSheet(b){let role='lead',ym=ymOf(Date.now()),name='';
  const draw=()=>{const auto=role==='own'?'':(ym?ymLabel(ym)+': '+ROLE_T[role]:ROLE_T[role]);
   const el=sheet(`<h3>Новый столбец</h3><div class="seg"><button data-r="lead" class="${role==='lead'?'on':''}">Лиды</button><button data-r="met" class="${role==='met'?'on':''}">Виделись</button><button data-r="own" class="${role==='own'?'on':''}">Свой</button></div>
@@ -1565,7 +1570,7 @@ async function placeFree(b,lid,toId,idx,opt){opt=opt||{};const n=N.get(lid),to=b
  const fi=from?(opt.at!=null&&from.items[opt.at]&&from.items[opt.at].id===lid?opt.at:from.items.findIndex(x=>x.id===lid)):-1;
  if(from===to&&fi>=0&&!opt.copy){const it=to.items.splice(fi,1)[0];to.items.splice(at(idx),0,it);saveB();render();return}
  let it=null;if(from&&!opt.copy&&fi>=0)it=from.items.splice(fi,1)[0];
- if(has&&!(dupOk&&(opt.copy||opt.again))){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
+ if(has&&!(dupOk&&(opt.copy||opt.again||!from))){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
  it=it||{id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};if(opt.copy&&from===to)it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
  to.items.splice(at(idx),0,it);saveB();render();
  toast('«'+nm+'» → '+colTitle(to)+(has?' (ещё раз)':''),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to)}
@@ -1931,7 +1936,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 15 · 18.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 16 · 18.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
@@ -2063,6 +2068,7 @@ async function boot(){
  if(!db)toast('Память браузера недоступна: записи не сохранятся после закрытия');
  if(SET.pinHash)await unlock();
  if(!location.hash&&SET.last){const m=SET.last.split('/');const nd=N.get(m[1]);if(nd&&!nd.deleted)location.hash='#/'+SET.last}
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadRates().then(ok=>{if(ok&&parseHash().k==='b')render()})});
  render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
