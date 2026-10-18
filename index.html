@@ -1036,7 +1036,7 @@ const curBoard=()=>{const b=boards();return b.find(x=>x.id===SET.board)||b[b.len
 const boardTitle=b=>b.title||(b.free?'Лиды и встречи':(b.city+' · '+fmtTrip(b)));
 const colOf=(b,type)=>b.cols.find(c=>c.type===type);
 const liveItems=c=>c?c.items.filter(it=>{const n=N.get(it.id);return n&&!n.deleted}):[];
-function findItem(b,lid,cid){if(!b)return null;if(cid){const c0=b.cols.find(c=>c.id===cid);if(c0){const i0=c0.items.findIndex(x=>x.id===lid);if(i0>=0)return{c:c0,i:i0,it:c0.items[i0]}}}for(const c of b.cols){const i=c.items.findIndex(x=>x.id===lid);if(i>=0)return{c,i,it:c.items[i]}}return null}
+function findItem(b,lid,cid,ii){if(!b)return null;if(cid){const c0=b.cols.find(c=>c.id===cid);if(c0){const i0=(ii!=null&&c0.items[ii]&&c0.items[ii].id===lid)?ii:c0.items.findIndex(x=>x.id===lid);if(i0>=0)return{c:c0,i:i0,it:c0.items[i0]}}}for(const c of b.cols){const i=c.items.findIndex(x=>x.id===lid);if(i>=0)return{c,i,it:c.items[i]}}return null}
 const saveB=()=>saveSet();
 const relShort=ts=>{const k=Math.round((sod(Date.now())-sod(ts))/864e5);return k<=0?'сегодня':k===1?'вчера':k+' дн. назад'};
 const LOC={'Дубай':'Дубае','Москва':'Москве','Краснодар':'Краснодаре','Ростов':'Ростове','Париж':'Париже','Стамбул':'Стамбуле','Милан':'Милане','Сочи':'Сочи'};
@@ -1101,7 +1101,7 @@ async function placeItem(b,lid,toId,idx,why,opt){if(b.free)return placeFree(b,li
  if(to.type==='met'&&from!==to)toast('Встретились: '+nm,'Записать встречу',()=>meetSheet(n,null,from&&from.type==='day'?dkey(from.date):dkey(Date.now())));
  else if(from!==to)toast(msg||('«'+nm+'» → '+colTitle(to)),'Отменить',undo);
  if(to.type==='wait'&&(ft==='new'||ft==='todo'))await maybeRest(b,n)}
-async function removeItem(b,lid,cid){const f=findItem(b,lid,cid);if(!f)return;const n0=N.get(lid);if(n0&&n0.plan){b.dis=b.dis||{};b.dis[lid]=n0.plan}const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
+async function removeItem(b,lid,cid,ii){const f=findItem(b,lid,cid,ii);if(!f)return;const n0=N.get(lid);if(n0&&n0.plan){b.dis=b.dis||{};b.dis[lid]=n0.plan}const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
 
 /* ----- your "write on" dates appear on the board ----- */
 function syncPlans(b){if(!b||b.free||eod(b.to)<Date.now())return;const todo=colOf(b,'todo');if(!todo)return;b.dis=b.dis||{};let ch=false;
@@ -1226,7 +1226,7 @@ async function addShots(n,after){const fs=await pickFiles('image/*',true);if(!fs
  for(const f of fs){const id='ch_'+uid();await putBlob(id,f);(n.chats=n.chats||[]).push({id:uid(),ts:Date.now(),src,img:id,text:'',title:(SRC[src]||'Переписка')+' · '+fmtDate(Date.now())})}
  await saveNode(n);render();toast(fs.length>1?'Скриншотов добавлено: '+fs.length:'Скриншот переписки добавлен','Открыть',()=>chatView(n,lastChat(n)));after&&after()}
 /* ----- card menu ----- */
-function cardMenu(b,lid,cid){const f=findItem(b,lid,cid);if(!f)return;if(b.free)return freeCardMenu(b,lid,f);const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
+function cardMenu(b,lid,cid,ii){const f=findItem(b,lid,cid,ii);if(!f)return;if(b.free)return freeCardMenu(b,lid,f);const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
  if(ct.ph)rows.push({ic:'🟢',t:'Написать в WhatsApp',sub:'+'+ct.ph+' · с готовым текстом',fn:()=>openChat(n,'wa',tx)});
  if(ct.ig)rows.push({ic:'📸',t:'Написать в Instagram',sub:'@'+ct.ig+' · текст скопирую',fn:()=>openChat(n,'ig',tx)});
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg+' · текст скопирую',fn:()=>openChat(n,'tg',tx)});
@@ -1247,7 +1247,7 @@ function cardMenu(b,lid,cid){const f=findItem(b,lid,cid);if(!f)return;if(b.free)
  rows.push({ic:'👤',t:'Открыть карточку',fn:()=>go('/n/'+n.id)});
  rows.push({ic:'✖️',t:'Убрать с доски',red:1,fn:()=>removeItem(b,lid,c.id)});
  menuSheet(nodeTitle(n)+' · '+colTitle(c),rows)}
-function moveToSheet(b,lid,cid){const f=findItem(b,lid,cid);menuSheet('Куда перенести?',b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:f&&f.c===c?'сейчас здесь':'',fn:()=>{if(!(f&&f.c===c))placeItem(b,lid,c.id,null,null,{from:f&&f.c.id})}})))}
+function moveToSheet(b,lid,cid,ii){const f=findItem(b,lid,cid,ii);menuSheet('Куда перенести?',b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:f&&f.c===c?'сейчас здесь':'',fn:()=>{if(!(f&&f.c===c))placeItem(b,lid,c.id,null,null,{from:f&&f.c.id,at:ii})}})))}
 function timeSheet(b,lid){const f=findItem(b,lid);if(!f)return;const el=sheet(`<h3>Во сколько?</h3><input class="inp" type="time" id="tmv" value="${esc(f.it.tm||'19:00')}"><div class="hint" style="text-align:left">С временем встреча станет «точно» 💚</div><div class="row" style="margin-top:12px"><button class="btn pink wide" id="tmo">Сохранить</button></div>${f.it.tm?'<div class="row"><button class="pill ghost" id="tmx">Убрать время</button></div>':''}`);
  el.querySelector('#tmo').onclick=()=>{f.it.tm=el.querySelector('#tmv').value;if(f.it.tm)f.it.s=1;saveB();closeSheet();render()};const x=el.querySelector('#tmx');if(x)x.onclick=()=>{f.it.tm='';saveB();closeSheet();render()}}
 
@@ -1304,8 +1304,8 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
  const pl=n.plan&&c.type!=='day'&&c.type!=='met'&&!b.free?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- const mn=cardMoneyHTML(b,c,n);const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${mn}</div>${ch}</div>`}
+ const mn=cardMoneyHTML(b,c,n,it);const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${mn}</div>${ch}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
@@ -1342,7 +1342,7 @@ function afterBoard(){const bc=$('#bcols');if(!bc)return;
 let BD=null;
 function bdTarget(x,y){const els=document.elementsFromPoint(x,y);for(const e of els){if(e.closest&&e.closest('#bdr'))return null;const c=e.closest&&e.closest('.bcol[data-col]');if(c)return c}return null}
 function bdPlace(col,y){let ph=document.querySelector('.bph');if(!ph){ph=document.createElement('div');ph.className='bph'}
- const l=col.querySelector('.bl');const cards=[...l.querySelectorAll('.bcard')].filter(c=>c.dataset.bc!==BD.id);let before=null;for(const c of cards){const r=c.getBoundingClientRect();if(y<r.top+r.height/2){before=c;break}}
+ const l=col.querySelector('.bl');const cards=[...l.querySelectorAll('.bcard')].filter(c=>c!==BD.t);let before=null;for(const c of cards){const r=c.getBoundingClientRect();if(y<r.top+r.height/2){before=c;break}}
  const em=l.querySelector('.bempty');if(em)em.style.display='none';if(before)l.insertBefore(ph,before);else l.appendChild(ph);BD.col=col.dataset.col;BD.idx=before?cards.indexOf(before):cards.length}
 function bdOver(x,y){document.querySelectorAll('.bcol.over').forEach(o=>o.classList.remove('over'));const col=bdTarget(x,y);
  if(!col){const ph=document.querySelector('.bph');if(ph)ph.remove();BD.col=null;return}col.classList.add('over');if(BD.kind==='h'){BD.col=col.dataset.col;return}bdPlace(col,y)}
@@ -1352,15 +1352,15 @@ document.addEventListener('pointerdown',e=>{if(LOCKED||BD||DR)return;const t=e.t
  const end=()=>{if(BD){BD.g.remove();BD.t.classList.remove('bdragging');document.querySelectorAll('.bcol.over').forEach(o=>o.classList.remove('over'));const ph=document.querySelector('.bph');if(ph)ph.remove();document.body.classList.remove('bdmode');document.querySelectorAll('.bempty').forEach(x=>x.style.display='')}};
  const timer=setTimeout(()=>{started=true;const g=document.createElement('div');g.className='bghost'+(kind==='h'?' h':'');
   g.innerHTML=kind==='h'?esc(t.querySelector('b').textContent):(()=>{const n=N.get(id);return avatarHTML(n,34)+'<b>'+esc(nodeTitle(n))+'</b>'})();document.body.appendChild(g);
-  BD={kind,id,t,g,col:null,idx:0,from:kind==='c'?(t.closest('.bcol')||{dataset:{}}).dataset.col:null};t.classList.add('bdragging');document.body.classList.add('bdmode');navigator.vibrate&&navigator.vibrate(12);pos();bdOver(lx,ly);
+  BD={kind,id,t,g,col:null,idx:0,from:kind==='c'?(t.closest('.bcol')||{dataset:{}}).dataset.col:null,at:kind==='c'&&t.dataset.ii!=null?+t.dataset.ii:null};t.classList.add('bdragging');document.body.classList.add('bdmode');navigator.vibrate&&navigator.vibrate(12);pos();bdOver(lx,ly);
   iv=setInterval(()=>{const bc=$('#bcols');if(!bc)return;let mvd=false;const br=bc.getBoundingClientRect();if(ly<br.bottom&&ly>br.top-40){if(lx<34){bc.scrollLeft-=13;mvd=true}else if(lx>innerWidth-34){bc.scrollLeft+=13;mvd=true}}
    const col=bdTarget(lx,ly);if(col&&kind!=='h'){const l=col.querySelector('.bl'),r=l.getBoundingClientRect();if(ly<r.top+36&&l.scrollTop>0){l.scrollTop-=10;mvd=true}else if(ly>r.bottom-36){l.scrollTop+=10;mvd=true}}if(mvd)bdOver(lx,ly)},16)},e.pointerType==='mouse'?160:330);
  const pos=()=>{if(BD)BD.g.style.transform=`translate(${lx-24}px,${ly-28}px) rotate(-2deg)`};
  const mv=ev=>{lx=ev.clientX;ly=ev.clientY;if(!started){if(Math.hypot(lx-sx,ly-sy)>9)clean();return}pos();bdOver(lx,ly)};
- const up=async()=>{const was=started;const st=BD?{kind:BD.kind,id:BD.id,col:BD.col,idx:BD.idx,from:BD.from}:null;clean();end();BD=null;if(!was||!st)return;NOCLICK=Date.now()+450;const b=curBoard();if(!b||!st.col)return;
+ const up=async()=>{const was=started;const st=BD?{kind:BD.kind,id:BD.id,col:BD.col,idx:BD.idx,from:BD.from,at:BD.at}:null;clean();end();BD=null;if(!was||!st)return;NOCLICK=Date.now()+450;const b=curBoard();if(!b||!st.col)return;
   if(st.kind==='h'){const to=b.cols.findIndex(c=>c.id===st.col);if(to>=0)moveCol(b,st.id,to);return}
-  const f=st.kind==='c'?findItem(b,st.id,st.from):findItem(b,st.id);if(f&&f.c.id===st.col){f.c.items.splice(f.i,1);f.c.items.splice(Math.min(st.idx,f.c.items.length),0,f.it);saveB();render();return}
-  await placeItem(b,st.id,st.col,st.idx,null,{from:st.kind==='c'?st.from:null})};
+  const f=st.kind==='c'?findItem(b,st.id,st.from,st.at):findItem(b,st.id);if(f&&f.c.id===st.col&&!b.free){f.c.items.splice(f.i,1);f.c.items.splice(Math.min(st.idx,f.c.items.length),0,f.it);saveB();render();return}
+  await placeItem(b,st.id,st.col,st.idx,null,{from:st.kind==='c'?st.from:null,at:st.at})};
  const cx=()=>{clean();end();BD=null};
  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cx)});
 document.addEventListener('touchmove',e=>{if(BD)e.preventDefault()},{passive:false});
@@ -1376,8 +1376,8 @@ async function act5(act,a,id,n){const b=curBoard();
   case'btips':{const T=BS.tips||[];const el=sheet('<h3>Подсказки</h3>'+T.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button></div>`).join(''));break}
   case'bgo':{const bc=$('#bcols'),el=bc&&bc.querySelector(`[data-col="${a.dataset.c}"]`);if(el)bc.scrollTo({left:el.offsetLeft-14,behavior:'smooth'});break}
   case'bmenu':boardMenu();break;
-  case'bcard':if(b&&n)cardMenu(b,n.id,a.dataset.cc);break;
-  case'bsum':if(b&&n)sumFromCard(b,n,a.dataset.cc);break;
+  case'bcard':if(b&&n)cardMenu(b,n.id,a.dataset.cc,a.dataset.ii!=null?+a.dataset.ii:null);break;
+  case'bsum':if(b&&n)sumFromCard(b,n,a.dataset.cc,a.dataset.ii);break;
   case'bdel':if(b)deleteBoard(b);break;
   case'bfmonth':if(b)newMonthSheet(b);break;
   case'bnewm':if(b)newMonthSheet(b);break;
@@ -1482,14 +1482,19 @@ function rangeOf(b,c){if(c.ym&&c.ym[0]==='<')return{from:0,to:new Date(+c.ym.sli
 const meetsIn=(n,r)=>meetsOf(n).filter(m=>m.amount>0&&m.ts>=r.from&&m.ts<=r.to);
 function sumOf(list){const by={};let aed=0;for(const m of list){by[m.cur]=(by[m.cur]||0)+m.amount;aed+=m.aed||conv(m.amount,m.cur,'AED')}return{by,aed}}
 const byStr=by=>Object.keys(by).map(c=>nf0.format(Math.round(by[c]))+' '+(SYM[c]||c)).join(' + ');
-function cardMoneyHTML(b,c,n){const r=rangeOf(b,c);if(!r)return '';const l=meetsIn(n,r);
- if(l.length)return `<b class="bmn" data-act="bsum" data-id="${n.id}" data-cc="${c.id}">💰 ${byStr(sumOf(l).by)}</b>`;
- if(c.role==='met'||c.type==='met')return `<b class="bmn z" data-act="bsum" data-id="${n.id}" data-cc="${c.id}">＋ сумма</b>`;return ''}
-function colSumHTML(b,c){const r=rangeOf(b,c);if(!r)return '';let all=[];for(const it of liveItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}
+function cardMeets(b,c,n,it,all){const r=rangeOf(b,c);if(!r)return null;const ms=meetsOf(n).filter(m=>(all||m.amount>0)&&m.ts>=r.from&&m.ts<=r.to).sort((x,y)=>x.ts-y.ts);
+ const ii=c.items.indexOf(it);const same=[];c.items.forEach((x,i)=>{if(x.id===n.id)same.push(i)});const cnt=same.length,j=same.indexOf(ii);
+ if(cnt<=1||j<0)return ms;return j<cnt-1?(ms[j]?[ms[j]]:[]):ms.slice(j)}
+const uniqItems=c=>{const seen=new Set(),out=[];for(const it of liveItems(c)){if(seen.has(it.id))continue;seen.add(it.id);out.push(it)}return out};
+function cardMoneyHTML(b,c,n,it){const r=rangeOf(b,c);if(!r)return '';const l=cardMeets(b,c,n,it);const ii=c.items.indexOf(it);
+ if(l.length)return `<b class="bmn" data-act="bsum" data-id="${n.id}" data-cc="${c.id}" data-ii="${ii}">💰 ${byStr(sumOf(l).by)}</b>`;
+ if(c.role==='met'||c.type==='met')return `<b class="bmn z" data-act="bsum" data-id="${n.id}" data-cc="${c.id}" data-ii="${ii}">＋ сумма</b>`;return ''}
+function colSumHTML(b,c){const r=rangeOf(b,c);if(!r)return '';let all=[];for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}
  if(!all.length)return '';const s=sumOf(all);const multi=Object.keys(s.by).length>1||!s.by.AED;
  return `<div class="bsum"><span>Итого</span><b>${byStr(s.by)}</b>${multi?`<small>≈ ${nf0.format(Math.round(s.aed))} AED</small>`:''}</div>`}
-function sumFromCard(b,n,cid){const c=b.cols.find(x=>x.id===cid)||{};const r=rangeOf(b,c);const day=c.ym&&c.ym!==ymOf(Date.now())?c.ym+'-01':dkey(Date.now());
- const list=r?meetsOf(n).filter(m=>m.ts>=r.from&&m.ts<=r.to).sort((x,y)=>x.ts-y.ts):[];
+function sumFromCard(b,n,cid,ii){const c=b.cols.find(x=>x.id===cid)||{};const r=rangeOf(b,c);const day=c.ym&&c.ym[0]!=='<'&&c.ym!==ymOf(Date.now())?c.ym+'-01':dkey(Date.now());
+ const it=c.items&&c.items[+ii]&&c.items[+ii].id===n.id?c.items[+ii]:(c.items||[]).find(x=>x.id===n.id);
+ const list=r&&it?cardMeets(b,c,n,it,true):[];
  if(!list.length)return meetSheet(n,null,day);if(list.length===1)return meetSheet(n,list[0]);
  menuSheet('Встречи: '+nodeTitle(n),[...list.map(m=>({ic:'💰',t:fmtDate(m.ts)+(m.amount>0?' · '+nf0.format(Math.round(m.amount))+' '+(SYM[m.cur]||m.cur):''),sub:'изменить',fn:()=>meetSheet(n,m)})),{ic:'＋',t:'Новая встреча',fn:()=>meetSheet(n,null,day)}])}
 function importForColumn(b,c){let list=[];for(const it of liveItems(c)){const n=N.get(it.id);if(!n||!isLead(n))continue;list=list.concat(scanLead(n).filter(x=>!x.dup&&(!c.ym||ymOf(x.ts)===c.ym)))}
@@ -1523,8 +1528,8 @@ function freeBoardMenu(b){const others=boards().filter(x=>x.id!==b.id);
  menuSheet(boardTitle(b),[{ic:'✏️',t:'Название',fn:()=>freeBoardEdit(b)},{ic:'＋',t:'Новый столбец',fn:()=>newFreeColSheet(b)},{ic:'📅',t:'Новый месяц',sub:'создам «лиды» и «виделись»',fn:()=>newMonthSheet(b)},{ic:'📊',t:'Суммы по столбцам',fn:()=>freeStats(b)},
   ...others.map(x=>({ic:x.free?'📋':'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
   {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},{ic:'🗑️',t:'Удалить эту доску',red:1,fn:()=>deleteBoard(b)}])}
-function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of liveItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${liveItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||!s.by.AED?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
- let tot=[];for(const c of b.cols){if(c.role!=='met')continue;const r=rangeOf(b,c);if(r)for(const it of liveItems(c))tot=tot.concat(meetsIn(N.get(it.id),r))}const ts=sumOf(tot);
+function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${uniqItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||!s.by.AED?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
+ let tot=[];for(const c of b.cols){if(c.role!=='met')continue;const r=rangeOf(b,c);if(r)for(const it of uniqItems(c))tot=tot.concat(meetsIn(N.get(it.id),r))}const ts=sumOf(tot);
  sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${tot.length?`<div class="note" style="margin-top:0">Всего со всех «виделись»: <b>${byStr(ts.by)}</b>${Object.keys(ts.by).length>1||!ts.by.AED?' · ≈ '+nf0.format(Math.round(ts.aed))+' AED':''}</div>`:''}${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
 function newFreeColSheet(b){let role='lead',ym=ymOf(Date.now()),name='';
  const draw=()=>{const auto=role==='own'?'':(ym?ymLabel(ym)+': '+ROLE_T[role]:ROLE_T[role]);
@@ -1554,19 +1559,22 @@ async function dateSugAdd(b){const cur=ymOf(Date.now());let col=b.cols.find(c=>c
 
 /* placing people on a free board. Drag = move, menus = add (a person can sit in several columns) */
 async function placeFree(b,lid,toId,idx,opt){opt=opt||{};const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
- const sB=JSON.stringify(b.cols),nm=nodeTitle(n);const from=opt.from?b.cols.find(c=>c.id===opt.from):null;const have=to.items.findIndex(x=>x.id===lid);
+ const sB=JSON.stringify(b.cols),nm=nodeTitle(n);const from=opt.from?b.cols.find(c=>c.id===opt.from):null;
+ const has=to.items.some(x=>x.id===lid);const dupOk=to.role==='met';
  const at=i=>(i==null||i<0||i>to.items.length)?to.items.length:i;
- if(from===to&&have>=0){const it=to.items.splice(have,1)[0];to.items.splice(at(idx),0,it);saveB();render();return}
- let it=null;if(from&&!opt.copy){const i=from.items.findIndex(x=>x.id===lid);if(i>=0)it=from.items.splice(i,1)[0]}
- if(have>=0){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
- it=it||{id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};to.items.splice(at(idx),0,it);saveB();render();
- toast('«'+nm+'» → '+colTitle(to),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to)}
+ const fi=from?(opt.at!=null&&from.items[opt.at]&&from.items[opt.at].id===lid?opt.at:from.items.findIndex(x=>x.id===lid)):-1;
+ if(from===to&&fi>=0&&!opt.copy){const it=to.items.splice(fi,1)[0];to.items.splice(at(idx),0,it);saveB();render();return}
+ let it=null;if(from&&!opt.copy&&fi>=0)it=from.items.splice(fi,1)[0];
+ if(has&&!(dupOk&&(opt.copy||opt.again))){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
+ it=it||{id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};if(opt.copy&&from===to)it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
+ to.items.splice(at(idx),0,it);saveB();render();
+ toast('«'+nm+'» → '+colTitle(to)+(has?' (ещё раз)':''),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to)}
 function freeAddMenu(b,ids){const n=N.get(ids[0]);const rows=[];const nd=ids.length===1&&n?nameDate(n):null;
- const addAll=async c=>{for(const i of ids)await placeFree(b,i,c.id,null,{copy:true});if(ids.length>1)toast('Добавила: '+ids.length+' → '+colTitle(c))};
+ const addAll=async c=>{for(const i of ids)await placeFree(b,i,c.id,null,{copy:true,again:true});if(ids.length>1)toast('Добавила: '+ids.length+' → '+colTitle(c))};
  if(nd){const y=ymOf(nd),c=b.cols.find(x=>x.ym===y&&x.role==='lead');const dd=new Date(nd);const ds=p2(dd.getDate())+'.'+p2(dd.getMonth()+1);
   if(c)rows.push({ic:'💡',t:'«'+colTitle(c)+'»',sub:'рекомендую: записан '+ds,fn:()=>addAll(c)});
   else rows.push({ic:'💡',t:'Создать «'+ymLabel(y)+': лиды» и добавить',sub:'записан '+ds,fn:async()=>{const nc=mkCol('lead',y);b.cols.push(nc);saveB();await addAll(nc)}})}
- b.cols.forEach(c=>rows.push({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:ids.length===1&&c.items.some(i=>i.id===ids[0])?'уже здесь':'',fn:()=>addAll(c)}));
+ b.cols.forEach(c=>rows.push({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:ids.length===1&&c.items.some(i=>i.id===ids[0])?(c.role==='met'?'уже здесь · добавлю ещё раз':'уже здесь'):'',fn:()=>addAll(c)}));
  if(!b.cols.length)rows.push({ic:'＋',t:'Сначала создай столбец',fn:()=>newFreeColSheet(b)});
  menuSheet(ids.length===1&&n?'Куда добавить «'+nodeTitle(n).slice(0,40)+'»?':'Куда добавить '+ids.length+' '+plural(ids.length,'человека','человек','человек')+'?',rows)}
 function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[];
@@ -1575,17 +1583,18 @@ function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[]
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg,fn:()=>openChat(n,'tg','')});
  const lc=lastChat(n),nc=(n.chats||[]).length;
  if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
- rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id)});
+ rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id,f.i)});
  rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
  rows.push({ic:'✏️',t:'Изменить имя',fn:()=>editSheet(n)});
- rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id)});
+ if(c.role==='met')rows.push({ic:'🔁',t:'Ещё одна встреча в этом месяце',sub:'добавлю ещё одну карточку этого человека сюда',fn:()=>placeFree(b,lid,c.id,f.i+1,{from:c.id,copy:true,again:true})});
+ rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id,f.i)});
  rows.push({ic:'➕',t:'Добавить копию в…',sub:'человек будет в двух столбцах',fn:()=>copyToSheet(b,lid,c.id)});
  rows.push({ic:'📸',t:'Добавить скриншот переписки',fn:()=>addShots(n)});
  rows.push({ic:'☎️',t:'Контакты',sub:[ct.ph?'+'+ct.ph:'',ct.ig?'IG @'+ct.ig:'',ct.tg?'TG @'+ct.tg:''].filter(Boolean).join(' · ')||'телефон, Instagram, Telegram',fn:()=>contactsSheet(n,()=>cardMenu(b,lid,c.id))});
  rows.push({ic:'🖼️',t:'Фото',fn:()=>avatarMenu(n)});rows.push({ic:'👤',t:'Открыть карточку',fn:()=>go('/n/'+n.id)});
- rows.push({ic:'✖️',t:'Убрать из этого столбца',red:1,fn:()=>removeItem(b,lid,c.id)});
+ rows.push({ic:'✖️',t:'Убрать эту карточку',red:1,fn:()=>removeItem(b,lid,c.id,f.i)});
  menuSheet(nodeTitle(n).slice(0,60)+' · '+colTitle(c),rows)}
-function copyToSheet(b,lid,cid){menuSheet('Добавить копию в…',b.cols.filter(c=>c.id!==cid).map(c=>({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:c.items.some(i=>i.id===lid)?'уже здесь':'',fn:()=>placeFree(b,lid,c.id,null,{from:cid,copy:true})})))}
+function copyToSheet(b,lid,cid){menuSheet('Добавить копию в…',b.cols.filter(c=>c.id!==cid).map(c=>({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:c.items.some(i=>i.id===lid)?'уже здесь':'',fn:()=>placeFree(b,lid,c.id,null,{from:cid,copy:true,again:true})})))}
 
 /* ----- advisor: what label for this person ----- */
 function analyzeChat(txt,n){const T=txt.toLowerCase();const has=r=>r.test(T);
@@ -1922,7 +1931,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 14 · 18.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 15 · 18.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
