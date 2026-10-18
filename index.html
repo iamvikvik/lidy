@@ -1465,7 +1465,7 @@ async function act6(act,a,id,n){switch(act){
 /* ===== stage 7: free boards (months), money in columns/cards, advisor ===== */
 const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const ymOf=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+p2(d.getMonth()+1)};
-const ymLabel=ym=>{const a=ym.split('-').map(Number);return MN[a[1]-1]+(a[0]!==new Date().getFullYear()?' '+a[0]:'')};
+const ymLabel=ym=>{if(ym[0]==='<')return 'До '+ym.slice(1);const a=ym.split('-').map(Number);return MN[a[1]-1]+(a[0]!==new Date().getFullYear()?' '+a[0]:'')};
 const ymShift=(k)=>{const d=new Date();return ymOf(new Date(d.getFullYear(),d.getMonth()+k,1).getTime())};
 const ROLE_T={lead:'лиды',met:'виделись'};
 const mkCol=(role,ym)=>({id:uid(),type:'own',role,ym,title:ymLabel(ym)+': '+ROLE_T[role],date:0,items:[]});
@@ -1474,7 +1474,8 @@ function monthOpts(extra){const out=[];for(let k=-2;k<=2;k++)out.push(ymShift(k)
 function nameDate(n){const m=nodeTitle(n).match(/(?:^|[^\d])(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})(?!\d)/);if(!m)return null;let y=+m[3];if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1]);return isNaN(d)?null:d.getTime()}
 
 /* ----- money ----- */
-function rangeOf(b,c){if(c.ym){const a=c.ym.split('-').map(Number);return{from:new Date(a[0],a[1]-1,1).getTime(),to:new Date(a[0],a[1],1).getTime()-1}}
+function rangeOf(b,c){if(c.ym&&c.ym[0]==='<')return{from:0,to:new Date(+c.ym.slice(1),0,1).getTime()-1};
+ if(c.ym){const a=c.ym.split('-').map(Number);return{from:new Date(a[0],a[1]-1,1).getTime(),to:new Date(a[0],a[1],1).getTime()-1}}
  if(c.type==='met'&&!b.free&&b.from)return{from:sod(b.from)-864e5,to:eod(b.to)+864e5};return null}
 const meetsIn=(n,r)=>meetsOf(n).filter(m=>m.amount>0&&m.ts>=r.from&&m.ts<=r.to);
 function sumOf(list){const by={};let aed=0;for(const m of list){by[m.cur]=(by[m.cur]||0)+m.amount;aed+=m.aed||conv(m.amount,m.cur,'AED')}return{by,aed}}
@@ -1501,6 +1502,7 @@ function monthChipsBind(el,c){el.dataset.ym=c.ym||'';el.querySelectorAll('#cmm [
 /* ----- free boards ----- */
 function newBoardChooser(){menuSheet('Новая доска',[
  {ic:'📋',t:'Свободная доска',sub:'без города и дат: столбцы по месяцам, лиды, виделись, суммы',fn:()=>freeBoardEdit(null)},
+ {ic:'🗓️',t:'Дубай: лиды и встречи 2026',sub:'готовая доска: «Старт», до 2026-го, затем по месяцам январь–декабрь',fn:()=>makeBoard2026(true)},
  {ic:'✈️',t:'Доска поездки',sub:'город, даты, столбики по дням',fn:()=>tripBoardEdit(null)}])}
 function freeBoardEdit(b0){const isNew=!b0;let mk=true;const cur=ymOf(Date.now());
  const draw=()=>{const nameV=draw.nv!=null?draw.nv:(b0?(b0.title||''):'');
@@ -1520,7 +1522,8 @@ function freeBoardMenu(b){const others=boards().filter(x=>x.id!==b.id);
   ...others.map(x=>({ic:x.free?'📋':'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
   {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},{ic:'🗑️',t:'Удалить эту доску',red:1,fn:()=>deleteBoard(b)}])}
 function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of liveItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${liveItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||!s.by.AED?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
- sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
+ let tot=[];for(const c of b.cols){if(c.role!=='met')continue;const r=rangeOf(b,c);if(r)for(const it of liveItems(c))tot=tot.concat(meetsIn(N.get(it.id),r))}const ts=sumOf(tot);
+ sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${tot.length?`<div class="note" style="margin-top:0">Всего со всех «виделись»: <b>${byStr(ts.by)}</b>${Object.keys(ts.by).length>1||!ts.by.AED?' · ≈ '+nf0.format(Math.round(ts.aed))+' AED':''}</div>`:''}${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
 function newFreeColSheet(b){let role='lead',ym=ymOf(Date.now()),name='';
  const draw=()=>{const auto=role==='own'?'':(ym?ymLabel(ym)+': '+ROLE_T[role]:ROLE_T[role]);
   const el=sheet(`<h3>Новый столбец</h3><div class="seg"><button data-r="lead" class="${role==='lead'?'on':''}">Лиды</button><button data-r="met" class="${role==='met'?'on':''}">Виделись</button><button data-r="own" class="${role==='own'?'on':''}">Свой</button></div>
@@ -1572,6 +1575,7 @@ function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[]
  if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
  rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id)});
  rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
+ rows.push({ic:'✏️',t:'Изменить имя',fn:()=>editSheet(n)});
  rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id)});
  rows.push({ic:'➕',t:'Добавить копию в…',sub:'человек будет в двух столбцах',fn:()=>copyToSheet(b,lid,c.id)});
  rows.push({ic:'📸',t:'Добавить скриншот переписки',fn:()=>addShots(n)});
@@ -1620,6 +1624,25 @@ function adviceSheet(b,n,cid){let txt='';const f=b?findItem(b,n.id,cid):null;
   el.querySelectorAll('[data-a]').forEach(x=>x.onclick=async()=>{await an.acts[+x.dataset.a].fn();render();draw()});
   el.querySelectorAll('[data-st]').forEach(x=>x.onclick=async()=>{n.st=n.st===x.dataset.st?'':x.dataset.st;if(!n.st)delete n.st;await saveNode(n,false);render();draw()});
   el.querySelectorAll('[data-w]').forEach(x=>x.onclick=async()=>{n.w=x.dataset.w;await saveNode(n,false);render();draw()})};draw()}
+
+/* ----- ready-made board: Дубай: лиды и встречи 2026 ----- */
+const B26='Дубай: лиды и встречи 2026';
+const MN_G=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+async function makeBoard2026(manual){let b=boards().find(x=>x.title===B26);
+ if(b&&manual){SET.board=b.id;saveB();render();toast('Такая доска уже есть');return b}
+ const mk=(title,role,ym)=>({id:uid(),type:'own',role:role||'',ym:ym||'',title,date:0,items:[]});
+ const cols=[mk('Старт'),mk('Лиды до 2026-го','lead','<2026'),mk('Виделись до 2026-го','met','<2026')];
+ MN_G.forEach((m,i)=>{const ym='2026-'+p2(i+1);cols.push(mk(m+' лиды','lead',ym));cols.push(mk(m+' виделись','met',ym))});
+ b={id:uid(),free:1,title:B26,city:'',from:sod(Date.now()),to:sod(Date.now()),cols};boards().push(b);SET.board=b.id;BS.sl=null;
+ /* people: by date in name -> lead column of that month; no date -> Старт; people with recorded meetings -> also "виделись" of that month */
+ const put=(c,id)=>{if(c&&!c.items.some(i=>i.id===id))c.items.push({id,s:0,tm:'',w:0,lt:0,at:Date.now()})};
+ const byYm=(role,ym)=>cols.find(c=>c.role===role&&c.ym===ym);
+ const ymKey=ts=>{const d=new Date(ts);return d.getFullYear()<2026?'<2026':(d.getFullYear()===2026?ymOf(ts):null)};
+ const list=leads().slice().sort((x,y)=>(nameDate(x)||0)-(nameDate(y)||0));let k=0;
+ for(const n of list){const nd=nameDate(n);const key=nd?ymKey(nd):null;put(key?byYm('lead',key):cols[0],n.id);k++;
+  for(const m of meetsOf(n)){if(!(m.amount>0))continue;const mk2=ymKey(m.ts);if(mk2)put(byYm('met',mk2),n.id)}}
+ saveB();if(manual!==false){if(parseHash().k!=='b')go('/b');else render();toast('Доска готова. Людей добавила: '+k)}return b}
+async function seedBoards(){if(SET.seed26)return;SET.seed26=1;saveSet();if(boards().some(x=>x.title===B26))return;await makeBoard2026(false)}
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -2013,6 +2036,7 @@ async function boot(){
  if(!db)toast('Память браузера недоступна: записи не сохранятся после закрытия');
  if(SET.pinHash)await unlock();
  if(!location.hash&&SET.last){const m=SET.last.split('/');const nd=N.get(m[1]);if(nd&&!nd.deleted)location.hash='#/'+SET.last}
+ try{await seedBoards();SET.board=SET.board||null}catch(e){console.error(e)}
  render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
