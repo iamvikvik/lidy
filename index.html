@@ -326,6 +326,20 @@ mark{background:var(--lime);border-radius:4px;padding:0 1px;color:inherit}
 .mimp .mi2{display:flex;gap:4px;flex:none}.mimp .mi2 input{width:76px;padding:7px 8px;font-size:15px;border-radius:10px}.mimp .mi2 select{border:1.5px solid var(--line);border-radius:10px;background:#fff;font-size:14px;padding:0 4px}
 .mimph{display:flex;align-items:center;gap:10px;margin:14px 0 2px}.mimph b{font-size:15px}
 
+textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display:block;font-family:inherit}
+
+/* --- boards: light cards, bigger photo, money --- */
+.bcard{align-items:flex-start;background:#fff;gap:10px;padding:9px}
+.bcard .av.sq{border-radius:14px;width:64px;height:64px;flex:none}
+.bcard .av.sq img{width:100%;height:100%;object-fit:cover;object-position:center 25%}
+.bct b{display:block;-webkit-line-clamp:unset;-webkit-box-orient:unset;overflow:visible;font-size:14px;line-height:1.28;word-break:break-word;color:#16161c}
+.bmn{display:inline-block;margin-top:5px;padding:3px 9px;border-radius:999px;background:#e9f8d8;color:#2b5a0c;font-size:12.5px;font-weight:800;font-style:normal;cursor:pointer}
+.bmn.z{background:#f1f1f5;color:#8a8a96;font-weight:700}
+.bsum{margin:2px 8px 6px;padding:9px 12px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1.5px #dcefc6;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.bsum span{font-size:11px;font-weight:800;color:#6b8a4a;text-transform:uppercase;letter-spacing:.06em}.bsum b{font-size:15px;font-weight:800}.bsum small{font-size:12px;color:var(--mut);font-weight:600}
+.bcol.t-own{background:#f3f3f6}.bcol.r-lead{background:#f1edff}.bcol.r-met{background:#effbe1}
+.mv{font-size:15px;font-weight:700;margin-top:2px}
+
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
 <script src="jszip.min.js"></script>
@@ -1019,10 +1033,10 @@ const dayTitle=ts=>WDN[new Date(ts).getDay()]+' '+dmy(ts);
 const colTitle=c=>c.title||(c.type==='day'?dayTitle(c.date):CT[c.type].t);
 const boards=()=>SET.boards||(SET.boards=[]);
 const curBoard=()=>{const b=boards();return b.find(x=>x.id===SET.board)||b[b.length-1]||null};
-const boardTitle=b=>b.title||(b.city+' · '+fmtTrip(b));
+const boardTitle=b=>b.title||(b.free?'Лиды и встречи':(b.city+' · '+fmtTrip(b)));
 const colOf=(b,type)=>b.cols.find(c=>c.type===type);
 const liveItems=c=>c?c.items.filter(it=>{const n=N.get(it.id);return n&&!n.deleted}):[];
-function findItem(b,lid){if(!b)return null;for(const c of b.cols){const i=c.items.findIndex(x=>x.id===lid);if(i>=0)return{c,i,it:c.items[i]}}return null}
+function findItem(b,lid,cid){if(!b)return null;if(cid){const c0=b.cols.find(c=>c.id===cid);if(c0){const i0=c0.items.findIndex(x=>x.id===lid);if(i0>=0)return{c:c0,i:i0,it:c0.items[i0]}}}for(const c of b.cols){const i=c.items.findIndex(x=>x.id===lid);if(i>=0)return{c,i,it:c.items[i]}}return null}
 const saveB=()=>saveSet();
 const relShort=ts=>{const k=Math.round((sod(Date.now())-sod(ts))/864e5);return k<=0?'сегодня':k===1?'вчера':k+' дн. назад'};
 const LOC={'Дубай':'Дубае','Москва':'Москве','Краснодар':'Краснодаре','Ростов':'Ростове','Париж':'Париже','Стамбул':'Стамбуле','Милан':'Милане','Сочи':'Сочи'};
@@ -1073,7 +1087,7 @@ async function bTouch(n,it){n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();
 async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);return true}
 async function maybeRest(b,n){const f=findItem(b,n.id);if(!f||(n.tc||0)<sleepN()||['rest','met'].includes(f.c.type)||f.c.type==='day')return;const r=colOf(b,'rest');if(!r)return;
  await placeItem(b,n.id,r.id,null,sleepN()+' сообщений без ответа — перенесла в «Отдыхают». Предложу снова в следующую поездку')}
-async function placeItem(b,lid,toId,idx,why){const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
+async function placeItem(b,lid,toId,idx,why,opt){if(b.free)return placeFree(b,lid,toId,idx,opt);const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
  const sB=JSON.stringify(b.cols),sN=snapLead(n);const f=findItem(b,lid);let it,from=null;
  if(f){from=f.c;f.c.items.splice(f.i,1);it=f.it}else it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
  if(idx==null||idx>to.items.length||idx<0)idx=to.items.length;to.items.splice(idx,0,it);
@@ -1087,15 +1101,15 @@ async function placeItem(b,lid,toId,idx,why){const n=N.get(lid),to=b.cols.find(c
  if(to.type==='met'&&from!==to)toast('Встретились: '+nm,'Записать встречу',()=>meetSheet(n,null,from&&from.type==='day'?dkey(from.date):dkey(Date.now())));
  else if(from!==to)toast(msg||('«'+nm+'» → '+colTitle(to)),'Отменить',undo);
  if(to.type==='wait'&&(ft==='new'||ft==='todo'))await maybeRest(b,n)}
-async function removeItem(b,lid){const f=findItem(b,lid);if(!f)return;const n0=N.get(lid);if(n0&&n0.plan){b.dis=b.dis||{};b.dis[lid]=n0.plan}const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
+async function removeItem(b,lid,cid){const f=findItem(b,lid,cid);if(!f)return;const n0=N.get(lid);if(n0&&n0.plan){b.dis=b.dis||{};b.dis[lid]=n0.plan}const sB=JSON.stringify(b.cols);f.c.items.splice(f.i,1);saveB();render();toast('Убрала с доски','Вернуть',()=>{b.cols=JSON.parse(sB);saveB();render()})}
 
 /* ----- your "write on" dates appear on the board ----- */
-function syncPlans(b){if(!b||eod(b.to)<Date.now())return;const todo=colOf(b,'todo');if(!todo)return;b.dis=b.dis||{};let ch=false;
+function syncPlans(b){if(!b||b.free||eod(b.to)<Date.now())return;const todo=colOf(b,'todo');if(!todo)return;b.dis=b.dis||{};let ch=false;
  for(const n of leads()){if(!n.plan||n.st==='stop'||b.dis[n.id]===n.plan||n.plan>eod(b.to)||findItem(b,n.id)||!citiesOf(n).includes(b.city))continue;
   let i=todo.items.findIndex(x=>{const m=N.get(x.id);return m&&m.plan&&m.plan>n.plan});if(i<0)i=todo.items.length;todo.items.splice(i,0,{id:n.id,s:0,tm:'',w:0,lt:0,at:Date.now(),auto:1});ch=true}
  if(ch)saveSet()}
 const planDue=n=>n.plan&&n.plan<=eod(Date.now());
-function suggestIds(b){if(!b||eod(b.to)<Date.now())return[];const rm=remMapAll(),e=eod(Date.now());return leads().filter(n=>{if(n.st==='stop'||findItem(b,n.id)||!citiesOf(n).includes(b.city))return false;if(n.lt&&n.lt>=sod(Date.now()))return false;const p=planOf(n,rm);return p&&p.ts&&p.src!=='new'&&p.src!=='manual'&&p.ts<=e}).map(n=>n.id)}
+function suggestIds(b){if(!b||b.free||eod(b.to)<Date.now())return[];const rm=remMapAll(),e=eod(Date.now());return leads().filter(n=>{if(n.st==='stop'||findItem(b,n.id)||!citiesOf(n).includes(b.city))return false;if(n.lt&&n.lt>=sod(Date.now()))return false;const p=planOf(n,rm);return p&&p.ts&&p.src!=='new'&&p.src!=='manual'&&p.ts<=e}).map(n=>n.id)}
 function onMeetSaved(n,ms){for(const b of boards()){const f=findItem(b,n.id);const met=colOf(b,'met');if(!f||!met||f.c===met)continue;if(!ms.some(m=>m.ts>=sod(b.from)-864e5&&m.ts<=eod(b.to)+864e5))continue;
  f.c.items.splice(f.i,1);f.it.s=0;met.items.push(f.it);saveB();toast('«'+nodeTitle(n)+'» → Встретились 💚')}}
 /* ----- columns ----- */
@@ -1106,7 +1120,7 @@ function insertDayCol(b,c){const ds=b.cols.map((x,i)=>({x,i})).filter(o=>o.x.typ
  if(after.length)at=after[after.length-1].i+1;else if(ds.length)at=ds[0].i;else{const w=b.cols.findIndex(x=>x.type==='wait');at=w>=0?w+1:b.cols.length}b.cols.splice(at,0,c)}
 function ensureDays(b){const have=new Set(dayCols(b).map(c=>dkey(c.date)));for(let d=sod(b.from);d<=sod(b.to);d=addDays(d,1))if(!have.has(dkey(d)))insertDayCol(b,{id:uid(),type:'day',title:'',date:d,items:[]})}
 function moveCol(b,cid,to){const i=b.cols.findIndex(c=>c.id===cid);if(i<0||to===i)return;const [c]=b.cols.splice(i,1);b.cols.splice(Math.max(0,Math.min(b.cols.length,to)),0,c);saveB();render()}
-function newColSheet(b){let type='day';const sug=suggestDates(b);let date=sug[0];
+function newColSheet(b){if(b.free)return newFreeColSheet(b);let type='day';const sug=suggestDates(b);let date=sug[0];
  const draw=()=>{const el=sheet(`<h3>Новый столбик</h3><div class="seg"><button data-t="day" class="${type==='day'?'on':''}">📅 День</button><button data-t="own" class="${type==='own'?'on':''}">📌 Свой</button></div>
   ${type==='day'?`<div class="lbl">Подсказываю дату</div><div class="chips">${sug.map(d=>`<button type="button" class="chip${dkey(d)===dkey(date)?' on':''}" data-d="${d}">${dayTitle(d)}</button>`).join('')}</div>
   <div class="lbl">Или выбери сама</div><input class="inp" type="date" id="ncd" value="${ymd(new Date(date))}"><div class="lbl">Название</div><input class="inp" id="nct" placeholder="${esc(dayTitle(date))}" maxlength="40"><div class="hint" style="text-align:left">Можно оставить пустым — назову по дате.</div>`
@@ -1122,21 +1136,25 @@ function colSheet(b,cid){const c=b.cols.find(x=>x.id===cid);if(!c)return;const i
  const el=sheet(`<h3>${CT[c.type].e} ${esc(colTitle(c))}</h3>
  <div class="lbl">Название</div><input class="inp" id="cst" value="${esc(c.title||'')}" placeholder="${esc(c.type==='day'?dayTitle(c.date):CT[c.type].t)}" maxlength="40">
  ${c.type==='day'?`<div class="lbl">Дата</div><input class="inp" type="date" id="csd" value="${ymd(new Date(c.date))}"><div class="hint" style="text-align:left">Пустое название — подставлю день недели и дату сама.</div>`:''}
+ ${monthChipsH(c)}
  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="css">Сохранить</button></div>
  <div class="row"><button class="pill ghost" id="csl"${i===0?' disabled':''}>← Левее</button><button class="pill ghost" id="csr"${i===b.cols.length-1?' disabled':''}>Правее →</button>${c.type==='day'?'<button class="pill c4" id="csn">＋ Следующий день</button>':''}</div>
  ${items.length&&['todo','wait'].includes(c.type)?`<div class="row"><button class="pill c5" id="csq">▶ Написать всем по очереди · ${items.length}</button></div>`:''}
  ${c.type==='day'&&items.length?`<div class="row"><button class="pill c3" id="csc">Подтвердить встречи · ${items.length}</button></div>`:''}
+ ${items.length&&(c.ym||c.type==='met')?`<div class="row"><button class="pill c3" id="csm">💰 Подтянуть суммы из заметок</button></div>`:''}
  <div class="row"><button class="pill ghost" id="csx" style="color:#d6264a">Удалить столбик</button></div>`);
- el.querySelector('#css').onclick=()=>{c.title=el.querySelector('#cst').value.trim();const d=el.querySelector('#csd');if(d&&d.value){const [y,m,dd]=d.value.split('-').map(Number);const nd=new Date(y,m-1,dd).getTime();if(nd!==c.date){b.cols.splice(b.cols.indexOf(c),1);c.date=nd;insertDayCol(b,c)}}saveB();closeSheet();render()};
+ monthChipsBind(el,c);const csm=el.querySelector('#csm');if(csm)csm.onclick=()=>{closeSheet();importForColumn(b,c)};
+ el.querySelector('#css').onclick=()=>{c.title=el.querySelector('#cst').value.trim();c.ym=el.dataset.ym!==undefined?el.dataset.ym:c.ym;const d=el.querySelector('#csd');if(d&&d.value){const [y,m,dd]=d.value.split('-').map(Number);const nd=new Date(y,m-1,dd).getTime();if(nd!==c.date){b.cols.splice(b.cols.indexOf(c),1);c.date=nd;insertDayCol(b,c)}}saveB();closeSheet();render()};
  el.querySelector('#csl').onclick=()=>moveCol(b,c.id,i-1);el.querySelector('#csr').onclick=()=>moveCol(b,c.id,i+1);
  const n2=el.querySelector('#csn');if(n2)n2.onclick=()=>{const s=suggestDates(b,1)[0];const nc={id:uid(),type:'day',title:'',date:s,items:[]};insertDayCol(b,nc);BS.goCol=nc.id;saveB();closeSheet();render();toast('Добавила: '+dayTitle(s))};
  const q=el.querySelector('#csq');if(q)q.onclick=()=>startQueue(items.map(x=>x.id),'write');
  const cc=el.querySelector('#csc');if(cc)cc.onclick=()=>startQueue(items.map(x=>x.id),'confirm');
- el.querySelector('#csx').onclick=async()=>{const k=liveItems(c).length;if(!await ask('Удалить «'+colTitle(c)+'»?',k?'Люди из него ('+k+') перейдут в «'+CT.wait.t+'».':'Столбик пустой.','Удалить',true))return;
+ el.querySelector('#csx').onclick=async()=>{const k=liveItems(c).length;if(!await ask('Удалить «'+colTitle(c)+'»?',k?(b.free?'Люди из него ('+k+') исчезнут с этой доски. В книжках они останутся.':'Люди из него ('+k+') перейдут в «'+CT.wait.t+'».'):'Столбик пустой.','Удалить',true))return;
   const w=c.type==='wait'?colOf(b,'todo'):colOf(b,'wait');if(w&&w!==c)w.items.push(...c.items);b.cols=b.cols.filter(x=>x!==c);saveB();render()}}
 
 /* ----- boards ----- */
-function boardEdit(b0){const isNew=!b0;const d0=sod(Date.now());
+function boardEdit(b0){if(!b0)return newBoardChooser();if(b0.free)return freeBoardEdit(b0);return tripBoardEdit(b0)}
+function tripBoardEdit(b0){const isNew=!b0;const d0=sod(Date.now());
  const D=isNew?{id:uid(),city:(here()&&here().city)||cityList()[0]||'',from:d0,to:addDays(d0,13),title:'',cols:[]}:Object.assign({},b0);
  const prev=boards().filter(x=>x.id!==D.id);let carry=isNew&&prev.length?1:0,carryR=0;
  const draw=()=>{const cl=[...new Set([...cityList(),...(D.city?[D.city]:[])])];
@@ -1158,11 +1176,11 @@ function boardEdit(b0){const isNew=!b0;const d0=sod(Date.now());
     boards().push(D);SET.board=D.id;BS.sl=null}
    else{Object.assign(b0,{city:D.city,from:D.from,to:D.to,title:D.title});ensureDays(b0)}
    saveB();closeSheet();if(parseHash().k!=='b')go('/b');else render();if(isNew)toast('Доска готова. Добавь людей из книжек 👥')}};draw()}
-function boardMenu(){const b=curBoard();if(!b)return boardEdit(null);const others=boards().filter(x=>x.id!==b.id).slice().sort((x,y)=>y.from-x.from);
+function boardMenu(){const b=curBoard();if(!b)return boardEdit(null);if(b.free)return freeBoardMenu(b);const others=boards().filter(x=>x.id!==b.id).slice().sort((x,y)=>y.from-x.from);
  menuSheet(boardTitle(b),[{ic:'✏️',t:'Город, даты, название',fn:()=>boardEdit(b)},{ic:'📊',t:'Итоги поездки',fn:()=>boardStats(b)},{ic:'💬',t:'Шаблоны сообщений',fn:tplMsgSheet},
   {ic:b.hidePast?'👁️':'🙈',t:b.hidePast?'Показать прошедшие дни':'Скрыть прошедшие дни',fn:()=>{b.hidePast=b.hidePast?0:1;saveB();render()}},
   ...others.map(x=>({ic:'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
-  {ic:'＋',t:'Новая доска поездки',fn:()=>boardEdit(null)},
+  {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},
   {ic:'🗑️',t:'Удалить эту доску',red:1,fn:async()=>{if(!await ask('Удалить доску?','Люди останутся в книжках, удалится только эта доска.','Удалить',true))return;SET.boards=boards().filter(x=>x!==b);SET.board=null;saveB();render()}}])}
 function boardStats(b){let w=0,ans=0;const by={};for(const c of b.cols){const l=liveItems(c);by[c.type]=(by[c.type]||0)+l.length;for(const it of l)w+=it.w||0;if(['day','next','met','own'].includes(c.type))ans+=l.length}
  const sure=b.cols.filter(c=>c.type==='day').reduce((s,c)=>s+liveItems(c).filter(x=>x.s).length,0),met=by.met||0;const per=(met+sure)?w/(met+sure):0;
@@ -1174,10 +1192,10 @@ function boardStats(b){let w=0,ans=0;const by={};for(const c of b.cols){const l=
 
 /* ----- people pickers ----- */
 const bookList=()=>[...N.values()].filter(n=>isBook(n)&&!n.deleted).sort((a,b)=>(a.order||0)-(b.order||0));
-const bkOf=b=>b&&b.bk!=null?b.bk:'city';
+const bkOf=b=>b&&b.bk!=null?b.bk:(b&&b.free?'':'city');
 function setBk(b,v){if(b){b.bk=v;saveB()}}
 function peopleList(book,q,b){const qq=nq(q||'');const city=b&&b.city;return leads().filter(n=>(book==='city'?(city&&citiesOf(n).includes(city)):(!book||isDesc(n.id,book)))&&(!qq||nq(nodeTitle(n)).includes(qq))).sort((a,b)=>b.updated-a.updated)}
-const bookChipsH=(cur,b)=>(b?`<button type="button" class="chip${cur==='city'?' on':''}" data-bk="city">📍 ${esc(b.city)}</button>`:'')+`<button type="button" class="chip${!cur?' on':''}" data-bk="">Все</button>`+bookList().map(k=>`<button type="button" class="chip${cur===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('');
+const bookChipsH=(cur,b)=>(b&&!b.free?`<button type="button" class="chip${cur==='city'?' on':''}" data-bk="city">📍 ${esc(b.city)}</button>`:'')+`<button type="button" class="chip${!cur?' on':''}" data-bk="">Все</button>`+bookList().map(k=>`<button type="button" class="chip${cur===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('');
 function whereOn(b,lid){const f=findItem(b,lid);return f?colTitle(f.c):''}
 function pickMany(b,title,ok,opt){opt=opt||{};return new Promise(res=>{const sel=new Set(opt.pre||[]);let book=opt.only?'':bkOf(b),q='';
  const el=sheet(`<h3>${esc(title)}</h3>${opt.hint?`<div class="hint" style="text-align:left">${opt.hint}</div>`:''}<input class="inp" id="pmq" placeholder="Найти по имени" autocomplete="off"><div class="chips bks${opt.only?' hide':''}" id="pmb"></div><div id="pml"></div><div class="pmbar"><button class="btn pink wide" id="pmok">${esc(ok)}</button></div>`);
@@ -1186,16 +1204,16 @@ function pickMany(b,title,ok,opt){opt=opt||{};return new Promise(res=>{const sel
   el.querySelectorAll('[data-pid]').forEach(x=>x.onclick=()=>{const id=x.dataset.pid;if(sel.has(id))sel.delete(id);else sel.add(id);x.classList.toggle('on');x.querySelector('.ck').textContent=sel.has(id)?'✓':'';el.querySelector('#pmok').textContent=ok+(sel.size?' · '+sel.size:'')})};
  el.querySelector('#pmq').oninput=e=>{q=e.target.value;draw()};draw();if(sel.size)el.querySelector('#pmok').textContent=ok+' · '+sel.size;
  el.querySelector('#pmok').onclick=()=>{closeSheet();res([...sel])};SHEET.bg.onclick=()=>{closeSheet();res(null)}})}
-function newPersonSheet(b,cid){let book=SET.npBook&&N.get(SET.npBook)&&!N.get(SET.npBook).deleted?SET.npBook:((bookList().find(k=>nq(nodeTitle(k)).includes(nq(b.city)))||bookList()[0]||{}).id||'');let avatar=null,title='';
- const draw=()=>{const el=sheet(`<h3>Новый человек</h3><input class="inp" id="npn" placeholder="Имя, ник, телефон…" value="${esc(title)}" maxlength="80">
+function newPersonSheet(b,cid){let book=SET.npBook&&N.get(SET.npBook)&&!N.get(SET.npBook).deleted?SET.npBook:((bookList().find(k=>b.city&&nq(nodeTitle(k)).includes(nq(b.city)))||bookList()[0]||{}).id||'');let avatar=null,title='';
+ const draw=()=>{const el=sheet(`<h3>Новый человек</h3><textarea class="inp nmx" id="npn" rows="2" placeholder="Имя, дата, телефон…" maxlength="300">${esc(title)}</textarea>
   <div class="lbl">В какую книжку</div><div class="chips">${bookList().map(k=>`<button type="button" class="chip${book===k.id?' on':''}" data-bk="${k.id}">${esc(k.mark)} ${esc(nodeTitle(k))}</button>`).join('')||'<span class="hint">Сначала создай книжку на вкладке «Книжки»</span>'}</div>
   <div class="lbl">Фото (необязательно)</div><div class="sw"><button class="c up${avatar?' on':''}" id="npa" style="height:64px;width:64px;border-radius:50%">${avatar?`<img src="${bu(avatar)}" alt="" style="border-radius:50%">`:'Фото'}</button></div>
   <div class="row" style="margin-top:12px"><button class="btn pink wide" id="npok">Добавить на доску</button></div>`);
-  const nm=el.querySelector('#npn');nm.oninput=()=>title=nm.value;if(!title)setTimeout(()=>nm.focus(),80);
+  const nm=el.querySelector('#npn');growTA(nm);nm.oninput=()=>{if(/\n/.test(nm.value))nm.value=nm.value.replace(/\n+/g,' ');title=nm.value;growTA(nm)};nm.onkeydown=e=>{if(e.key==='Enter')e.preventDefault()};if(!title)setTimeout(()=>nm.focus(),80);
   el.querySelectorAll('[data-bk]').forEach(x=>x.onclick=()=>{book=x.dataset.bk;draw()});
   el.querySelector('#npa').onclick=async()=>{const f=(await pickFile(false))[0];if(f){const sr=await makeSrc(f);const r=await avatarFromBlob(sr.blob);if(r)avatar=r}draw()};
   el.querySelector('#npok').onclick=async()=>{const t=title.trim();if(!t){toast('Впиши имя');return}if(!book){toast('Выбери книжку');return}SET.npBook=book;saveSet();
-   const x=newNode('col',book,{title:t,avatar,cities:[b.city]});await saveNode(x);closeSheet();await placeItem(b,x.id,cid,null)}};draw()}
+   const x=newNode('col',book,{title:t,avatar,cities:b.city?[b.city]:[]});await saveNode(x);closeSheet();await placeItem(b,x.id,cid,null)}};draw()}
 async function addSheet(b,cid){const c=b.cols.find(x=>x.id===cid);menuSheet('Добавить в «'+colTitle(c)+'»',[
  {ic:'👥',t:'Из книжек',sub:'Выбери сразу несколько человек',fn:async()=>{const ids=await pickMany(b,'Кого добавить в «'+colTitle(c)+'»?','Добавить');if(!ids||!ids.length)return;for(const id of ids)await placeItem(b,id,cid,null);if(ids.length>1)toast('Добавила: '+ids.length)}},
  {ic:'🆕',t:'Новый человек',sub:'Создам коллекцию в книжке',fn:()=>newPersonSheet(b,cid)}])}
@@ -1208,7 +1226,7 @@ async function addShots(n,after){const fs=await pickFiles('image/*',true);if(!fs
  for(const f of fs){const id='ch_'+uid();await putBlob(id,f);(n.chats=n.chats||[]).push({id:uid(),ts:Date.now(),src,img:id,text:'',title:(SRC[src]||'Переписка')+' · '+fmtDate(Date.now())})}
  await saveNode(n);render();toast(fs.length>1?'Скриншотов добавлено: '+fs.length:'Скриншот переписки добавлен','Открыть',()=>chatView(n,lastChat(n)));after&&after()}
 /* ----- card menu ----- */
-function cardMenu(b,lid){const f=findItem(b,lid);if(!f)return;const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
+function cardMenu(b,lid,cid){const f=findItem(b,lid,cid);if(!f)return;if(b.free)return freeCardMenu(b,lid,f);const n=N.get(lid),c=f.c,it=f.it,ct=contactsOf(n);const tx=fillT((c.type==='day'?ctpls():mtpls())[0]||'',b,c);const rows=[];
  if(ct.ph)rows.push({ic:'🟢',t:'Написать в WhatsApp',sub:'+'+ct.ph+' · с готовым текстом',fn:()=>openChat(n,'wa',tx)});
  if(ct.ig)rows.push({ic:'📸',t:'Написать в Instagram',sub:'@'+ct.ig+' · текст скопирую',fn:()=>openChat(n,'ig',tx)});
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg+' · текст скопирую',fn:()=>openChat(n,'tg',tx)});
@@ -1221,14 +1239,15 @@ function cardMenu(b,lid){const f=findItem(b,lid);if(!f)return;const n=N.get(lid)
  else if(['wait','rest','next'].includes(c.type))rows.push({ic:'✉️',t:'Написала ещё раз',sub:'без ответа: '+(n.tc||0)+' из '+sleepN(),fn:async()=>{await bTouch(n,it);saveB();render();toast('Записала: '+nodeTitle(n)+' · без ответа: '+n.tc);await maybeRest(b,n)}});
  if(c.type==='day'){rows.push({ic:it.s?'🤍':'💚',t:it.s?'Пометить «скорее всего»':'Пометить «точно»',sub:it.s?'догадка, день не назначен':'человек сам назвал день',fn:()=>{it.s=it.s?0:1;saveB();render()}});
   rows.push({ic:'🕐',t:it.tm?'Время: '+it.tm:'Указать время',fn:()=>timeSheet(b,lid)})}
- rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid)});
+ rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id)});
+ rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
  rows.push({ic:'📝',t:'Записать встречу',sub:'с суммой, в календарь встреч',fn:()=>meetSheet(n,null,c.type==='day'?dkey(c.date):dkey(Date.now()))});
  rows.push({ic:'☎️',t:'Контакты',sub:[ct.ph?'+'+ct.ph:'',ct.ig?'IG @'+ct.ig:'',ct.tg?'TG @'+ct.tg:''].filter(Boolean).join(' · ')||'телефон, Instagram, Telegram',fn:()=>contactsSheet(n,()=>cardMenu(b,lid))});
  rows.push({ic:'🖼️',t:'Фото',fn:()=>avatarMenu(n)});
  rows.push({ic:'👤',t:'Открыть карточку',fn:()=>go('/n/'+n.id)});
- rows.push({ic:'✖️',t:'Убрать с доски',red:1,fn:()=>removeItem(b,lid)});
+ rows.push({ic:'✖️',t:'Убрать с доски',red:1,fn:()=>removeItem(b,lid,c.id)});
  menuSheet(nodeTitle(n)+' · '+colTitle(c),rows)}
-function moveToSheet(b,lid){const f=findItem(b,lid);menuSheet('Куда перенести?',b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:f&&f.c===c?'сейчас здесь':'',fn:()=>{if(!(f&&f.c===c))placeItem(b,lid,c.id,null)}})))}
+function moveToSheet(b,lid,cid){const f=findItem(b,lid,cid);menuSheet('Куда перенести?',b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:f&&f.c===c?'сейчас здесь':'',fn:()=>{if(!(f&&f.c===c))placeItem(b,lid,c.id,null,null,{from:f&&f.c.id})}})))}
 function timeSheet(b,lid){const f=findItem(b,lid);if(!f)return;const el=sheet(`<h3>Во сколько?</h3><input class="inp" type="time" id="tmv" value="${esc(f.it.tm||'19:00')}"><div class="hint" style="text-align:left">С временем встреча станет «точно» 💚</div><div class="row" style="margin-top:12px"><button class="btn pink wide" id="tmo">Сохранить</button></div>${f.it.tm?'<div class="row"><button class="pill ghost" id="tmx">Убрать время</button></div>':''}`);
  el.querySelector('#tmo').onclick=()=>{f.it.tm=el.querySelector('#tmv').value;if(f.it.tm)f.it.s=1;saveB();closeSheet();render()};const x=el.querySelector('#tmx');if(x)x.onclick=()=>{f.it.tm='';saveB();closeSheet();render()}}
 
@@ -1260,7 +1279,7 @@ function queueStep(){const b=curBoard();if(!QU||!b||QU.i>=QU.ids.length){const d
   q.done++;q.i++;QU=q;queueStep()}}
 
 /* ----- assistant tips ----- */
-function tipsOf(b){const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b);
+function tipsOf(b){if(b.free)return freeTips(b);const out=[],now=Date.now(),t0=sod(now);const days=dayCols(b);
  if(eod(b.to)>=now){const soon=[];for(const c of b.cols)for(const it of liveItems(c)){const n=N.get(it.id);if(n.lt&&n.lt>=t0)continue;let w=0;
    if(n.plan&&n.plan<=now+90*6e4&&n.plan>=t0)w=n.plan;else if(c.type==='day'&&sod(c.date)===t0&&!it.s){const hb=habitOf(n);if(hb){const x=atW(n,c.date);if(x<=now+90*6e4)w=x}}
    if(w)soon.push({n,w})}
@@ -1283,14 +1302,16 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const dots=wt?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
  const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
- const pl=n.plan&&c.type!=='day'&&c.type!=='met'?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
+ const pl=n.plan&&c.type!=='day'&&c.type!=='met'&&!b.free?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}">${avatarHTML(n,40)}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b><span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span></div>${ch}</div>`}
-const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто'};
+ const mn=cardMoneyHTML(b,c,n);const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${mn}</div>${ch}</div>`}
+const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
- return `<section class="bcol t-${c.type}${isT?' today':''}${past?' past':''}" data-col="${c.id}"><header data-bh="${c.id}" data-act="bcol" data-c="${c.id}"><span class="bhn"><b>${CT[c.type].e} ${esc(colTitle(c))}</b><small>${sub}</small></span><span class="bmore">⋯</span></header>
- <div class="bl">${items.map(it=>cardHTML(b,c,it)).join('')||`<div class="bempty">${emptyT[c.type]}</div>`}</div><button class="badd" data-act="badd" data-c="${c.id}">＋ Добавить</button></section>`}
+ const em=c.role==='lead'?emptyT.lead:c.role==='met'?emptyT.metr:emptyT[c.type];
+ return `<section class="bcol t-${c.type}${c.role?' r-'+c.role:''}${isT?' today':''}${past?' past':''}" data-col="${c.id}"><header data-bh="${c.id}" data-act="bcol" data-c="${c.id}"><span class="bhn"><b>${c.role==='lead'?'📝':c.role==='met'?'🤝':CT[c.type].e} ${esc(colTitle(c))}</b><small>${sub}</small></span><span class="bmore">⋯</span></header>
+ <div class="bl">${items.map(it=>cardHTML(b,c,it)).join('')||`<div class="bempty">${em}</div>`}</div>${colSumHTML(b,c)}<button class="badd" data-act="badd" data-c="${c.id}">＋ Добавить</button></section>`}
 function drawerList(b){const list=peopleList(bkOf(b),BS.q,b).slice(0,150);return list.map(n=>{const w=whereOn(b,n.id);return `<div class="bp${BS.sel.has(n.id)?' on':''}" data-bp="${n.id}" data-act="bpp" data-id="${n.id}">${avatarHTML(n,40)}<span class="bpt"><b>${esc(nodeTitle(n))}</b><small>${w?'📌 '+esc(w):esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span>${BS.multi?`<i class="ck">${BS.sel.has(n.id)?'✓':''}</i>`:''}</div>`}).join('')||'<p class="hint">Никого не нашла</p>'}
 function drawerHTML(b){
  return `<div class="bdr" id="bdr"><div class="bdrh"><input class="inp" id="bdq" placeholder="Найти человека" value="${esc(BS.q)}" autocomplete="off"><button class="pill ${BS.multi?'c2':'ghost'}" data-act="bmulti">${BS.multi?'✓ '+BS.sel.size:'Несколько'}</button><button class="ib" data-act="bdrawer">${ICON.close}</button></div>
@@ -1299,15 +1320,15 @@ function drawerHTML(b){
  <div class="bdl" id="bdl">${drawerList(b)}</div></div>`}
 function viewBoard(){const b=curBoard();
  const ob=$('#bcols');if(ob){BS.sl=ob.scrollLeft;document.querySelectorAll('.bcol[data-col]').forEach(s=>{const l=s.querySelector('.bl');if(l)BS.tops[s.dataset.col]=l.scrollTop})}const od=$('#bdl');if(od)BS.dtop=od.scrollTop;
- if(!b)return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Доска поездки</h1>
-  <div class="empty" style="padding-top:20px"><img src="lidy.png" alt=""><b>Как Trello, только для твоих людей</b>Столбики: кому написать, кому написала, дни поездки с датами, следующий приезд. Людей берёшь прямо из своих книжек и перетаскиваешь.</div>
-  <div class="row" style="justify-content:center"><button class="btn pink" data-act="bnew">＋ Создать доску поездки</button></div></div>${tabbar('/b')}`;
+ if(!b)return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Доски</h1>
+  <div class="empty" style="padding-top:20px"><img src="lidy.png" alt=""><b>Как Trello, только для твоих людей</b>Свободная доска: столбики по месяцам (лиды, виделись) с суммами. Или доска поездки с днями и датами. Людей берёшь прямо из своих книжек и перетаскиваешь.</div>
+  <div class="row" style="justify-content:center"><button class="btn pink" data-act="bnew">＋ Создать доску</button></div></div>${tabbar('/b')}`;
  syncPlans(b);const tw=todayW(),sk=streak(),q=queueIds(b).length,allT=tipsOf(b);BS.tips=allT;const tips=allT.slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
  const cols=b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
- return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${dmy(x.from)}–${dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>✈️ ${esc(boardTitle(b))}</b><small>⌄ даты, итоги, шаблоны</small></button>${topBtn('settings',ICON.gear)}</div>
- <div class="bstat"><span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]).id}">⇤ В начало</button></div>
+ return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${x.free?'свободная':dmy(x.from)+'–'+dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>${b.free?'📋':'✈️'} ${esc(boardTitle(b))}</b><small>${b.free?'⌄ название, столбцы, итоги':'⌄ даты, итоги, шаблоны'}</small></button><button class="ib" data-act="bdel" aria-label="Удалить доску" style="width:40px;height:40px;font-size:18px">🗑️</button>${topBtn('settings',ICON.gear)}</div>
+ <div class="bstat">${b.free?`<button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button><button class="pill c4" data-act="bnewcol">＋ Столбик</button><button class="pill ghost" data-act="bfmonth">📅 Новый месяц</button>`:`<span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]||{}).id}">⇤ В начало</button>`}</div>
  ${tips.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><div class="btb"><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button>${i===0&&allT.length>1?`<button class="pill sm ghost" data-act="btips">ещё ${allT.length-1}</button>`:''}</div></div>`).join('')}</div>
- <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>подскажу дату: ${dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
+ <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>${b.free?'месяц и название':'подскажу дату: '+dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
  ${BS.drawer?drawerHTML(b):''}</div>${tabbar('/b')}`}
 function afterBoard(){const bc=$('#bcols');if(!bc)return;
  document.querySelectorAll('.bcol[data-col]').forEach(s=>{const l=s.querySelector('.bl');if(l&&BS.tops[s.dataset.col])l.scrollTop=BS.tops[s.dataset.col]});
@@ -1331,15 +1352,15 @@ document.addEventListener('pointerdown',e=>{if(LOCKED||BD||DR)return;const t=e.t
  const end=()=>{if(BD){BD.g.remove();BD.t.classList.remove('bdragging');document.querySelectorAll('.bcol.over').forEach(o=>o.classList.remove('over'));const ph=document.querySelector('.bph');if(ph)ph.remove();document.body.classList.remove('bdmode');document.querySelectorAll('.bempty').forEach(x=>x.style.display='')}};
  const timer=setTimeout(()=>{started=true;const g=document.createElement('div');g.className='bghost'+(kind==='h'?' h':'');
   g.innerHTML=kind==='h'?esc(t.querySelector('b').textContent):(()=>{const n=N.get(id);return avatarHTML(n,34)+'<b>'+esc(nodeTitle(n))+'</b>'})();document.body.appendChild(g);
-  BD={kind,id,t,g,col:null,idx:0};t.classList.add('bdragging');document.body.classList.add('bdmode');navigator.vibrate&&navigator.vibrate(12);pos();bdOver(lx,ly);
+  BD={kind,id,t,g,col:null,idx:0,from:kind==='c'?(t.closest('.bcol')||{dataset:{}}).dataset.col:null};t.classList.add('bdragging');document.body.classList.add('bdmode');navigator.vibrate&&navigator.vibrate(12);pos();bdOver(lx,ly);
   iv=setInterval(()=>{const bc=$('#bcols');if(!bc)return;let mvd=false;const br=bc.getBoundingClientRect();if(ly<br.bottom&&ly>br.top-40){if(lx<34){bc.scrollLeft-=13;mvd=true}else if(lx>innerWidth-34){bc.scrollLeft+=13;mvd=true}}
    const col=bdTarget(lx,ly);if(col&&kind!=='h'){const l=col.querySelector('.bl'),r=l.getBoundingClientRect();if(ly<r.top+36&&l.scrollTop>0){l.scrollTop-=10;mvd=true}else if(ly>r.bottom-36){l.scrollTop+=10;mvd=true}}if(mvd)bdOver(lx,ly)},16)},e.pointerType==='mouse'?160:330);
  const pos=()=>{if(BD)BD.g.style.transform=`translate(${lx-24}px,${ly-28}px) rotate(-2deg)`};
  const mv=ev=>{lx=ev.clientX;ly=ev.clientY;if(!started){if(Math.hypot(lx-sx,ly-sy)>9)clean();return}pos();bdOver(lx,ly)};
- const up=async()=>{const was=started;const st=BD?{kind:BD.kind,id:BD.id,col:BD.col,idx:BD.idx}:null;clean();end();BD=null;if(!was||!st)return;NOCLICK=Date.now()+450;const b=curBoard();if(!b||!st.col)return;
+ const up=async()=>{const was=started;const st=BD?{kind:BD.kind,id:BD.id,col:BD.col,idx:BD.idx,from:BD.from}:null;clean();end();BD=null;if(!was||!st)return;NOCLICK=Date.now()+450;const b=curBoard();if(!b||!st.col)return;
   if(st.kind==='h'){const to=b.cols.findIndex(c=>c.id===st.col);if(to>=0)moveCol(b,st.id,to);return}
-  const f=findItem(b,st.id);if(f&&f.c.id===st.col){f.c.items.splice(f.i,1);f.c.items.splice(Math.min(st.idx,f.c.items.length),0,f.it);saveB();render();return}
-  await placeItem(b,st.id,st.col,st.idx)};
+  const f=st.kind==='c'?findItem(b,st.id,st.from):findItem(b,st.id);if(f&&f.c.id===st.col){f.c.items.splice(f.i,1);f.c.items.splice(Math.min(st.idx,f.c.items.length),0,f.it);saveB();render();return}
+  await placeItem(b,st.id,st.col,st.idx,null,{from:st.kind==='c'?st.from:null})};
  const cx=()=>{clean();end();BD=null};
  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cx)});
 document.addEventListener('touchmove',e=>{if(BD)e.preventDefault()},{passive:false});
@@ -1355,7 +1376,13 @@ async function act5(act,a,id,n){const b=curBoard();
   case'btips':{const T=BS.tips||[];const el=sheet('<h3>Подсказки</h3>'+T.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button></div>`).join(''));break}
   case'bgo':{const bc=$('#bcols'),el=bc&&bc.querySelector(`[data-col="${a.dataset.c}"]`);if(el)bc.scrollTo({left:el.offsetLeft-14,behavior:'smooth'});break}
   case'bmenu':boardMenu();break;
-  case'bcard':if(b&&n)cardMenu(b,n.id);break;
+  case'bcard':if(b&&n)cardMenu(b,n.id,a.dataset.cc);break;
+  case'bsum':if(b&&n)sumFromCard(b,n,a.dataset.cc);break;
+  case'bdel':if(b)deleteBoard(b);break;
+  case'bfmonth':if(b)newMonthSheet(b);break;
+  case'bnewm':if(b)newMonthSheet(b);break;
+  case'bnosum':if(b)nosumSheet(b);break;
+  case'bdatesug':if(b)dateSugAdd(b);break;
   case'bchat':if(n&&lastChat(n))chatView(n,lastChat(n));break;
   case'bcol':if(b)colSheet(b,a.dataset.c);break;
   case'badd':if(b)addSheet(b,a.dataset.c);break;
@@ -1363,8 +1390,9 @@ async function act5(act,a,id,n){const b=curBoard();
   case'bdrawer':BS.drawer=!BS.drawer;BS.multi=false;BS.sel.clear();render();break;
   case'bmulti':BS.multi=!BS.multi;BS.sel.clear();render();break;
   case'bpp':if(!b||!n)break;if(BS.multi){if(BS.sel.has(n.id))BS.sel.delete(n.id);else BS.sel.add(n.id);render();break}
+   if(b.free){freeAddMenu(b,[n.id]);break}
    menuSheet('Куда добавить «'+nodeTitle(n)+'»?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:whereOn(b,n.id)===colTitle(c)?'уже здесь':'',fn:()=>placeItem(b,n.id,c.id,null)})));break;
-  case'bmultiadd':if(!b)break;menuSheet('Куда добавить '+BS.sel.size+' '+plural(BS.sel.size,'человека','человек','человек')+'?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),fn:async()=>{const ids=[...BS.sel];BS.sel.clear();BS.multi=false;for(const i of ids)await placeItem(b,i,c.id,null);toast('Добавила: '+ids.length+' → '+colTitle(c))}})));break;
+  case'bmultiadd':if(!b)break;if(b.free){const ids=[...BS.sel];BS.sel.clear();BS.multi=false;freeAddMenu(b,ids);break}menuSheet('Куда добавить '+BS.sel.size+' '+plural(BS.sel.size,'человека','человек','человек')+'?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),fn:async()=>{const ids=[...BS.sel];BS.sel.clear();BS.multi=false;for(const i of ids)await placeItem(b,i,c.id,null);toast('Добавила: '+ids.length+' → '+colTitle(c))}})));break;
   case'bqueue':if(b)startQueue(queueIds(b),'write');break;
   case'bconf':if(b){const c=b.cols.find(x=>x.id===a.dataset.c);if(c)startQueue(liveItems(c).map(x=>x.id),'confirm')}break;
   case'bguess':if(b)startQueue(dayCols(b).filter(c=>c.date>=sod(Date.now())).flatMap(c=>liveItems(c).filter(x=>!x.s).map(x=>x.id)),'confirm');break;
@@ -1433,6 +1461,165 @@ async function act6(act,a,id,n){switch(act){
  case'mscan':if(n){const l=scanLead(n);if(!l.length){toast('В заметках не нашла строк с датой вроде «Пт 11.07.25 14:44 $300»');break}if(!l.some(x=>!x.dup)){toast('Все встречи из заметок уже записаны ✓');break}meetImport(l,'Встречи: '+nodeTitle(n))}break;
  case'mscanall':{toast('Ищу встречи в заметках…');await sleep(30);meetImport(scanAll(),'Встречи из всех заметок');break}
 }}
+
+/* ===== stage 7: free boards (months), money in columns/cards, advisor ===== */
+const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const ymOf=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+p2(d.getMonth()+1)};
+const ymLabel=ym=>{const a=ym.split('-').map(Number);return MN[a[1]-1]+(a[0]!==new Date().getFullYear()?' '+a[0]:'')};
+const ymShift=(k)=>{const d=new Date();return ymOf(new Date(d.getFullYear(),d.getMonth()+k,1).getTime())};
+const ROLE_T={lead:'лиды',met:'виделись'};
+const mkCol=(role,ym)=>({id:uid(),type:'own',role,ym,title:ymLabel(ym)+': '+ROLE_T[role],date:0,items:[]});
+function monthOpts(extra){const out=[];for(let k=-2;k<=2;k++)out.push(ymShift(k));if(extra&&!out.includes(extra))out.push(extra);return out.sort()}
+/* date written in a person's name: 3.09.26 */
+function nameDate(n){const m=nodeTitle(n).match(/(?:^|[^\d])(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})(?!\d)/);if(!m)return null;let y=+m[3];if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1]);return isNaN(d)?null:d.getTime()}
+
+/* ----- money ----- */
+function rangeOf(b,c){if(c.ym){const a=c.ym.split('-').map(Number);return{from:new Date(a[0],a[1]-1,1).getTime(),to:new Date(a[0],a[1],1).getTime()-1}}
+ if(c.type==='met'&&!b.free&&b.from)return{from:sod(b.from)-864e5,to:eod(b.to)+864e5};return null}
+const meetsIn=(n,r)=>meetsOf(n).filter(m=>m.amount>0&&m.ts>=r.from&&m.ts<=r.to);
+function sumOf(list){const by={};let aed=0;for(const m of list){by[m.cur]=(by[m.cur]||0)+m.amount;aed+=m.aed||conv(m.amount,m.cur,'AED')}return{by,aed}}
+const byStr=by=>Object.keys(by).map(c=>nf0.format(Math.round(by[c]))+' '+(SYM[c]||c)).join(' + ');
+function cardMoneyHTML(b,c,n){const r=rangeOf(b,c);if(!r)return '';const l=meetsIn(n,r);
+ if(l.length)return `<b class="bmn" data-act="bsum" data-id="${n.id}" data-cc="${c.id}">💰 ${byStr(sumOf(l).by)}</b>`;
+ if(c.role==='met'||c.type==='met')return `<b class="bmn z" data-act="bsum" data-id="${n.id}" data-cc="${c.id}">＋ сумма</b>`;return ''}
+function colSumHTML(b,c){const r=rangeOf(b,c);if(!r)return '';let all=[];for(const it of liveItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}
+ if(!all.length)return '';const s=sumOf(all);const multi=Object.keys(s.by).length>1||!s.by.AED;
+ return `<div class="bsum"><span>Итого</span><b>${byStr(s.by)}</b>${multi?`<small>≈ ${nf0.format(Math.round(s.aed))} AED</small>`:''}</div>`}
+function sumFromCard(b,n,cid){const c=b.cols.find(x=>x.id===cid)||{};const r=rangeOf(b,c);const day=c.ym&&c.ym!==ymOf(Date.now())?c.ym+'-01':dkey(Date.now());
+ const list=r?meetsOf(n).filter(m=>m.ts>=r.from&&m.ts<=r.to).sort((x,y)=>x.ts-y.ts):[];
+ if(!list.length)return meetSheet(n,null,day);if(list.length===1)return meetSheet(n,list[0]);
+ menuSheet('Встречи: '+nodeTitle(n),[...list.map(m=>({ic:'💰',t:fmtDate(m.ts)+(m.amount>0?' · '+nf0.format(Math.round(m.amount))+' '+(SYM[m.cur]||m.cur):''),sub:'изменить',fn:()=>meetSheet(n,m)})),{ic:'＋',t:'Новая встреча',fn:()=>meetSheet(n,null,day)}])}
+function importForColumn(b,c){let list=[];for(const it of liveItems(c)){const n=N.get(it.id);if(!n||!isLead(n))continue;list=list.concat(scanLead(n).filter(x=>!x.dup&&(!c.ym||ymOf(x.ts)===c.ym)))}
+ meetImport(list,'Встречи из заметок: '+colTitle(c))}
+function autoScan(n,c){if(!c||!(c.role==='met'||c.type==='met')||!isLead(n))return;const list=scanLead(n).filter(x=>!x.dup&&(!c.ym||ymOf(x.ts)===c.ym));
+ if(list.length)toast('В заметках нашла встреч: '+list.length,'Проверить',()=>meetImport(list,'Встречи из заметок: '+nodeTitle(n)))}
+
+/* ----- month chips in column sheet ----- */
+function monthChipsH(c){const opts=monthOpts(c.ym);return `<div class="lbl">Месяц (для сумм)</div><div class="chips" id="cmm"><button type="button" class="chip${!c.ym?' on':''}" data-ym="">Без месяца</button>${opts.map(y=>`<button type="button" class="chip${c.ym===y?' on':''}" data-ym="${y}">${ymLabel(y)}</button>`).join('')}</div><div class="hint" style="text-align:left">Если выбрать месяц, у каждого человека покажу, сколько он заплатил в этом месяце, а внизу столбца — итог.</div>`}
+function monthChipsBind(el,c){el.dataset.ym=c.ym||'';el.querySelectorAll('#cmm [data-ym]').forEach(x=>x.onclick=()=>{el.dataset.ym=x.dataset.ym;el.querySelectorAll('#cmm .chip').forEach(y=>y.classList.toggle('on',y===x))})}
+
+/* ----- free boards ----- */
+function newBoardChooser(){menuSheet('Новая доска',[
+ {ic:'📋',t:'Свободная доска',sub:'без города и дат: столбцы по месяцам, лиды, виделись, суммы',fn:()=>freeBoardEdit(null)},
+ {ic:'✈️',t:'Доска поездки',sub:'город, даты, столбики по дням',fn:()=>tripBoardEdit(null)}])}
+function freeBoardEdit(b0){const isNew=!b0;let mk=true;const cur=ymOf(Date.now());
+ const draw=()=>{const nameV=draw.nv!=null?draw.nv:(b0?(b0.title||''):'');
+  const el=sheet(`<h3>${isNew?'Новая доска':'Доска'}</h3><div class="lbl">Название</div><input class="inp" id="fbn" maxlength="50" placeholder="Лиды и встречи" value="${esc(nameV)}">
+  ${isNew?`<div class="lbl">Столбцы</div><div class="chips"><button type="button" class="chip${mk?' on':''}" id="fbm">Создать «${ymLabel(cur)}: лиды» и «${ymLabel(cur)}: виделись»</button></div><div class="hint" style="text-align:left">Потом можно переименовать, двигать и добавлять свои.</div>`:''}
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="fbok">${isNew?'Создать доску':'Сохранить'}</button></div>
+  ${isNew?'':'<div class="row"><button class="pill ghost" id="fbx" style="color:#d6264a">🗑️ Удалить доску</button></div>'}`);
+  const nm=el.querySelector('#fbn');nm.oninput=()=>draw.nv=nm.value;const bm=el.querySelector('#fbm');if(bm)bm.onclick=()=>{mk=!mk;bm.classList.toggle('on',mk)};
+  el.querySelector('#fbok').onclick=()=>{const t=nm.value.trim();
+   if(isNew){const D={id:uid(),free:1,title:t,city:'',from:sod(Date.now()),to:sod(Date.now()),cols:mk?[mkCol('lead',cur),mkCol('met',cur)]:[]};boards().push(D);SET.board=D.id;BS.sl=null;saveB();closeSheet();if(parseHash().k!=='b')go('/b');else render();toast('Доска готова. Добавь людей из книжек 👥')}
+   else{b0.title=t;saveB();closeSheet();render()}};
+  const x=el.querySelector('#fbx');if(x)x.onclick=()=>{closeSheet();deleteBoard(b0)}};draw.nv=null;draw()}
+async function deleteBoard(b){if(!await ask('Удалить доску «'+boardTitle(b)+'»?','Удалится только доска и её столбцы. Люди и их встречи останутся в книжках.','Удалить',true))return;
+ SET.boards=boards().filter(x=>x!==b);SET.board=null;saveB();render();toast('Доска удалена')}
+function freeBoardMenu(b){const others=boards().filter(x=>x.id!==b.id);
+ menuSheet(boardTitle(b),[{ic:'✏️',t:'Название',fn:()=>freeBoardEdit(b)},{ic:'＋',t:'Новый столбец',fn:()=>newFreeColSheet(b)},{ic:'📅',t:'Новый месяц',sub:'создам «лиды» и «виделись»',fn:()=>newMonthSheet(b)},{ic:'📊',t:'Суммы по столбцам',fn:()=>freeStats(b)},
+  ...others.map(x=>({ic:x.free?'📋':'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
+  {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},{ic:'🗑️',t:'Удалить эту доску',red:1,fn:()=>deleteBoard(b)}])}
+function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of liveItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${liveItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||!s.by.AED?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
+ sheet(`<h3>📊 ${esc(boardTitle(b))}</h3>${rows||'<p class="hint">Столбцов пока нет</p>'}`)}
+function newFreeColSheet(b){let role='lead',ym=ymOf(Date.now()),name='';
+ const draw=()=>{const auto=role==='own'?'':(ym?ymLabel(ym)+': '+ROLE_T[role]:ROLE_T[role]);
+  const el=sheet(`<h3>Новый столбец</h3><div class="seg"><button data-r="lead" class="${role==='lead'?'on':''}">Лиды</button><button data-r="met" class="${role==='met'?'on':''}">Виделись</button><button data-r="own" class="${role==='own'?'on':''}">Свой</button></div>
+  <div class="lbl">Месяц (для сумм)</div><div class="chips" id="fcm"><button type="button" class="chip${!ym?' on':''}" data-y="">Без месяца</button>${monthOpts(ym).map(y=>`<button type="button" class="chip${ym===y?' on':''}" data-y="${y}">${ymLabel(y)}</button>`).join('')}</div>
+  <div class="lbl">Название</div><input class="inp" id="fcn" maxlength="40" placeholder="${esc(auto||'Например: Думает')}" value="${esc(name)}"><div class="hint" style="text-align:left">Можно оставить пустым — назову сама${auto?': «'+esc(auto)+'»':''}.</div>
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="fcok">Добавить</button></div>`);
+  const nm=el.querySelector('#fcn');nm.oninput=()=>name=nm.value;
+  el.querySelectorAll('[data-r]').forEach(x=>x.onclick=()=>{role=x.dataset.r;draw()});el.querySelectorAll('[data-y]').forEach(x=>x.onclick=()=>{ym=x.dataset.y;draw()});
+  el.querySelector('#fcok').onclick=()=>{const t=nm.value.trim()||auto;if(!t){toast('Впиши название');return}const c={id:uid(),type:'own',role:role==='own'?'':role,ym:ym||'',title:t,date:0,items:[]};b.cols.push(c);BS.goCol=c.id;saveB();closeSheet();render()}};draw()}
+function newMonthSheet(b){const cur=ymOf(Date.now());const opts=[ymShift(0),ymShift(1),ymShift(2)];
+ menuSheet('Новый месяц',opts.map(y=>{const miss=['lead','met'].filter(r=>!b.cols.some(c=>c.ym===y&&c.role===r));return{ic:'📅',t:ymLabel(y),sub:miss.length?'добавлю: '+miss.map(r=>ROLE_T[r]).join(', '):'уже есть оба столбца',fn:()=>{if(!miss.length){toast('Эти столбцы уже есть');return}let last=null;for(const r of miss){last=mkCol(r,y);b.cols.push(last)}BS.goCol=last.id;saveB();render();toast('Добавила: '+ymLabel(y))}}}))}
+function freeTips(b){const out=[],cur=ymOf(Date.now());
+ if(!b.cols.length){out.push({e:'👋',t:'Столбцов пока нет. Создай на этот месяц «лиды» и «виделись».',b:'Создать',act:'bnewm'});return out}
+ const miss=['lead','met'].filter(r=>!b.cols.some(c=>c.ym===cur&&c.role===r));
+ if(miss.length)out.push({e:'📅',t:'Идёт '+ymLabel(cur).toLowerCase()+'. Нет столбцов: '+miss.map(r=>'«'+ymLabel(cur)+': '+ROLE_T[r]+'»').join(', '),b:'Создать',act:'bnewm'});
+ const ns=[];for(const c of b.cols){if(!(c.role==='met'&&c.ym===cur))continue;for(const it of liveItems(c)){const n=N.get(it.id);if(!meetsIn(n,rangeOf(b,c)).length)ns.push({n,c})}}
+ if(ns.length)out.push({e:'💰',t:ns.length+' '+plural(ns.length,'человек','человека','человек')+' в «'+esc(colTitle(ns[0].c))+'» без суммы',b:'Вписать',act:'bnosum'});
+ const have=new Set();b.cols.forEach(c=>c.items.forEach(i=>have.add(i.id)));const wd=leads().filter(n=>!have.has(n.id)&&nameDate(n)&&ymOf(nameDate(n))===cur).length;
+ if(wd)out.push({e:'💡',t:wd+' '+plural(wd,'человек','человека','человек')+' с датой '+ymLabel(cur).toLowerCase()+' в имени ещё не на доске. Добавить в «'+ymLabel(cur)+': лиды»?',b:'Добавить',act:'bdatesug'});
+ return out}
+function nosumSheet(b){const cur=ymOf(Date.now());const rows=[];for(const c of b.cols){if(!(c.role==='met'&&c.ym===cur))continue;for(const it of liveItems(c)){const n=N.get(it.id);if(!meetsIn(n,rangeOf(b,c)).length)rows.push({ic:'💰',t:nodeTitle(n),sub:'вписать сумму',fn:()=>sumFromCard(b,n,c.id)})}}
+ if(!rows.length){toast('У всех есть суммы');return}menuSheet('Без суммы',rows)}
+async function dateSugAdd(b){const cur=ymOf(Date.now());let col=b.cols.find(c=>c.ym===cur&&c.role==='lead');if(!col){col=mkCol('lead',cur);b.cols.push(col)}
+ const have=new Set();b.cols.forEach(c=>c.items.forEach(i=>have.add(i.id)));const ids=leads().filter(n=>!have.has(n.id)&&nameDate(n)&&ymOf(nameDate(n))===cur).map(n=>n.id);
+ for(const id of ids)col.items.push({id,s:0,tm:'',w:0,lt:0,at:Date.now()});saveB();render();toast('Добавила в «'+colTitle(col)+'»: '+ids.length)}
+
+/* placing people on a free board. Drag = move, menus = add (a person can sit in several columns) */
+async function placeFree(b,lid,toId,idx,opt){opt=opt||{};const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
+ const sB=JSON.stringify(b.cols),nm=nodeTitle(n);const from=opt.from?b.cols.find(c=>c.id===opt.from):null;const have=to.items.findIndex(x=>x.id===lid);
+ const at=i=>(i==null||i<0||i>to.items.length)?to.items.length:i;
+ if(from===to&&have>=0){const it=to.items.splice(have,1)[0];to.items.splice(at(idx),0,it);saveB();render();return}
+ let it=null;if(from&&!opt.copy){const i=from.items.findIndex(x=>x.id===lid);if(i>=0)it=from.items.splice(i,1)[0]}
+ if(have>=0){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
+ it=it||{id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};to.items.splice(at(idx),0,it);saveB();render();
+ toast('«'+nm+'» → '+colTitle(to),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to)}
+function freeAddMenu(b,ids){const n=N.get(ids[0]);const rows=[];const nd=ids.length===1&&n?nameDate(n):null;
+ const addAll=async c=>{for(const i of ids)await placeFree(b,i,c.id,null,{copy:true});if(ids.length>1)toast('Добавила: '+ids.length+' → '+colTitle(c))};
+ if(nd){const y=ymOf(nd),c=b.cols.find(x=>x.ym===y&&x.role==='lead');const dd=new Date(nd);const ds=p2(dd.getDate())+'.'+p2(dd.getMonth()+1);
+  if(c)rows.push({ic:'💡',t:'«'+colTitle(c)+'»',sub:'рекомендую: записан '+ds,fn:()=>addAll(c)});
+  else rows.push({ic:'💡',t:'Создать «'+ymLabel(y)+': лиды» и добавить',sub:'записан '+ds,fn:async()=>{const nc=mkCol('lead',y);b.cols.push(nc);saveB();await addAll(nc)}})}
+ b.cols.forEach(c=>rows.push({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:ids.length===1&&c.items.some(i=>i.id===ids[0])?'уже здесь':'',fn:()=>addAll(c)}));
+ if(!b.cols.length)rows.push({ic:'＋',t:'Сначала создай столбец',fn:()=>newFreeColSheet(b)});
+ menuSheet(ids.length===1&&n?'Куда добавить «'+nodeTitle(n).slice(0,40)+'»?':'Куда добавить '+ids.length+' '+plural(ids.length,'человека','человек','человек')+'?',rows)}
+function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[];
+ if(ct.ph)rows.push({ic:'🟢',t:'Написать в WhatsApp',sub:'+'+ct.ph,fn:()=>openChat(n,'wa','')});
+ if(ct.ig)rows.push({ic:'📸',t:'Написать в Instagram',sub:'@'+ct.ig,fn:()=>openChat(n,'ig','')});
+ if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg,fn:()=>openChat(n,'tg','')});
+ const lc=lastChat(n),nc=(n.chats||[]).length;
+ if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
+ rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id)});
+ rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
+ rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id)});
+ rows.push({ic:'➕',t:'Добавить копию в…',sub:'человек будет в двух столбцах',fn:()=>copyToSheet(b,lid,c.id)});
+ rows.push({ic:'📸',t:'Добавить скриншот переписки',fn:()=>addShots(n)});
+ rows.push({ic:'☎️',t:'Контакты',sub:[ct.ph?'+'+ct.ph:'',ct.ig?'IG @'+ct.ig:'',ct.tg?'TG @'+ct.tg:''].filter(Boolean).join(' · ')||'телефон, Instagram, Telegram',fn:()=>contactsSheet(n,()=>cardMenu(b,lid,c.id))});
+ rows.push({ic:'🖼️',t:'Фото',fn:()=>avatarMenu(n)});rows.push({ic:'👤',t:'Открыть карточку',fn:()=>go('/n/'+n.id)});
+ rows.push({ic:'✖️',t:'Убрать из этого столбца',red:1,fn:()=>removeItem(b,lid,c.id)});
+ menuSheet(nodeTitle(n).slice(0,60)+' · '+colTitle(c),rows)}
+function copyToSheet(b,lid,cid){menuSheet('Добавить копию в…',b.cols.filter(c=>c.id!==cid).map(c=>({ic:c.role==='met'?'🤝':c.role==='lead'?'📝':'📌',t:colTitle(c),sub:c.items.some(i=>i.id===lid)?'уже здесь':'',fn:()=>placeFree(b,lid,c.id,null,{from:cid,copy:true})})))}
+
+/* ----- advisor: what label for this person ----- */
+function analyzeChat(txt,n){const T=txt.toLowerCase();const has=r=>r.test(T);
+ const S={meet:/встрет|увидим|пересеч|приед|заед|созвон|свидани|when can we meet|let'?s meet|see you|are you free|свободн|давай увид/,
+  when:/сегодня|завтра|послезавтра|на выходных|в (пн|вт|ср|чт|пт|сб|вс)\b|понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье|\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s?(числа|окт|ноя|дек|янв)|вечером|утром|днем|днём/,
+  later:/позже|потом|попозже|на следующей неделе|в следующий раз|как будет время|напишу сам|напишу позже|сейчас занят|не сейчас|через (неделю|месяц|пару)|после (поездки|праздн|командировк)/,
+  no:/не интересно|неинтересно|не надо|не пиши|не беспокой|отстань|удали мой|stop writ|no thanks|not interested|ошиб(ся|лись|очка) номер/,
+  price:/сколько стоит|какая цена|цена|прайс|стоимость|price|how much/};
+ const tc=n.tc||0;const out={lines:[],acts:[],reply:''};
+ if(!txt.trim()&&!tc){out.lines.push('Переписки нет. Вставь текст или скриншот, или посмотри данные ниже.');return out}
+ if(has(S.no)){out.lines.push('🛑 Похоже на отказ. Лучше не писать дальше.');out.acts.push({t:'Поставить «Не писать»',fn:async()=>{n.st='stop';await saveNode(n,false);toast('Метка: Не писать')}})}
+ else if(has(S.meet)&&has(S.when)){out.lines.push('🔥 Хочет встретиться и назвал время. Это тёплый лид: подтверди встречу и добавь на доску в «виделись» после встречи.');out.acts.push({t:'Поставить «Тёплый 🔥»',fn:async()=>{n.w='hot';await saveNode(n,false);toast('Теплота: Тёплый')}});out.reply='Отлично, договорились! Подтверждаю, увидимся 😊'}
+ else if(has(S.meet)){out.lines.push('🔥 Хочет встретиться, но день пока не назвал. Предложи два конкретных варианта: так проще ответить «да».');out.acts.push({t:'Поставить «Тёплый 🔥»',fn:async()=>{n.w='hot';await saveNode(n,false);toast('Теплота: Тёплый')}});out.reply='Я могу в четверг вечером или в пятницу днём. Что тебе удобнее? 😊'}
+ else if(has(S.later)){out.lines.push('⏳ Откладывает. Не дави: напиши через неделю.');out.acts.push({t:'Напомнить через 7 дней',fn:async()=>{n.plan=sod(Date.now())+7*864e5+18*36e5;if(!n.st||n.st==='never')n.st='some';await saveNode(n,false);toast('Напомню через неделю')}});out.reply='Хорошо, без проблем! Напишу тебе через недельку 😊'}
+ else if(has(S.price)){out.lines.push('💬 Спрашивает цену. Ответь коротко и сразу предложи время, пока интерес горячий.')}
+ else if(txt.trim())out.lines.push('🤔 Чёткого сигнала в тексте не вижу. Если последним писала ты — подожди 3 дня и напомни один раз.');
+ if(tc>=3)out.lines.push('✉ Без ответа уже '+tc+' из '+sleepN()+' сообщений. Если дойдёт до '+sleepN()+' — лучше отложить на потом.');
+ if(tc>=sleepN()-1)out.acts.push({t:'Поставить «Спящий»',fn:async()=>{n.st='sleep';await saveNode(n,false);toast('Метка: Спящий')}});
+ if(n.lt)out.lines.push('Последний раз писала: '+relShort(n.lt)+'.');
+ return out}
+function adviceSheet(b,n,cid){let txt='';const f=b?findItem(b,n.id,cid):null;
+ const draw=()=>{const an=analyzeChat(txt,n);
+  const el=sheet(`<h3>💡 ${esc(nodeTitle(n).slice(0,50))}</h3><div class="hint" style="text-align:left">Вставь сюда текст переписки. Я подскажу, какую метку поставить. Умею разбирать только текст, скриншоты не читаю.</div>
+  <textarea class="inp" id="adt" style="min-height:120px" placeholder="Вставь переписку…">${esc(txt)}</textarea>
+  <div class="row"><button class="pill c4" id="adgo">Разобрать</button><button class="pill ghost" id="adsh">📸 Скриншот</button><button class="pill c3" id="adcl">📋 Скопировать для Claude</button></div>
+  ${txt.trim()||(n.tc||0)?`<div class="note" style="margin-top:12px">${an.lines.map(l=>esc(l)).join('<br>')}</div>`:''}
+  ${an.reply?`<div class="lbl">Что можно ответить</div><div class="note" style="background:#fff">${esc(an.reply)}</div><div class="row"><button class="pill ghost" id="adcp">Скопировать ответ</button></div>`:''}
+  ${an.acts.length?`<div class="lbl">Сделать</div><div class="row">${an.acts.map((a,i)=>`<button class="pill c2" data-a="${i}">${esc(a.t)}</button>`).join('')}</div>`:''}
+  <div class="lbl">Или поставить метку вручную</div><div class="chips">${Object.keys(ST).map(k=>`<button type="button" class="chip${n.st===k?' on':''}" data-st="${k}">${ST[k].t}</button>`).join('')}</div>
+  <div class="chips" style="margin-top:6px">${['hot','ok','cold'].map(k=>`<button type="button" class="chip${(n.w||'ok')===k?' on':''}" data-w="${k}">${WE[k]} ${WT[k]}</button>`).join('')}</div>`);
+  const ta=el.querySelector('#adt');ta.oninput=()=>txt=ta.value;
+  el.querySelector('#adgo').onclick=()=>{txt=ta.value;draw()};
+  el.querySelector('#adsh').onclick=()=>{txt=ta.value;addShots(n,()=>draw())};
+  el.querySelector('#adcl').onclick=async()=>{txt=ta.value;const mt=meetsOf(n);const where=f?colTitle(f.c):'';
+   const p='Помоги разобраться с лидом из приложения «Лиды».\nИмя: '+nodeTitle(n)+'\n'+(where?'Сейчас в столбце: '+where+'\n':'')+'Писала без ответа подряд: '+(n.tc||0)+'\n'+(n.lt?'Последний раз писала: '+relShort(n.lt)+'\n':'')+'Встреч записано: '+mt.length+'\nМетки сейчас: '+(n.st?ST[n.st].t:'нет')+', '+WT[n.w||'ok']+'\n\nПереписка:\n'+(txt.trim()||'(вставлю скриншотом)')+'\n\nПодскажи: какую метку поставить, в какой столбец перенести и что ответить.';
+   const ok=await copyText(p);toast(ok?'Скопировала. Вставь в чат с Claude (скриншот приложи туда же)':'Не получилось скопировать')};
+  const cp=el.querySelector('#adcp');if(cp)cp.onclick=async()=>{await copyText(an.reply);toast('Ответ скопирован')};
+  el.querySelectorAll('[data-a]').forEach(x=>x.onclick=async()=>{await an.acts[+x.dataset.a].fn();render();draw()});
+  el.querySelectorAll('[data-st]').forEach(x=>x.onclick=async()=>{n.st=n.st===x.dataset.st?'':x.dataset.st;if(!n.st)delete n.st;await saveNode(n,false);render();draw()});
+  el.querySelectorAll('[data-w]').forEach(x=>x.onclick=async()=>{n.w=x.dataset.w;await saveNode(n,false);render();draw()})};draw()}
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -1609,14 +1796,15 @@ async function coverFromFile(file){const s=await makeSrc(file);const L=await loa
 /* ===== create / edit ===== */
 function pickFile(multi){return new Promise(res=>{holdLock();const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=!!multi;i.style.display='none';document.body.appendChild(i);
  i.onchange=()=>{res([...i.files]);setTimeout(()=>i.remove(),500)};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
+function growTA(t){if(!t)return;t.style.height='auto';t.style.height=Math.min(t.scrollHeight+2,window.innerHeight*.4)+'px'}
 function editSheet(n,parent,type){const book=n?isBook(n):(type==='col'&&!parent);let pal=n?(n.palN?(n.pal||0):0):0,cover=n?n.cover:null,avatar=n?n.avatar:null;
- const draw=()=>{const el=sheet(`<h3>${n?'Изменить':(book?'Новая книжка':'Новая коллекция')}</h3><input class="inp" id="nm" placeholder="${book?'Например: Москва':'Например: имя'}" value="${esc(draw.title||(n?n.title:''))}" maxlength="80">
+ const draw=()=>{const el=sheet(`<h3>${n?'Изменить':(book?'Новая книжка':'Новая коллекция')}</h3><textarea class="inp nmx" id="nm" rows="1" placeholder="${book?'Например: Москва':'Например: имя'}" maxlength="300">${esc(draw.title||(n?n.title:''))}</textarea>
   ${book?`<div class="lbl">Обложка</div><div class="sw">${PALS.map((p,i)=>`<button class="c${!cover&&pal===i?' on':''}" data-p="${i}">${coverSVG(i)}</button>`).join('')}<button class="c up${cover?' on':''}" id="upc">${cover?`<img src="${bu(cover)}" alt="">`:'Своя<br>обложка'}</button></div>`:''}
   ${!book&&!n?`<div class="row"><button type="button" class="pill c3" id="nbdb">🎂 ＋ День рождения${draw.bd?': '+draw.bd.split('-').reverse().join('.'):''}</button></div><div id="nbdbox" class="${draw.bdo?'':'hide'}"><input class="inp" type="date" id="nbd" value="${draw.bd||''}"><div class="chips" style="margin-top:8px"><button type="button" class="chip${draw.bny?' on':''}" id="nbdy">Год неизвестен</button></div></div>`:''}
   ${!book&&!n?`<div class="lbl">Когда написать (необязательно)</div><input class="inp" type="date" id="npd" value="${draw.pd||''}">`:''}
   ${!book?`<div class="lbl">Фото (необязательно)</div><div class="sw"><button class="c up${avatar?' on':''}" id="upa" style="height:64px">${avatar?`<img src="${bu(avatar)}" alt="">`:'Выбрать<br>фото'}</button></div>`:''}
   <div class="row" style="margin-top:12px"><button class="btn pink wide" id="ok">${n?'Сохранить':'Создать'}</button></div>`);
-  const nm=el.querySelector('#nm');nm.oninput=()=>draw.title=nm.value;const npd=el.querySelector('#npd');if(npd)npd.oninput=()=>draw.pd=npd.value;
+  const nm=el.querySelector('#nm');growTA(nm);nm.oninput=()=>{if(/\n/.test(nm.value))nm.value=nm.value.replace(/\n+/g,' ');draw.title=nm.value;growTA(nm)};nm.onkeydown=e=>{if(e.key==='Enter')e.preventDefault()};const npd=el.querySelector('#npd');if(npd)npd.oninput=()=>draw.pd=npd.value;
   const nbdb=el.querySelector('#nbdb');if(nbdb){nbdb.onclick=()=>{draw.bdo=!draw.bdo;el.querySelector('#nbdbox').classList.toggle('hide',!draw.bdo)};el.querySelector('#nbd').oninput=e=>draw.bd=e.target.value;el.querySelector('#nbdy').onclick=e=>{draw.bny=draw.bny?0:1;e.target.classList.toggle('on',!!draw.bny)}}if(!n)setTimeout(()=>nm.focus(),80);
   el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{draw.title=nm.value;pal=+b.dataset.p;cover=null;draw()});
   const up=el.querySelector('#upc');if(up)up.onclick=async()=>{draw.title=nm.value;const f=(await pickFile(false))[0];if(f){const b=await coverFromFile(f);if(b)cover=b}draw()};
