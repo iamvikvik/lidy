@@ -364,6 +364,31 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .l4b.late2{background:#ffe3e3;color:#c62828}
 .lmore{border-top:1px solid rgba(0,0,0,.06);margin-top:4px;padding-top:4px}
 
+.zbig{display:flex;gap:10px;margin:10px 0}.zb{flex:1;padding:16px 8px;border-radius:18px;border:2px solid transparent;background:var(--soft);font:inherit;font-weight:700;font-size:15px;color:inherit}.zb.on{background:#ffe0ef;border-color:#d81b72;color:#a40e55}
+.wrow{display:flex;gap:8px;margin:2px 0 8px}
+.wbig{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:13px 10px;border:0;border-radius:18px;color:#fff;font:inherit;font-weight:800;font-size:16px;background:linear-gradient(135deg,#c2185b,#880e4f);box-shadow:0 0 0 3px rgba(194,24,91,.18),0 6px 18px rgba(194,24,91,.45)}
+.wbig small{font-size:12px;font-weight:600;opacity:.92}
+.wbig.old{animation:wpulse 1.8s ease-in-out infinite}
+@keyframes wpulse{50%{box-shadow:0 0 0 6px rgba(194,24,91,.22),0 6px 22px rgba(194,24,91,.6)}}
+.wans{border:0;border-radius:18px;padding:0 16px;font:inherit;font-weight:700;background:#e3f7e8;color:#1b7a3a}
+.pmrow{margin:2px 0 8px}
+.bpm,.bpm0{display:block;font-size:13px;line-height:1.3;margin-top:4px;color:#333;cursor:pointer;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:pre-wrap;overflow-wrap:anywhere}
+.bpm{background:#fff7d6;border-radius:9px;padding:4px 8px}.bpm i{font-style:normal;font-weight:700;color:#8a6d00}
+.bpm0{color:#a0a0ad;font-size:12px;-webkit-line-clamp:1}
+.pmrow .bpm{font-size:15px;padding:9px 12px;border-radius:14px;-webkit-line-clamp:6}.pmrow .bpm0{display:inline-block;background:var(--soft);padding:6px 12px;border-radius:12px;font-size:13px}
+.bwd{display:inline-block;margin-top:4px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#c2185b,#880e4f);box-shadow:0 0 8px rgba(194,24,91,.45)}
+.bwd.old{animation:wpulse 1.8s ease-in-out infinite}
+.wpill{background:#c2185b;color:#fff}
+.pmh{font-size:14px;padding:6px 0;border-top:1px solid rgba(0,0,0,.06)}.pmh i{font-style:normal;color:#8a8a99;margin-right:6px}
+.nr{display:flex;gap:12px;padding:10px 0;border-top:1px solid rgba(0,0,0,.06)}
+.nrp{border:0;background:none;padding:0;flex:none}.nrp .av.sq{width:76px;height:76px;border-radius:16px}.nrp .av.sq img{width:100%;height:100%;object-fit:cover;object-position:center 25%}
+.nrt{flex:1;min-width:0}.nrt b{display:block;font-size:16px}.nrt small{display:block;color:#8a8a99;margin:1px 0 3px}.nrb{display:flex;gap:8px;margin-top:6px}
+.bcol.t-rest{filter:grayscale(.7);opacity:.9}
+.bpm i{white-space:nowrap}
+.bct .bwd{display:block;width:fit-content;max-width:100%;font-size:12px}
+.bct .bwd,.bct .bwd *{color:#fff!important}
+.bct .bpm{color:#33333a!important}.bct .bpm i{color:#8a6d00!important}
+
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
 <script src="jszip.min.js"></script>
@@ -740,16 +765,13 @@ function tripEdit(t,dr){const d1=addDays(sod(Date.now()),14);
  const dl=el.querySelector('#tdl');if(dl)dl.onclick=async()=>{if(!await ask('Удалить поездку?','Даты «когда писать» от неё пропадут.','Удалить',true)){tripEdit(t,D);return}SET.trips=(SET.trips||[]).filter(x=>x.id!==D.id);saveSet();render()}}
 
 /* ----- touches ----- */
-const LF=['st','w','tc','lt','la','plan','ansAt','lk','tot'];
+const LF=['st','w','tc','lt','la','plan','ansAt','lk','tot','wd','zc','zs','wh','pm','pmAt','pmh'];
 function snapLead(n){const o={};LF.forEach(k=>o[k]=Array.isArray(n[k])?n[k].slice():n[k]);o.meets=JSON.parse(JSON.stringify(n.meets||[]));return o}
 function restoreLead(n,o){LF.forEach(k=>{if(o[k]===undefined)delete n[k];else n[k]=Array.isArray(o[k])?o[k].slice():o[k]});n.meets=o.meets}
 function doneRem(n){const r=remMapAll().get(n.id);if(r)r.m.rDone=Date.now()}
 async function undoLead(n,sn){restoreLead(n,sn);await saveNode(n,false);render()}
-async function doTouch(n){const sn=snapLead(n);n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;doneRem(n);logW();await saveNode(n,false);
- if(n.tc>=sleepN()&&!['sleep','half','stop'].includes(n.st)){render();
-  if(await ask('Уже '+n.tc+' '+plural(n.tc,'касание','касания','касаний')+' без ответа','Перевести «'+nodeTitle(n)+'» в спящие? Тогда напомню писать реже, примерно раз в 4 месяца.','В спящие')){n.st='sleep';n.plan=0;await saveNode(n,false)}}
- render();toast('Записала: '+nodeTitle(n)+(n.tc>1?' · без ответа: '+n.tc:''),'Отменить',()=>undoLead(n,sn))}
-async function doAnswered(n){const sn=snapLead(n);n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);
+async function doTouch(n){return doWait(n)}
+async function doAnswered(n){const sn=snapLead(n);n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.zs=0;n.zc=0;doneRem(n);
  if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);render();
  toast('Ответил: '+nodeTitle(n),'Отменить',()=>undoLead(n,sn));
  menuSheet('Что дальше с «'+nodeTitle(n)+'»?',[
@@ -809,24 +831,19 @@ const distOf=n=>{for(const c of citiesOf(n))if(n.dist&&n.dist[c])return n.dist[c
 function leadHead(n,extra){const p=planOf(n);const id=n.id,k=(n.chats||[]).length,late=p&&p.ts&&p.ts<Date.now()&&p.src!=='new';
  const hasD=p&&p.ts&&p.src!=='new';const d=distOf(n);
  let h=`<div class="l4"><button class="l4b${late?' late2':''}" data-act="${hasD?'lplan':'lplanset'}" data-id="${id}"><i>✉</i><b>Когда написать</b>${hasD?`<small>${fmtPlan(p.ts)}</small>`:''}</button>`+
- `<button class="l4b" data-act="ldist" data-id="${id}"><i>📍</i><b>${d?esc(d):'Район'}</b></button>`+
+ `<button class="l4b" data-act="ldist" data-id="${id}"><i>📍</i>${d?(()=>{const l=distLabel(d).split('|');return `<b>${esc(l[0])}</b>${l[1]?`<small>${esc(l[1])}</small>`:''}`})():'<b>Район</b>'}</button>`+
  `<button class="l4b" data-act="chats" data-id="${id}"><i>💬</i><b>Переписки</b>${k?`<small>${k}</small>`:''}</button>`+
  `<button class="l4b" data-act="nuance" data-id="${id}"><i>📝</i><b>Нюансы</b>${n.nuance?'<small>есть</small>':''}</button></div>`;
  if(p&&p.src==='new')h+=`<div class="row lp"><span class="pill sm ghost">ещё не писала</span></div>`;
+ const wd=n.wd||[];
+ h+=`<div class="wrow"><button class="wbig${wOld(n)?' old':''}" data-act="lwait" data-id="${id}">⏳ Жду ответ${wd.length?`<small>${wdates(n,3)}</small>`:''}</button>${wd.length?`<button class="wans" data-act="lans" data-id="${id}">✅ Ответил</button>`:''}</div>`;
+ h+=`<div class="pmrow">${pmLine(n)}</div>`;
  h+=ctRow(n);
  const open=LMORE.has(id);
- h+=`<div class="row lp"><button class="pill sm ghost" data-act="lmore" data-id="${id}">${open?'⌃ Скрыть':'⋯ Ещё'}</button></div>`;
+ h+=`<div class="row lp"><button class="pill sm ghost" data-act="lmore" data-id="${id}">${open?'⌃ Скрыть':'⋯ Ещё'}</button><button class="pill sm ghost" data-act="lwhat" data-id="${id}">🔔 Что произошло?</button></div>`;
  if(open)h+=`<div class="lmore">${leadMore(n)}${extra||''}</div>`;
  if(n.nuance)h+=`<div class="nuance" data-act="nuance" data-id="${id}">${esc(n.nuance)}</div>`;
  return h}
-function distSheet(n){const cs=citiesOf(n);const H=here();let c=cs[0]||(H&&H.city)||cityList()[0]||'';
- const draw=()=>{const el=sheet(`<h3>📍 Район · ${esc(nodeTitle(n))}</h3>${cs.length>1?chips('dc',cs,c):`<div class="hint" style="text-align:left">${c?esc(c):'Город не выбран'}</div>`}
-  <input class="inp" id="dd" list="ddl" placeholder="Например: Dubai Marina" maxlength="60" value="${esc((n.dist&&n.dist[c])||'')}"><datalist id="ddl">${districtsOf(c).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
-  <div class="hint" style="text-align:left">Пиши так же, как раньше: подскажу из уже введённых.</div>
-  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="dsv">Сохранить</button></div>`);
-  if(cs.length>1)chipsBind(el,'dc',v=>{c=v;draw()});
-  setTimeout(()=>{const i=el.querySelector('#dd');if(i&&!i.value)i.focus()},80);
-  el.querySelector('#dsv').onclick=async()=>{const v=el.querySelector('#dd').value.trim();if(!c){toast('Сначала выбери город (⋯ Ещё → город)');return}n.dist=n.dist||{};if(v)n.dist[c]=v;else delete n.dist[c];if(!(n.cities&&n.cities.length))n.cities=[c];await saveNode(n,false);closeSheet();render()}};draw()}
 const chipsM=(id,opts,sel,fmt)=>`<div class="chips" id="${id}">${opts.map(o=>`<button type="button" class="chip${sel.includes(o)?' on':''}" data-v="${esc(o)}">${fmt?fmt(o):esc(o)}</button>`).join('')}</div>`;
 function chipsMBind(el,id,sel,cb){el.querySelector('#'+id).querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const v=b.dataset.v,i=sel.indexOf(v);if(i>=0)sel.splice(i,1);else sel.push(v);b.classList.toggle('on');cb&&cb()})}
 function leadSheet(n,dr){
@@ -864,13 +881,13 @@ function buildToday(){const rm=remMapAll(),now=Date.now(),e=eod(now),s0=sod(now)
  return{list:cand.slice(0,cap),rest:Math.max(0,cand.length-cap),done,total:cand.length}}
 function leadRow(x){const n=x.n,p=x.p,id=n.id;const cs=citiesOf(n);const loc=cs.length?'📍 '+cs.map(c=>esc(c)+(n.dist&&n.dist[c]?' · '+esc(n.dist[c]):'')).join(', '):'';
  const late=p.src!=='new'&&p.ts<sod(Date.now());
- const l1=[n.st?ST[n.st].t:'',loc,n.tc?n.tc+' без ответа':''].filter(Boolean).join(' · ')||'без статуса';
+ const l1=[n.st?ST[n.st].t:'',loc,(n.wd&&n.wd.length)?'⏳ '+wdates(n,3):n.tc?n.tc+' без ответа':''].filter(Boolean).join(' · ')||'без статуса';
  const l2=(late?`<i class="late">${relDay(p.ts)}</i> · `:'')+esc(p.why)+(x.dm?' · <b>в твоём районе</b>':'');
- return `<div class="ev lead"><button class="evm" data-act="open" data-id="${id}">${avatarHTML(n,48)}<span class="evt"><b>${WE[n.w||'ok']} ${esc(nodeTitle(n))}</b><span>${l1}</span><span>${l2}</span></span></button>
+ return `<div class="ev lead"><button class="evm" data-act="open" data-id="${id}">${avatarHTML(n,48)}<span class="evt"><b>${WE[n.w||'ok']} ${esc(nodeTitle(n))}</b><span>${l1}</span><span>${l2}</span>${n.pm?`<span class="bpm" data-act="bpm" data-id="${id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</span>`:''}</span></button>
  <div class="lacts"><button class="pill c2" data-act="ltouch" data-id="${id}">Написала</button><button class="pill c5" data-act="lans" data-id="${id}">Ответил</button><button class="pill c1" data-act="llater" data-id="${id}">Позже</button>${n.st?'':`<button class="pill ghost" data-act="lcard" data-id="${id}">Статус</button>`}</div></div>`}
 function viewToday(){const T=buildToday(),H=here();const total=dailyN()+TD.extra;
  let h=`<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('search',ICON.search,'')}${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Сегодня</h1>
- <div class="row"><span class="pill c2">Написала ${T.done.length} из ${total}</span><button class="pill ${H?'c3':'c4'}" data-act="here">📍 ${H?esc(H.city)+(H.dist?' · '+esc(H.dist):'')+' · до '+fmtDate(H.until).replace(/ \d{4}$/,''):'Я в городе'}</button><button class="pill c1" data-act="trips">✈️ Поездки</button><button class="pill ghost" data-act="tstats">📊 Статистика</button></div>`;
+ <div class="row"><span class="pill c2">Написала ${T.done.length} из ${total}</span>${sleepers().length?`<button class="pill ghost" data-act="zzz">😴 Спящие · ${sleepers().length}</button>`:''}<button class="pill ${H?'c3':'c4'}" data-act="here">📍 ${H?esc(H.city)+(H.dist?' · '+esc(H.dist):'')+' · до '+fmtDate(H.until).replace(/ \d{4}$/,''):'Я в городе'}</button><button class="pill c1" data-act="trips">✈️ Поездки</button><button class="pill ghost" data-act="tstats">📊 Статистика</button></div>`;
  if(H)h+=`<div class="hint" style="text-align:left">Сначала те, кто живёт в этом районе, потом остальные из города.</div>`;
  h+=`<div class="lbl">Написать · ${T.list.length}</div>`;
  h+=T.list.length?T.list.map(leadRow).join(''):`<div class="hint" style="text-align:left">${leads().length?'На сегодня всё. Можно взять ещё или поставить даты в календаре.':'Здесь появятся люди, которым пора написать. Создай в книжках коллекции с именами или добавь списком через «+» → «Быстро добавить людей».'}</div>`;
@@ -983,6 +1000,10 @@ async function act3(act,a,id,n){
  switch(act){
   case'lcard':if(n)leadSheet(n);break;
   case'ldist':if(n)distSheet(n);break;
+  case'lwait':if(n)doWait(n);break;
+  case'lwhat':if(n)whatSheet(n);break;
+  case'bpm':if(n)pmSheet(n);break;
+  case'zzz':sleepSheet();break;
   case'lmore':if(n){if(LMORE.has(n.id))LMORE.delete(n.id);else LMORE.add(n.id);render()}break;
   case'lwarm':if(n){const o=['hot','ok','cold'];n.w=o[(o.indexOf(n.w||'ok')+1)%3];await saveNode(n,false);render()}break;
   case'lplan':if(n)planMenu(n);break;
@@ -1075,7 +1096,7 @@ async function act4(act,a,id,n){
  }}
 
 /* ===== stage 5: trip board (columns, drag & drop, people drawer, queue, assistant) ===== */
-const CT={todo:{t:'Написать',e:'📝'},wait:{t:'Написала · жду ответ',e:'✉️'},day:{t:'',e:'📅'},next:{t:'Следующий приезд',e:'✈️'},met:{t:'Встретились',e:'💚'},rest:{t:'Отдыхают',e:'😴'},own:{t:'Свой столбик',e:'📌'}};
+const CT={todo:{t:'Написать',e:'📝'},wait:{t:'Жду ответ',e:'⏳'},day:{t:'',e:'📅'},next:{t:'Следующий приезд',e:'✈️'},met:{t:'Встретились',e:'💚'},rest:{t:'Спящие',e:'😴'},own:{t:'Свой столбик',e:'📌'}};
 const dmy=ts=>{const d=new Date(ts);return p2(d.getDate())+'.'+p2(d.getMonth()+1)};
 const dayTitle=ts=>WDN[new Date(ts).getDay()]+' '+dmy(ts);
 const colTitle=c=>c.title||(c.type==='day'?dayTitle(c.date):CT[c.type].t);
@@ -1137,10 +1158,10 @@ function tplMsgSheet(){const el=sheet(`<h3>Шаблоны сообщений</h3
  el.querySelector('#tmr').onclick=()=>{SET.mtpl=null;SET.ctpl=null;saveSet();tplMsgSheet()}}
 
 /* ----- lead updates from the board ----- */
-async function bTouch(n,it){n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;doneRem(n);logW();if(it){it.w=(it.w||0)+1;it.lt=Date.now()}await saveNode(n,false)}
-async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);return true}
-async function maybeRest(b,n){const f=findItem(b,n.id);if(!f||(n.tc||0)<sleepN()||['rest','met'].includes(f.c.type)||f.c.type==='day')return;const r=colOf(b,'rest');if(!r)return;
- await placeItem(b,n.id,r.id,null,sleepN()+' сообщений без ответа — перенесла в «Отдыхают». Предложу снова в следующую поездку')}
+async function bTouch(n,it){n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;{const m=noteTouch(n);if(m)n.tc=0}doneRem(n);logW();if(it){it.w=(it.w||0)+1;it.lt=Date.now()}await saveNode(n,false)}
+async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.zs=0;n.zc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);return true}
+async function maybeRest(b,n){const f=findItem(b,n.id);if(!f||!n.zs||['rest','met'].includes(f.c.type)||f.c.type==='day')return;const r=colOf(b,'rest');if(!r)return;
+ await placeItem(b,n.id,r.id,null,'Не отвечает — ушёл в «Спящие». Напишешь '+fmtPlan(n.plan))}
 async function placeItem(b,lid,toId,idx,why,opt){if(b.free)return placeFree(b,lid,toId,idx,opt);const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
  const sB=JSON.stringify(b.cols),sN=snapLead(n);const f=findItem(b,lid);let it,from=null;
  if(f){from=f.c;f.c.items.splice(f.i,1);it=f.it}else it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
@@ -1289,8 +1310,10 @@ function cardMenu(b,lid,cid,ii){const f=findItem(b,lid,cid,ii);if(!f)return;if(b
  rows.push({ic:'📸',t:'Добавить скриншот переписки',sub:'можно выбрать несколько',fn:()=>addShots(n)});
  if(nc>1)rows.push({ic:'🗂️',t:'Все переписки · '+nc,fn:()=>chatsSheet(n)});
  const wc=colOf(b,'wait');
- if(c.type==='todo'&&wc)rows.push({ic:'✉️',t:'Написала',sub:'перенесу в «Написала»',fn:()=>placeItem(b,lid,wc.id,null)});
- else if(['wait','rest','next'].includes(c.type))rows.push({ic:'✉️',t:'Написала ещё раз',sub:'без ответа: '+(n.tc||0)+' из '+sleepN(),fn:async()=>{await bTouch(n,it);saveB();render();toast('Записала: '+nodeTitle(n)+' · без ответа: '+n.tc);await maybeRest(b,n)}});
+ if(c.type==='todo'&&wc)rows.push({ic:'⏳',t:'Жду ответ',sub:'я написала, перенесу в «Жду ответ»',fn:()=>placeItem(b,lid,wc.id,null)});
+ else if(['wait','rest','next'].includes(c.type))rows.push({ic:'⏳',t:'Жду ответ ещё раз',sub:(n.wd&&n.wd.length?n.wd.length+' '+plural(n.wd.length,'раз','раза','раз')+' · ':'')+'последнее '+(n.lt?dmy(n.lt):'—'),fn:async()=>{await bTouch(n,it);saveB();render();toast('Записала: '+nodeTitle(n)+' · без ответа: '+n.tc);await maybeRest(b,n)}});
+  if(['wait','rest','next'].includes(c.type))rows.push({ic:'✅',t:'Ответил',sub:'спрошу, когда написать дальше',fn:async()=>{if(await bAnswered(n)){saveB();render();doAnswered(n)}}});
+ rows.push({ic:'📌',t:n.pm?'Пометка':'Добавить пометку',sub:n.pm?n.pm.slice(0,50):'на чём остановились',fn:()=>pmSheet(n)});
  if(c.type==='day'){rows.push({ic:it.s?'🤍':'💚',t:it.s?'Пометить «скорее всего»':'Пометить «точно»',sub:it.s?'догадка, день не назначен':'человек сам назвал день',fn:()=>{it.s=it.s?0:1;saveB();render()}});
   rows.push({ic:'🕐',t:it.tm?'Время: '+it.tm:'Указать время',fn:()=>timeSheet(b,lid)})}
  rows.push({ic:'📅',t:'Перенести в…',fn:()=>moveToSheet(b,lid,c.id)});
@@ -1353,14 +1376,14 @@ function tipsOf(b){if(b.free)return freeTips(b);const out=[],now=Date.now(),t0=s
 
 /* ----- view ----- */
 function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait','todo','next','rest'].includes(c.type);
- const dots=wt?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
+ const wdn=(n.wd||[]).length;const dots=wt&&!wdn?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
  const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
  const pl=n.plan&&c.type!=='day'&&c.type!=='met'&&!b.free?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- const mn=cardMoneyHTML(b,c,n,it);const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${mn}${ctIcons(n,'bc')}</div>${ch}</div>`}
-const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'5 сообщений без ответа — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
+ const mn=cardMoneyHTML(b,c,n,it);const wdb=wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'';const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${ch}</div>`}
+const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала и ждёшь ответ',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'Кто не ответил на 5 сообщений — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
  const em=c.role==='lead'?emptyT.lead:c.role==='met'?emptyT.metr:emptyT[c.type];
@@ -1380,8 +1403,8 @@ function viewBoard(){const b=curBoard();
  syncPlans(b);const tw=todayW(),sk=streak(),q=queueIds(b).length,allT=tipsOf(b);BS.tips=allT;const tips=allT.slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
  const cols=b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
  return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${x.free?'свободная':dmy(x.from)+'–'+dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>${b.free?'📋':'✈️'} ${esc(boardTitle(b))}</b><small>${b.free?'⌄ название, столбцы, итоги':'⌄ даты, итоги, шаблоны'}</small></button><button class="ib" data-act="bdel" aria-label="Удалить доску" style="width:40px;height:40px;font-size:18px">🗑️</button>${topBtn('settings',ICON.gear)}</div>
- <div class="bstat">${b.free?`<button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button><button class="pill c2" data-act="bcoll">👥 Из коллекций</button><button class="pill c4" data-act="bnewcol">＋ Столбик</button><button class="pill ghost" data-act="bfmonth">📅 Новый месяц</button>`:`<span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill ${stayAt(Date.now())||stays().length?'c3':'c4'}" data-act="stays">${(()=>{const s=stayAt(Date.now())||stays().find(x=>!x.to||x.to>=sod(Date.now()));return s?'📍 '+esc(s.dist||s.city)+(s.to?' · до '+stayLabel({from:s.to}).split(' – ')[0]:''):'📍 Где я буду'})()}</button><button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]||{}).id}">⇤ В начало</button>`}</div>
- ${tips.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><div class="btb"><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button>${i===0&&allT.length>1?`<button class="pill sm ghost" data-act="btips">ещё ${allT.length-1}</button>`:''}</div></div>`).join('')}</div>
+ <div class="bstat">${b.free?`<button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button><button class="pill c2" data-act="bcoll">👥 Из коллекций</button><button class="pill c4" data-act="bnewcol">＋ Столбик</button><button class="pill ghost" data-act="bfmonth">📅 Новый месяц</button>`:`<span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill ${stayAt(Date.now())||stays().length?'c3':'c4'}" data-act="stays">${(()=>{const s=stayAt(Date.now())||stays().find(x=>!x.to||x.to>=sod(Date.now()));return s?'📍 '+esc(s.dist||s.city)+(s.to?' · до '+stayLabel({from:s.to}).split(' – ')[0]:''):'📍 Где я буду'})()}</button>${(()=>{const wc=colOf(b,'wait');const wl=wc?liveItems(wc).map(x=>N.get(x.id)).filter(Boolean):[];const o=wl.filter(wOld).length;const z=sleepers().length;return (wl.length?`<button class="pill wpill" data-act="bgo" data-c="${wc.id}">⏳ Жду ${wl.length}${o?' · дольше 3 дн. '+o:''}</button>`:'')+(z?`<button class="pill ghost" data-act="zzz">😴 Спящие · ${z}</button>`:'')})()}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]||{}).id}">⇤ В начало</button>`}</div>
+ ${tips.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><div class="btb"><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button>${t.b2?`<button class="pill sm c2" data-act="${t.act2}" data-ti="${i}">${t.b2}</button>`:''}${i===0&&allT.length>1?`<button class="pill sm ghost" data-act="btips">ещё ${allT.length-1}</button>`:''}</div></div>`).join('')}</div>
  <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>${b.free?'месяц и название':'подскажу дату: '+dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
  ${BS.drawer?drawerHTML(b):''}</div>${tabbar('/b')}`}
 function afterBoard(){const bc=$('#bcols');if(!bc)return;
@@ -1454,6 +1477,7 @@ async function act5(act,a,id,n){const b=curBoard();
    menuSheet('Куда добавить «'+nodeTitle(n)+'»?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),sub:whereOn(b,n.id)===colTitle(c)?'уже здесь':'',fn:()=>placeItem(b,n.id,c.id,null)})));break;
   case'bmultiadd':if(!b)break;if(b.free){const ids=[...BS.sel];BS.sel.clear();BS.multi=false;freeAddMenu(b,ids);break}menuSheet('Куда добавить '+BS.sel.size+' '+plural(BS.sel.size,'человека','человек','человек')+'?',b.cols.filter(c=>!(c.type==='day'&&eod(c.date)<Date.now())).map(c=>({ic:CT[c.type].e,t:colTitle(c),fn:async()=>{const ids=[...BS.sel];BS.sel.clear();BS.multi=false;for(const i of ids)await placeItem(b,i,c.id,null);toast('Добавила: '+ids.length+' → '+colTitle(c))}})));break;
   case'stays':staysSheet();break;
+  case'nearall':{const tt=(BS.tips||[])[+a.dataset.ti];if(tt&&tt.ids)nearSheet(tt.ids);break}
   case'bqueue':if(b)startQueue(queueIds(b),'write');break;
   case'bconf':if(b){const c=b.cols.find(x=>x.id===a.dataset.c);if(c)startQueue(liveItems(c).map(x=>x.id),'confirm')}break;
   case'bguess':if(b)startQueue(dayCols(b).filter(c=>c.date>=sod(Date.now())).flatMap(c=>liveItems(c).filter(x=>!x.s).map(x=>x.id)),'confirm');break;
@@ -1772,17 +1796,17 @@ function photoNav(n,d){if(!n)return;const l=photoSibs(n),i=l.findIndex(x=>x.id==
 /* ===== v18: where I will be (stays) + district matching ===== */
 const TRL={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',ч:'ch',ш:'sh',щ:'sh',ы:'y',э:'e',ю:'u',я:'ya'};
 const dkn=s=>[...String(s||'').toLowerCase()].map(c=>TRL[c]!==undefined?TRL[c]:c).join('').replace(/dubai|dubay|district|rayon|[^a-z0-9]/g,'');
-const distEq=(a,b)=>{a=dkn(a);b=dkn(b);return a.length>=3&&b.length>=3&&(a.includes(b)||b.includes(a))};
+const distEq=(a,b)=>{const za=zoneOf(a),zb=zoneOf(b);if(za||zb)return !!za&&za===zb;a=dkn(a);b=dkn(b);return a.length>=3&&b.length>=3&&(a.includes(b)||b.includes(a))};
 const stays=()=>(SET.stays||[]).slice().sort((a,b)=>a.from-b.from);
 const stayAt=ts=>{let r=null;for(const s of stays())if(s.from<=ts&&(!s.to||ts<=eod(s.to)))r=s;return r};
-const nearOf=(st)=>st&&st.dist?leads().filter(n=>n.st!=='stop'&&citiesOf(n).includes(st.city)&&distEq(n.dist&&n.dist[st.city],st.dist)):[];
+const nearOf=(st)=>st&&st.dist?leads().filter(n=>n.st!=='stop'&&!n.zs&&citiesOf(n).includes(st.city)&&distEq(n.dist&&n.dist[st.city],st.dist)):[];
 const stayLabel=s=>{const f=x=>{const d=new Date(x);return d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)};return f(s.from)+(s.to?' – '+f(s.to):' – …')};
 const stayWhere=s=>[s.country,s.city,s.dist].filter(Boolean).join(', ');
 function stayTip(b){if(!b||b.free||eod(b.to)<Date.now())return null;const t0=sod(Date.now());
  const st=stays().find(s=>s.dist&&(!s.to||eod(s.to)>=t0)&&s.from<=eod(b.to)&&(!s.to||s.to>=sod(b.from)));if(!st)return null;
  const ppl=nearOf(st).filter(n=>!(n.lt&&n.lt>=t0));if(!ppl.length)return null;
  const act=st.from<=Date.now();
- return{e:'📍',t:(act?'Ты в районе ':'С '+stayLabel(st).split(' – ')[0]+' ты в районе ')+esc(st.dist)+'. Живут рядом: '+ppl.slice(0,4).map(n=>esc(nodeTitle(n).split(' ')[0])).join(', ')+(ppl.length>4?' и ещё '+(ppl.length-4):'')+'. Напиши им',b:'Писать',act:'bsoon',ids:ppl.map(n=>n.id)}}
+ return{e:'📍',t:(act?'Ты в районе ':'С '+stayLabel(st).split(' – ')[0]+' ты в районе ')+esc(st.dist)+'. Живут рядом: '+ppl.slice(0,4).map(n=>esc(nodeTitle(n).split(' ')[0])).join(', ')+(ppl.length>4?' и ещё '+(ppl.length-4):'')+'. Напиши им',b:'Писать',act:'bsoon',b2:'Показать всех',act2:'nearall',ids:ppl.map(n=>n.id)}}
 function staysSheet(){const L=stays();const t0=sod(Date.now());
  const el=sheet(`<h3>📍 Где я буду</h3><div class="hint" style="text-align:left">Впиши даты, страну, город и район. Тогда я буду подсказывать, кому написать из того же района. Конец можно не указывать, если пока не знаешь.</div>
  ${L.length?L.map(s=>{const k=nearOf(s).length;return `<button class="act" data-sid="${s.id}"><span class="ic">${s.to&&s.to<t0?'✔️':'📍'}</span><span>${stayLabel(s)}<br><small style="opacity:.7">${esc(stayWhere(s))}${k?' · рядом '+k:''}</small></span></button>`}).join(''):'<div class="hint" style="text-align:left">Пока ничего нет.</div>'}
@@ -1796,16 +1820,77 @@ function staySheet(s0){const b=curBoard&&curBoard();const last=stays().slice(-1)
  <div class="two"><label>С<input class="inp" type="date" id="sf" value="${v(S.from)}"></label><label>По (можно пусто)<input class="inp" type="date" id="st" value="${v(S.to)}"></label></div>
  <div class="lbl">Страна</div><input class="inp" id="sco" list="scl" maxlength="40" value="${esc(S.country)}" placeholder="ОАЭ"><datalist id="scl">${[...new Set(['ОАЭ',...stays().map(x=>x.country).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
  <div class="lbl">Город</div><input class="inp" id="sci" list="sil" maxlength="40" value="${esc(S.city)}" placeholder="Дубай"><datalist id="sil">${cityList().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
- <div class="lbl">Район</div><input class="inp" id="sdi" list="sdl" maxlength="60" value="${esc(S.dist)}" placeholder="Dubai Marina"><datalist id="sdl">${districtsOf(S.city).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+ <div class="lbl">Район</div><div class="zbig" id="szb">${ZONES.map(x=>`<button type="button" class="zb${zoneOf(S.dist)===x?' on':''}" data-z="${x}">${x}</button>`).join('')}</div><input type="hidden" id="sdi" value="${esc(S.dist)}">
  <div class="row" style="margin-top:14px"><button class="btn pink wide" id="ssv">Сохранить</button></div>${s0?'<div class="row"><button class="pill ghost" id="sdel">Удалить период</button></div>':''}`);
  const rd=x=>{const m=/^(\d+)-(\d+)-(\d+)$/.exec(x);return m?new Date(+m[1],+m[2]-1,+m[3]).getTime():0};
- el.querySelector('#sci').oninput=e=>{const dl=el.querySelector('#sdl');dl.innerHTML=districtsOf(e.target.value.trim()).map(x=>`<option value="${esc(x)}">`).join('')};
+ el.querySelectorAll('#szb .zb').forEach(bn=>bn.onclick=()=>{const h=el.querySelector('#sdi');const on=bn.classList.contains('on');el.querySelectorAll('#szb .zb').forEach(x=>x.classList.remove('on'));if(on)h.value='';else{bn.classList.add('on');h.value=bn.dataset.z}});
  el.querySelector('#ssv').onclick=()=>{const f=rd(el.querySelector('#sf').value),t=rd(el.querySelector('#st').value),c=el.querySelector('#sci').value.trim();
   if(!f){toast('Укажи дату начала');return}if(t&&t<f){toast('Конец раньше начала');return}if(!c){toast('Укажи город');return}
   S.from=f;S.to=t;S.country=el.querySelector('#sco').value.trim();S.city=c;S.dist=el.querySelector('#sdi').value.trim();
   if(!cityList().includes(c)){SET.cities=[...cityList(),c]}
   SET.stays=(SET.stays||[]).filter(x=>x.id!==S.id).concat([S]);saveSet();TD.extra=0;staysSheet();render()};
  const d=el.querySelector('#sdel');if(d)d.onclick=()=>{SET.stays=(SET.stays||[]).filter(x=>x.id!==S.id);saveSet();staysSheet();render()}}
+
+
+/* ===== v20: waiting dates, sleepers, notes on cards, nearby photos, zones ===== */
+const addMonths=(ts,k)=>{const d=new Date(ts);d.setMonth(d.getMonth()+k);return d.getTime()};
+const SLEEPM=[2,3,6];
+const shouldSleep=n=>n.st!=='stop'&&(n.wd||[]).length>=(n.zc?1:sleepN());
+function goSleep(n){n.zc=(n.zc||0)+1;const m=SLEEPM[Math.min(n.zc-1,2)];n.zs=1;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.tc=0;if(n.st!=='stop')n.st='sleep';n.plan=atW(n,addMonths(Date.now(),m));return m}
+const wdates=(n,k)=>{const w=n.wd||[];const s=w.slice(-(k||3)).map(dmy).join(' · ');return s+(w.length>(k||3)?' +'+(w.length-(k||3)):'')};
+const wOld=n=>{const w=n.wd||[];return w.length&&Date.now()-w[w.length-1]>3*864e5};
+function noteTouch(n){n.zs=0;n.wd=[...(n.wd||[]),Date.now()];if(shouldSleep(n))return goSleep(n);return 0}
+/* move cards on trip boards after she pressed "Жду ответ" */
+function syncBoardsAfterTouch(n){let ch=false;for(const b of boards()){if(b.free)continue;const f=findItem(b,n.id);if(!f)continue;const wc=colOf(b,'wait'),rc=colOf(b,'rest');
+ const to=n.zs?rc:(f.c.type==='todo'?wc:null);if(to&&to!==f.c){f.c.items.splice(f.i,1);f.it.s=0;f.it.tm='';to.items.push(f.it);ch=true}}if(ch)saveB()}
+async function doWait(n){const sn=snapLead(n);const m=noteTouch(n);n.tc=(n.tc||0)+(m?0:1);n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=m?n.plan:0;doneRem(n);logW();await saveNode(n,false);syncBoardsAfterTouch(n);render();
+ toast(m?'В спящие. Напишешь '+fmtPlan(n.plan):'Жду ответ: '+nodeTitle(n)+' · '+dmy(Date.now()),'Отменить',()=>{undoLead(n,sn)})}
+/* ----- zones ----- */
+const ZONES=['Dubai Marina','Business Bay'];
+const ZRX={'Dubai Marina':/(marina|марин)/,'Business Bay':/(business|бизнес|biznes|^bb\b|^бб\b)/};
+const dsplit=s=>String(s||'').split(/\s*[-–—]\s*/);
+const zoneOf=s=>{const f=dsplit(s)[0].toLowerCase();for(const z of ZONES)if(ZRX[z].test(f))return z;return null};
+const specOf=s=>{const p=dsplit(s);return zoneOf(s)?p.slice(1).join(' - ').trim():String(s||'').trim()};
+const zShort=z=>z==='Dubai Marina'?'Marina':z;
+const distLabel=v=>{if(!v)return'';const z=zoneOf(v),sp=specOf(v);return z?zShort(z)+(sp?'|'+sp:''):v};
+function distSheet(n){const cs=citiesOf(n);const H=here();let c=cs[0]||(H&&H.city)||cityList()[0]||'';
+ const cur=(n.dist&&n.dist[c])||'';let z=zoneOf(cur)||'';let sp=z?specOf(cur):cur;
+ const specs=[...new Set(leads().map(x=>{const v=x.dist&&x.dist[c];return v&&zoneOf(v)?specOf(v):''}).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
+ const draw=()=>{const el=sheet(`<h3>📍 Район · ${esc(nodeTitle(n))}</h3>${cs.length>1?chips('dc',cs,c):''}
+  <div class="zbig">${ZONES.map(x=>`<button type="button" class="zb${z===x?' on':''}" data-z="${x}">${x}</button>`).join('')}</div>
+  <div class="lbl">Конкретный район (необязательно)</div><input class="inp" id="dd" list="ddl" placeholder="Например: Dubai Hills" maxlength="60" value="${esc(sp)}"><datalist id="ddl">${specs.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+  <div class="hint" style="text-align:left">Писать ему я буду, когда ты в выбранной зоне. Конкретный район просто виден на карточке.</div>
+  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="dsv">Сохранить</button></div>${cur?'<div class="row"><button class="pill ghost" id="dcl">Убрать район</button></div>':''}`);
+  el.querySelectorAll('.zb').forEach(b=>b.onclick=()=>{sp=el.querySelector('#dd').value;z=z===b.dataset.z?'':b.dataset.z;draw()});
+  if(cs.length>1)chipsBind(el,'dc',v=>{sp=el.querySelector('#dd').value;c=v;const cc=(n.dist&&n.dist[c])||'';z=zoneOf(cc)||'';sp=z?specOf(cc):cc;draw()});
+  const save=async v=>{if(!c){toast('Сначала выбери город (⋯ Ещё → город)');return}n.dist=n.dist||{};if(v)n.dist[c]=v;else delete n.dist[c];if(!(n.cities&&n.cities.length))n.cities=[c];await saveNode(n,false);closeSheet();render()};
+  el.querySelector('#dsv').onclick=()=>{const s=el.querySelector('#dd').value.trim();save(z?(s?z+' - '+s:z):s)};
+  const x=el.querySelector('#dcl');if(x)x.onclick=()=>save('')};draw()}
+/* ----- notes on cards ----- */
+const pmDate=n=>n.pmAt?(()=>{const d=new Date(n.pmAt);return p2(d.getDate())+'.'+p2(d.getMonth()+1)})():'';
+function pmSheet(n){const el=sheet(`<h3>📌 Где остановились · ${esc(nodeTitle(n).split(' ')[0])}</h3><div class="hint" style="text-align:left">Коротко: что было и что дальше. Эта запись видна на карточке.</div><textarea class="inp" id="pm" style="min-height:130px" placeholder="Например: хотел встретиться сегодня, в 21:00 ответил, что ещё на работе">${esc(n.pm||'')}</textarea>
+ <div class="row" style="margin-top:12px"><button class="btn pink wide" id="pms">Сохранить</button></div>
+ ${(n.pmh&&n.pmh.length)?`<div class="lbl">История</div>${n.pmh.slice().reverse().slice(0,30).map(h=>`<div class="pmh"><i>${fmtDate(h.t)}</i> ${esc(h.x)}</div>`).join('')}`:''}`);
+ const t=el.querySelector('#pm');setTimeout(()=>t.focus(),80);
+ el.querySelector('#pms').onclick=async()=>{const v=t.value.trim();if(v!==(n.pm||'')){if(n.pm)n.pmh=[...(n.pmh||[]),{t:n.pmAt||Date.now(),x:n.pm}];n.pm=v;n.pmAt=v?Date.now():0}await saveNode(n,false);closeSheet();render()}}
+const pmLine=n=>n.pm?`<span class="bpm" data-act="bpm" data-id="${n.id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</span>`:`<span class="bpm0" data-act="bpm" data-id="${n.id}">＋ пометка</span>`;
+/* ----- sleepers ----- */
+const sleepers=()=>leads().filter(n=>n.zs&&n.st!=='stop').sort((a,b)=>(a.plan||0)-(b.plan||0));
+function sleepSheet(){const L=sleepers();const el=sheet(`<h3>😴 Спящие · ${L.length}</h3><div class="hint" style="text-align:left">Не отвечают. Приложение напомнит написать в указанный день: сначала через 2 месяца, потом через 3, потом через 6.</div>
+ ${L.length?L.map(n=>`<div class="ev"><button class="evm" data-act="open" data-id="${n.id}">${avatarHTML(n,44)}<span class="evt"><b>${esc(nodeTitle(n))}</b><span>${n.plan?'напишешь '+fmtPlan(n.plan):'без даты'}</span></span></button><button class="pill sm ghost" data-wk="${n.id}">Разбудить</button></div>`).join(''):'<div class="hint" style="text-align:left">Пока никого.</div>'}`);
+ el.querySelectorAll('[data-wk]').forEach(b=>b.onclick=async()=>{const n=N.get(b.dataset.wk);n.zs=0;n.plan=0;n.wd=[];await saveNode(n,false);closeSheet();render();toast('Разбудила: '+nodeTitle(n))})}
+/* ----- nearby with photos ----- */
+function nearSheet(ids){const b=curBoard();const L=ids.map(i=>N.get(i)).filter(Boolean);
+ const el=sheet(`<h3>📍 Живут рядом · ${L.length}</h3>${L.map(n=>{const d=(n.dist&&n.dist[(stayAt(Date.now())||{}).city||citiesOf(n)[0]])||distOf(n);return `<div class="nr"><button class="nrp" data-act="open" data-id="${n.id}">${avatarHTML(n,76,'sq')}</button><div class="nrt"><b>${esc(nodeTitle(n).split(' ').slice(0,2).join(' '))}</b><small>${esc(specOf(d)||zoneOf(d)||'')}${n.tc?' · без ответа: '+n.tc:''}${n.lt?' · писала '+relShort(n.lt):''}</small>${n.pm?`<span class="bpm"><i>${pmDate(n)}</i> ${esc(n.pm)}</span>`:''}<div class="nrb"><button class="pill sm c4" data-nw="${n.id}">Написать</button><button class="pill sm ghost" data-nm="${n.id}">Перенести…</button></div></div></div>`}).join('')}`);
+ el.querySelectorAll('[data-nw]').forEach(x=>x.onclick=()=>{const n=N.get(x.dataset.nw),c=contactsOf(n);const k=c.ph?'wa':c.tg?'tg':c.ig?'ig':'';if(k)openChat(n,k,'');else{closeSheet();go('/n/'+n.id)}});
+ el.querySelectorAll('[data-nm]').forEach(x=>x.onclick=()=>{if(b)moveToSheet(b,x.dataset.nm,null)});
+ el.querySelectorAll('img[data-chimg]').forEach(()=>{})}
+/* ----- what happened ----- */
+function whatSheet(n){menuSheet('Что произошло? · '+nodeTitle(n).split(' ')[0],[
+ {ic:'⏳',t:'Жду ответ',sub:'я написала'+((n.wd||[]).length?' · уже '+(n.wd||[]).length:''),fn:()=>doWait(n)},
+ {ic:'✅',t:'Ответил',fn:()=>doAnswered(n)},
+ {ic:'🔁',t:'Перенесли',sub:'выбрать новую дату',fn:()=>planDateSheet(n)},
+ {ic:'🤝',t:'Встретились',sub:'записать встречу',fn:()=>meetSheet(n,null)}])}
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -2069,7 +2154,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 19 · 20.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 20 · 21.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
