@@ -388,6 +388,12 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .bct .bwd{display:block;width:fit-content;max-width:100%;font-size:12px}
 .bct .bwd,.bct .bwd *{color:#fff!important}
 .bct .bpm{color:#33333a!important}.bct .bpm i{color:#8a6d00!important}
+.bwd0{background:transparent!important;color:#b0204f!important;border:1.5px solid #b0204f;box-shadow:none!important;display:block;width:fit-content;border-radius:9px;padding:2px 8px;font-size:12px;margin-top:3px}
+.bwd[data-act]{cursor:pointer}
+.btg{display:block;width:fit-content;font-size:11.5px;font-weight:700;border-radius:9px;padding:2px 8px;margin-top:3px;white-space:nowrap}
+.tg-g{background:#d4f5dc;color:#17702e}.tg-y{background:#fff1b8;color:#7a5a00}.tg-p{background:#ffd9ec;color:#b01a6b}.tg-o{background:#ffe0c4;color:#8a4300}.tg-r{background:#ffcfcf;color:#a01212}
+.bwrap.cp .bcard{padding:5px 7px;margin-bottom:4px;gap:7px}
+.bwrap.cp .bcard .av,.bwrap.cp .bcard .av.sq{width:34px!important;height:34px!important;border-radius:10px;font-size:15px!important}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -1381,8 +1387,8 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
  const pl=n.plan&&c.type!=='day'&&c.type!=='met'&&!b.free?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- const mn=cardMoneyHTML(b,c,n,it);const wdb=wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'';const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${ch}</div>`}
+ const mn=cardMoneyHTML(b,c,n,it);const wdb=b.free?freeWaitHTML(b,c,n):(wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'');const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${ch}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала и ждёшь ответ',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'Кто не ответил на 5 сообщений — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
@@ -1400,10 +1406,10 @@ function viewBoard(){const b=curBoard();
  if(!b)return `<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Доски</h1>
   <div class="empty" style="padding-top:20px"><img src="lidy.png" alt=""><b>Как Trello, только для твоих людей</b>Свободная доска: столбики по месяцам (лиды, виделись) с суммами. Или доска поездки с днями и датами. Людей берёшь прямо из своих книжек и перетаскиваешь.</div>
   <div class="row" style="justify-content:center"><button class="btn pink" data-act="bnew">＋ Создать доску</button></div><div class="row" style="justify-content:center;margin-top:10px"><button class="pill c2" data-act="bmk26">🗓️ Создать «Дубай: лиды и встречи 2026»</button></div></div>${tabbar('/b')}`;
- syncPlans(b);const tw=todayW(),sk=streak(),q=queueIds(b).length,allT=tipsOf(b);BS.tips=allT;const tips=allT.slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
- const cols=b.cols.filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
- return `<div class="bwrap${BS.drawer?' dr':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${x.free?'свободная':dmy(x.from)+'–'+dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>${b.free?'📋':'✈️'} ${esc(boardTitle(b))}</b><small>${b.free?'⌄ название, столбцы, итоги':'⌄ даты, итоги, шаблоны'}</small></button><button class="ib" data-act="bdel" aria-label="Удалить доску" style="width:40px;height:40px;font-size:18px">🗑️</button>${topBtn('settings',ICON.gear)}</div>
- <div class="bstat">${b.free?`<button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button><button class="pill c2" data-act="bcoll">👥 Из коллекций</button><button class="pill c4" data-act="bnewcol">＋ Столбик</button><button class="pill ghost" data-act="bfmonth">📅 Новый месяц</button>`:`<span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill ${stayAt(Date.now())||stays().length?'c3':'c4'}" data-act="stays">${(()=>{const s=stayAt(Date.now())||stays().find(x=>!x.to||x.to>=sod(Date.now()));return s?'📍 '+esc(s.dist||s.city)+(s.to?' · до '+stayLabel({from:s.to}).split(' – ')[0]:''):'📍 Где я буду'})()}</button>${(()=>{const wc=colOf(b,'wait');const wl=wc?liveItems(wc).map(x=>N.get(x.id)).filter(Boolean):[];const o=wl.filter(wOld).length;const z=sleepers().length;return (wl.length?`<button class="pill wpill" data-act="bgo" data-c="${wc.id}">⏳ Жду ${wl.length}${o?' · дольше 3 дн. '+o:''}</button>`:'')+(z?`<button class="pill ghost" data-act="zzz">😴 Спящие · ${z}</button>`:'')})()}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]||{}).id}">⇤ В начало</button>`}</div>
+ if(b.free&&!b.m21)migrateTinder(b);syncPlans(b);const tw=todayW(),sk=streak(),q=queueIds(b).length,allT=tipsOf(b);BS.tips=allT;const tips=allT.slice(0,1);const tcol=dayCols(b).find(c=>sod(c.date)===sod(Date.now()));
+ const cols=sortedCols(b).filter(c=>!(b.hidePast&&c.type==='day'&&eod(c.date)<Date.now()));
+ return `<div class="bwrap${BS.drawer?' dr':''}${b.cp?' cp':''}"><div class="bhead"><div class="btabs">${boards().slice().sort((x,y)=>x.from-y.from).map(x=>`<button class="btab${x===b?' on':''}" data-act="bswitch" data-id="${x.id}">${esc(x.title||x.city)}<small>${x.free?'свободная':dmy(x.from)+'–'+dmy(x.to)}</small></button>`).join('')}<button class="btab add" data-act="bnew">＋ Доска</button></div><div class="btop"><button class="btitle" data-act="bmenu"><b>${b.free?'📋':'✈️'} ${esc(boardTitle(b))}</b><small>${b.free?'⌄ название, столбцы, итоги':'⌄ даты, итоги, шаблоны'}</small></button><button class="ib" data-act="bdel" aria-label="Удалить доску" style="width:40px;height:40px;font-size:18px">🗑️</button>${topBtn('settings',ICON.gear)}</div>
+ <div class="bstat">${b.free?`<button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button><button class="pill c2" data-act="bcoll">👥 Из коллекций</button><button class="pill c4" data-act="bnewcol">＋ Столбик</button><button class="pill ghost" data-act="bfmonth">📅 Новый месяц</button><button class="pill ghost" data-act="btagleg">❔ Метки</button>`:`<span class="pill ${tw>=dailyN()?'c2':'wh'}">✉ Сегодня ${tw} из ${dailyN()}</span>${sk?`<span class="pill ghost">🔥 ${sk} ${plural(sk,'день','дня','дней')}</span>`:''}<button class="pill ${stayAt(Date.now())||stays().length?'c3':'c4'}" data-act="stays">${(()=>{const s=stayAt(Date.now())||stays().find(x=>!x.to||x.to>=sod(Date.now()));return s?'📍 '+esc(s.dist||s.city)+(s.to?' · до '+stayLabel({from:s.to}).split(' – ')[0]:''):'📍 Где я буду'})()}</button>${(()=>{const wc=colOf(b,'wait');const wl=wc?liveItems(wc).map(x=>N.get(x.id)).filter(Boolean):[];const o=wl.filter(wOld).length;const z=sleepers().length;return (wl.length?`<button class="pill wpill" data-act="bgo" data-c="${wc.id}">⏳ Жду ${wl.length}${o?' · дольше 3 дн. '+o:''}</button>`:'')+(z?`<button class="pill ghost" data-act="zzz">😴 Спящие · ${z}</button>`:'')})()}<button class="pill c5" data-act="bqueue">▶ Писать по очереди${q?' · '+q:''}</button><button class="pill ${BS.drawer?'c3':'c1'}" data-act="bdrawer">👥 Из книжек</button>${tcol?`<button class="pill ghost" data-act="bgo" data-c="${tcol.id}">📅 К сегодня</button>`:''}<button class="pill ghost" data-act="bgo" data-c="${(colOf(b,'todo')||b.cols[0]||{}).id}">⇤ В начало</button>`}</div>
  ${tips.map((t,i)=>`<div class="btip"><span>${t.e}</span><p>${t.t}</p><div class="btb"><button class="pill sm c4" data-act="${t.act}" data-ti="${i}"${t.c?` data-c="${t.c}"`:''}>${t.b}</button>${t.b2?`<button class="pill sm c2" data-act="${t.act2}" data-ti="${i}">${t.b2}</button>`:''}${i===0&&allT.length>1?`<button class="pill sm ghost" data-act="btips">ещё ${allT.length-1}</button>`:''}</div></div>`).join('')}</div>
  <div class="bcols" id="bcols">${cols.map(c=>colHTML(b,c)).join('')}<section class="bcol bnew"><button data-act="bnewcol">＋ Столбик<small>${b.free?'месяц и название':'подскажу дату: '+dayTitle(suggestDates(b,1)[0])}</small></button></section></div>
  ${BS.drawer?drawerHTML(b):''}</div>${tabbar('/b')}`}
@@ -1466,6 +1472,9 @@ async function act5(act,a,id,n){const b=curBoard();
   case'bmk26':makeBoard2026(true);break;
   case'bnosum':if(b)nosumSheet(b);break;
   case'bdatesug':if(b)dateSugAdd(b);break;
+  case'bwait':if(n)doWait(n);break;
+  case'btag':{const t=n&&tagOf(n);if(t)toast(t.d);break}
+  case'btagleg':tagLegend();break;
   case'bchat':if(n&&lastChat(n))chatView(n,lastChat(n));break;
   case'bcol':if(b)colSheet(b,a.dataset.c);break;
   case'badd':if(b)addSheet(b,a.dataset.c);break;
@@ -1610,7 +1619,7 @@ function freeBoardEdit(b0){const isNew=!b0;let mk=true;const cur=ymOf(Date.now()
 async function deleteBoard(b){if(!await ask('Удалить доску «'+boardTitle(b)+'»?','Удалится только доска и её столбцы. Люди и их встречи останутся в книжках.','Удалить',true))return;
  SET.boards=boards().filter(x=>x!==b);SET.board=null;saveB();render();toast('Доска удалена')}
 function freeBoardMenu(b){const others=boards().filter(x=>x.id!==b.id);
- menuSheet(boardTitle(b),[{ic:'✏️',t:'Название',fn:()=>freeBoardEdit(b)},{ic:'＋',t:'Новый столбец',fn:()=>newFreeColSheet(b)},{ic:'📅',t:'Новый месяц',sub:'создам «лиды» и «виделись»',fn:()=>newMonthSheet(b)},{ic:'📊',t:'Суммы по столбцам',fn:()=>freeStats(b)},
+ menuSheet(boardTitle(b),[{ic:'✏️',t:'Название',fn:()=>freeBoardEdit(b)},{ic:'＋',t:'Новый столбец',fn:()=>newFreeColSheet(b)},{ic:'📅',t:'Новый месяц',sub:'создам «лиды» и «виделись»',fn:()=>newMonthSheet(b)},{ic:'📊',t:'Суммы по столбцам',fn:()=>freeStats(b)},{ic:'😴',t:'Спящие: '+(b.zz?'вкл':'выкл'),sub:b.zz?'после 5 «Жду ответ» людей убираю в «Спящие»':'люди с этой доски не уходят в «Спящие»',fn:()=>{b.zz=b.zz?0:1;saveB();render();toast('Спящие на этой доске: '+(b.zz?'вкл':'выкл'))}},{ic:'🔎',t:'Компактно: '+(b.cp?'вкл':'выкл'),sub:'маленькие карточки',fn:()=>{b.cp=b.cp?0:1;saveB();render()}},{ic:'❔',t:'Что значат метки',fn:tagLegend},
   ...others.map(x=>({ic:x.free?'📋':'🗂️',t:boardTitle(x),sub:'Открыть эту доску',fn:()=>{SET.board=x.id;BS.sl=null;saveB();render()}})),
   {ic:'＋',t:'Новая доска',fn:()=>boardEdit(null)},{ic:'🗑️',t:'Удалить эту доску',red:1,fn:()=>deleteBoard(b)}])}
 function freeStats(b){const rows=b.cols.map(c=>{const r=rangeOf(b,c);let all=[];if(r)for(const it of uniqItems(c)){const n=N.get(it.id);all=all.concat(meetsIn(n,r))}const s=sumOf(all);return `<div class="mrow"><div class="mh"><b>${esc(colTitle(c))}</b><span>${uniqItems(c).length} чел.</span></div>${all.length?`<div class="mv">${byStr(s.by)}${Object.keys(s.by).length>1||(!s.by.AED&&!onlyRub(s.by))?` · ≈ ${nf0.format(Math.round(s.aed))} AED`:''}${onlyRub(s.by)?'':' · ≈ '+nf0.format(Math.round(s.rub))+' ₽'}</div>`:'<div class="hint" style="text-align:left;margin:2px 0 0">'+(r?'пока без сумм':'месяц не выбран')+'</div>'}</div>`}).join('');
@@ -1653,7 +1662,7 @@ async function placeFree(b,lid,toId,idx,opt){opt=opt||{};const n=N.get(lid),to=b
  if(has&&!(dupOk&&(opt.copy||opt.again||!from))){if(!it){toast('«'+nm+'» уже в «'+colTitle(to)+'»');return}saveB();render();return}
  it=it||{id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};if(opt.copy&&from===to)it={id:lid,s:0,tm:'',w:0,lt:0,at:Date.now()};
  to.items.splice(at(idx),0,it);saveB();render();
- toast('«'+nm+'» → '+colTitle(to)+(has?' (ещё раз)':''),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to)}
+ toast('«'+nm+'» → '+colTitle(to)+(has?' (ещё раз)':''),'Отменить',()=>{b.cols=JSON.parse(sB);saveB();render()});autoScan(n,to);sortConsent(to);tinderLink(b,n,to)}
 function freeAddMenu(b,ids){const n=N.get(ids[0]);const rows=[];const nd=ids.length===1&&n?nameDate(n):null;
  const addAll=async c=>{for(const i of ids)await placeFree(b,i,c.id,null,{copy:true,again:true});if(ids.length>1)toast('Добавила: '+ids.length+' → '+colTitle(c))};
  if(nd){const y=ymOf(nd),c=b.cols.find(x=>x.ym===y&&x.role==='lead');const dd=new Date(nd);const ds=p2(dd.getDate())+'.'+p2(dd.getMonth()+1);
@@ -1668,6 +1677,8 @@ function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[]
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg,fn:()=>openChat(n,'tg','')});
  const lc=lastChat(n),nc=(n.chats||[]).length;
  if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
+ if(c.role!=='met'){rows.push({ic:'⏳',t:(n.wd||[]).length?'Жду ответ · ещё раз':'Жду ответ',sub:'добавлю сегодняшнюю дату',fn:()=>doWait(n)});if((n.wd||[]).length)rows.push({ic:'✅',t:'Ответил',sub:'уберу «Жду ответ»',fn:()=>doAnswered(n)})}
+ rows.push({ic:'🏷️',t:'Метка',sub:tagOf(n)?TAGS[n.tgl].t:'согласие / отказ',fn:()=>tagSheet(b,n,c.id)});rows.push({ic:'📌',t:'Пометка',sub:'где остановились',fn:()=>pmSheet(n)});
  rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id,f.i)});
  rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
  rows.push({ic:'✏️',t:'Изменить имя',fn:()=>editSheet(n)});
@@ -1839,7 +1850,7 @@ const shouldSleep=n=>n.st!=='stop'&&(n.wd||[]).length>=(n.zc?1:sleepN());
 function goSleep(n){n.zc=(n.zc||0)+1;const m=SLEEPM[Math.min(n.zc-1,2)];n.zs=1;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.tc=0;if(n.st!=='stop')n.st='sleep';n.plan=atW(n,addMonths(Date.now(),m));return m}
 const wdates=(n,k)=>{const w=n.wd||[];const s=w.slice(-(k||3)).map(dmy).join(' · ');return s+(w.length>(k||3)?' +'+(w.length-(k||3)):'')};
 const wOld=n=>{const w=n.wd||[];return w.length&&Date.now()-w[w.length-1]>3*864e5};
-function noteTouch(n){n.zs=0;n.wd=[...(n.wd||[]),Date.now()];if(shouldSleep(n))return goSleep(n);return 0}
+function noteTouch(n){n.zs=0;n.wd=[...(n.wd||[]),Date.now()];if(!noSleep(n)&&shouldSleep(n))return goSleep(n);return 0}
 /* move cards on trip boards after she pressed "Жду ответ" */
 function syncBoardsAfterTouch(n){let ch=false;for(const b of boards()){if(b.free)continue;const f=findItem(b,n.id);if(!f)continue;const wc=colOf(b,'wait'),rc=colOf(b,'rest');
  const to=n.zs?rc:(f.c.type==='todo'?wc:null);if(to&&to!==f.c){f.c.items.splice(f.i,1);f.it.s=0;f.it.tm='';to.items.push(f.it);ch=true}}if(ch)saveB()}
@@ -1891,6 +1902,49 @@ function whatSheet(n){menuSheet('Что произошло? · '+nodeTitle(n).sp
  {ic:'✅',t:'Ответил',fn:()=>doAnswered(n)},
  {ic:'🔁',t:'Перенесли',sub:'выбрать новую дату',fn:()=>planDateSheet(n)},
  {ic:'🤝',t:'Встретились',sub:'записать встречу',fn:()=>meetSheet(n,null)}])}
+
+/* ===== stage 10 (v21): Tinder funnel — tags, wait button on free boards, sleep toggle, auto-link to month ===== */
+const TAGS={
+ ca:{e:'✅',t:'активное',g:'Согласие',c:'g',r:0,d:'Согласие активное: сам(а) хочет, отвечает охотно'},
+ cu:{e:'🤔',t:'неуверенное',g:'Согласие',c:'y',r:1,d:'Согласие неуверенное: согласился(лась), но сомневается'},
+ rv:{e:'💗',t:'очень дружелюбный',g:'Отказ',c:'p',d:'Очень дружелюбный отказ от свидания: тепло, дверь открыта'},
+ rf:{e:'🙂',t:'дружелюбный',g:'Отказ',c:'p',d:'Дружелюбный отказ'},
+ rfn:{e:'🙂😐',t:'дружелюбный неуверенный',g:'Отказ',c:'o',d:'Дружелюбный, но неуверенный отказ: может передумать'},
+ rn:{e:'😐',t:'неуверенный',g:'Отказ',c:'o',d:'Неуверенный отказ: сам(а) не знает'},
+ rh:{e:'⛔',t:'резкий',g:'Отказ',c:'r',d:'Резкий (агрессивный) отказ: не писать'}};
+const tagOf=n=>TAGS[n.tgl]||null;
+const tagChip=n=>{const t=tagOf(n);return t?`<b class="btg tg-${t.c}" data-act="btag" data-id="${n.id}">${t.e} ${t.t}</b>`:''};
+/* a person on a free board with sleeping switched off never goes to «Спящие» */
+function noSleep(n){return boards().some(b=>b.free&&!b.zz&&findItem(b,n.id))}
+const rankOf=n=>{const t=tagOf(n);return t&&t.g==='Согласие'?t.r:2};
+function sortConsent(c){if(!/согласи/i.test(c.title||''))return;const a=c.items.map((it,i)=>({it,i,r:rankOf(N.get(it.id)||{})}));a.sort((x,y)=>x.r-y.r||x.i-y.i);c.items=a.map(x=>x.it)}
+function tagLegend(){menuSheet('Что значат метки',Object.keys(TAGS).map(k=>({ic:TAGS[k].e,t:TAGS[k].g+': '+TAGS[k].t,sub:TAGS[k].d,fn:()=>{}})))}
+function tagSheet(b,n,c){const rows=Object.keys(TAGS).map(k=>({ic:TAGS[k].e,t:TAGS[k].g+': '+TAGS[k].t,sub:n.tgl===k?'сейчас':TAGS[k].d,fn:async()=>{n.tgl=k;await saveNode(n,false);for(const x of b.cols)sortConsent(x);saveB();render()}}));
+ if(n.tgl)rows.push({ic:'✖️',t:'Убрать метку',red:1,fn:async()=>{n.tgl='';await saveNode(n,false);saveB();render()}});
+ rows.push({ic:'❔',t:'Что значат метки',fn:tagLegend});menuSheet('Метка · '+nodeTitle(n).slice(0,40),rows)}
+/* month of a person: date in name -> month word in name -> now */
+const MSTEM=['январ','феврал','март','апрел','ма[йя]','июн','июл','август','сентябр','октябр','ноябр','декабр'];
+function monthOfName(n){const nd=nameDate(n);if(nd)return ymOf(nd);const t=nodeTitle(n).toLowerCase();for(let i=0;i<12;i++)if(new RegExp(MSTEM[i]).test(t)){const y=new Date().getFullYear();return y+'-'+p2(i+1)}return ymOf(Date.now())}
+/* entering «Согласие» on one board => linked into «лиды» of that month on the monthly board (not moved) */
+function tinderLink(b,n,to){if(!to||to.role||!/согласи/i.test(to.title||''))return;
+ const mb=boards().find(x=>x.free&&x.id!==b.id&&x.cols.some(c=>c.role==='lead'));if(!mb)return;
+ const ym=monthOfName(n);let col=mb.cols.find(c=>c.role==='lead'&&c.ym===ym);
+ if(!col){col=mkCol('lead',ym);mb.cols.push(col)}
+ if(mb.cols.some(c=>c.role&&c.items.some(i=>i.id===n.id)&&c.ym===ym))return;
+ col.items.push({id:n.id,s:0,tm:'',w:0,lt:0,at:Date.now()});saveB();
+ toast('«'+nodeTitle(n).slice(0,30)+'» записана и в «'+boardTitle(mb).slice(0,28)+'»: '+colTitle(col))}
+/* one-time: «Отказ ➡️ свидание» column becomes tag «очень дружелюбный» inside «Отказ» */
+async function migrateTinder(b){b.m21=1;const sv=b.cols.find(c=>!c.role&&/отказ/i.test(c.title||'')&&/свидан/i.test(c.title||''));if(!sv)return;
+ let rf=b.cols.find(c=>c!==sv&&!c.role&&/^\s*отказ\s*$/i.test(c.title||''));if(!rf){sv.title='Отказ';rf=sv}
+ for(const it of sv.items){const n=N.get(it.id);if(n&&!n.tgl){n.tgl='rv';await saveNode(n,false)}}
+ if(rf!==sv){for(const it of sv.items)if(!rf.items.some(x=>x.id===it.id))rf.items.push(it);b.cols=b.cols.filter(c=>c!==sv)}
+ for(const c of b.cols)sortConsent(c);saveB()}
+function sortedCols(b){if(!b.free||!b.cols.some(c=>c.ym))return b.cols;const cur=ymOf(Date.now());
+ const k=c=>{if(!c.ym)return 2;if(c.ym===cur)return 0+(c.role==='met'?.1:0);if(c.ym>cur&&c.ym[0]!=='<')return 1;return 3};
+ return b.cols.map((c,i)=>({c,i})).sort((x,y)=>k(x.c)-k(y.c)||(k(x.c)===3?(y.c.ym>x.c.ym?1:y.c.ym<x.c.ym?-1:0):k(x.c)===1?(x.c.ym>y.c.ym?1:-1):0)||x.i-y.i).map(x=>x.c)}
+function wait5(n){return (n.wd||[]).slice(-5).map(dmy).join(' · ')}
+function freeWaitHTML(b,c,n){if(!b.free||c.role==='met')return '';const w=(n.wd||[]).length;
+ return w?`<b class="bwd${wOld(n)?' old':''}" data-act="bwait" data-id="${n.id}">⏳ ${wait5(n)}</b>`:`<b class="bwd bwd0" data-act="bwait" data-id="${n.id}">⏳ Жду ответ</b>`}
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -2154,7 +2208,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 20 · 21.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 21 · 22.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
