@@ -394,6 +394,11 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .tg-g{background:#d4f5dc;color:#17702e}.tg-y{background:#fff1b8;color:#7a5a00}.tg-p{background:#ffd9ec;color:#b01a6b}.tg-o{background:#ffe0c4;color:#8a4300}.tg-r{background:#ffcfcf;color:#a01212}
 .bwrap.cp .bcard{padding:5px 7px;margin-bottom:4px;gap:7px}
 .bwrap.cp .bcard .av,.bwrap.cp .bcard .av.sq{width:34px!important;height:34px!important;border-radius:10px;font-size:15px!important}
+.bct .bwd0{color:#b0204f!important;background:#fff!important}
+.bbell{flex:none;align-self:flex-start;width:36px;height:36px;border-radius:50%;border:1.5px solid #e3e3ea;background:#fff;font-size:17px;line-height:1;padding:0;opacity:.75}
+.bbell.on{background:#fff0f6;border-color:#d2457f;opacity:1}
+.bcard .bpl[data-act]{cursor:pointer}
+.bwrap.cp .bbell{width:28px;height:28px;font-size:14px}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -1385,10 +1390,10 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const wdn=(n.wd||[]).length;const dots=wt&&!wdn?`<span class="bdots">${[0,1,2,3,4].map(i=>`<i class="${i<tc?'on':''}"></i>`).join('')}</span>`:'';
  const ago=c.type==='wait'&&n.lt?`<em>${relShort(n.lt)}</em>`:'';const ms=(n.msgs||[]).map(m=>MSGS[m]).join(' ');
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
- const pl=n.plan&&c.type!=='day'&&c.type!=='met'&&!b.free?`<b class="bpl${planDue(n)?' due':''}">✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
+ const pl=n.plan&&c.type!=='day'&&(b.free?c.role!=='met':c.type!=='met')?`<b class="bpl${planDue(n)?' due':''}"${b.free?` data-act="bbell" data-id="${n.id}"`:''}>✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
  const mn=cardMoneyHTML(b,c,n,it);const wdb=b.free?freeWaitHTML(b,c,n):(wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'');const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${ch}</div>`}
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${b.free&&c.role!=='met'?`<button class="bbell${n.plan?' on':''}" data-act="bbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:''}${ch}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала и ждёшь ответ',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'Кто не ответил на 5 сообщений — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
@@ -1472,6 +1477,7 @@ async function act5(act,a,id,n){const b=curBoard();
   case'bmk26':makeBoard2026(true);break;
   case'bnosum':if(b)nosumSheet(b);break;
   case'bdatesug':if(b)dateSugAdd(b);break;
+  case'bbell':if(n){if(n.plan)planMenu(n);else planDateSheet(n)}break;
   case'bwait':if(n)doWait(n);break;
   case'btag':{const t=n&&tagOf(n);if(t)toast(t.d);break}
   case'btagleg':tagLegend();break;
@@ -1677,7 +1683,7 @@ function freeCardMenu(b,lid,f){const n=N.get(lid),c=f.c,ct=contactsOf(n),rows=[]
  if(ct.tg)rows.push({ic:'✈️',t:'Написать в Telegram',sub:'@'+ct.tg,fn:()=>openChat(n,'tg','')});
  const lc=lastChat(n),nc=(n.chats||[]).length;
  if(lc)rows.push({ic:'💬',t:'Последняя переписка',sub:fmtDate(lc.ts)+(nc>1?' · всего '+nc:''),fn:()=>chatView(n,lc)});
- if(c.role!=='met'){rows.push({ic:'⏳',t:(n.wd||[]).length?'Жду ответ · ещё раз':'Жду ответ',sub:'добавлю сегодняшнюю дату',fn:()=>doWait(n)});if((n.wd||[]).length)rows.push({ic:'✅',t:'Ответил',sub:'уберу «Жду ответ»',fn:()=>doAnswered(n)})}
+ if(c.role!=='met'){rows.push({ic:'🔔',t:'Когда написать',sub:n.plan?'сейчас: '+fmtPlan(n.plan)+' · можно перенести':'выбрать дату и время',fn:()=>n.plan?planMenu(n):planDateSheet(n)});rows.push({ic:'⏳',t:(n.wd||[]).length?'Жду ответ · ещё раз':'Жду ответ',sub:'добавлю сегодняшнюю дату',fn:()=>doWait(n)});if((n.wd||[]).length)rows.push({ic:'✅',t:'Ответил',sub:'уберу «Жду ответ»',fn:()=>doAnswered(n)})}
  rows.push({ic:'🏷️',t:'Метка',sub:tagOf(n)?TAGS[n.tgl].t:'согласие / отказ',fn:()=>tagSheet(b,n,c.id)});rows.push({ic:'📌',t:'Пометка',sub:'где остановились',fn:()=>pmSheet(n)});
  rows.push({ic:'💰',t:'Записать сумму',sub:'сколько заплатил за встречу',fn:()=>sumFromCard(b,n,c.id,f.i)});
  rows.push({ic:'💡',t:'Что делать с этим человеком?',sub:'вставь переписку — подскажу метку',fn:()=>adviceSheet(b,n,c.id)});
@@ -2208,7 +2214,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 21 · 22.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 22 · 23.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
