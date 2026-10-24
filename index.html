@@ -399,6 +399,13 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .bbell.on{background:#fff0f6;border-color:#d2457f;opacity:1}
 .bcard .bpl[data-act]{cursor:pointer}
 .bwrap.cp .bbell{width:28px;height:28px;font-size:14px}
+.bcard{flex-wrap:wrap}.bpmw{flex:0 0 100%;order:9}.bpmw .bpm{margin-top:2px;-webkit-line-clamp:4}
+.bpmw .bpm{color:#33333a!important}.bpmw .bpm i{color:#8a6d00!important}
+.bellb{flex:none;width:34px;height:34px;border-radius:50%;border:1.5px solid #e6e6ee;background:#fff;font-size:16px;padding:0;line-height:1;opacity:.8}.bellb.on{background:#fff0f6;border-color:#d2457f;opacity:1}
+.pill.wpill2{background:linear-gradient(135deg,#c2185b,#7a0f3d)!important;color:#fff!important;cursor:pointer}.pill.wpill2.old{animation:wpulse 1.8s ease-in-out infinite}
+.pill.okpill{background:#d9f7e0!important;color:#17702e!important;cursor:pointer}
+.dgh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 2px;font-size:14px}.dgr{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid #eee;font-size:14px;font-weight:600}.dgr span{flex:1;min-width:0;word-break:break-word}.dgr small{color:#888;flex:none}
+.dgr .ck{flex:none;width:24px;height:24px;border-radius:8px;border:2px solid #d4d4dc;display:grid;place-items:center;font-style:normal;font-weight:800}.dgr .ck.on{background:#b4f24f;border-color:#b4f24f}
 
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
@@ -814,7 +821,7 @@ function planMenu(n){const p=planOf(n);const rows=[{ic:'✅',t:'Написала
 
 /* ----- lead card (header pills + sheet) ----- */
 const fmtShort=ts=>{const d=new Date(ts);return d.getDate()+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)};
-function leadRowPills(n){if(!isLead(n))return'';const ps=[];
+function leadRowPills(n){if(!isLead(n))return'';const ps=[];{const sp=statusPill(n);if(sp)ps.push(sp)}
  const w=n.w||'ok';if(n.st)ps.push(`<i class="pill sm ${ST[n.st].c}">${WE[w]} ${ST[n.st].t}</i>`);else if(w!=='ok')ps.push(`<i class="pill sm ghost">${WE[w]} ${WT[w]}</i>`);
  const ms=meetsOf(n).slice().sort((a,b)=>a.ts-b.ts);const sh=ms.slice(-6);if(ms.length>6)ps.push(`<i class="pill sm ghost">+${ms.length-6}</i>`);sh.forEach((m,i)=>ps.push(`<i class="pill sm c3">${fmtShort(m.ts)}</i>`));
  const ds=citiesOf(n).map(c=>n.dist&&n.dist[c]).filter(Boolean);if(ds.length)ps.push(`<i class="pill sm ghost">📍 ${esc(ds.join(', '))}</i>`);
@@ -1018,6 +1025,8 @@ async function act3(act,a,id,n){
   case'lmore':if(n){if(LMORE.has(n.id))LMORE.delete(n.id);else LMORE.add(n.id);render()}break;
   case'lwarm':if(n){const o=['hot','ok','cold'];n.w=o[(o.indexOf(n.w||'ok')+1)%3];await saveNode(n,false);render()}break;
   case'lplan':if(n)planMenu(n);break;
+  case'lbell':if(n){if(n.plan)planMenu(n);else planDateSheet(n)}break;
+  case'lstat':if(n)statSheet(n);break;
   case'lplanset':if(n)planDateSheet(n);break;
   case'ltouch':if(n)doTouch(n);break;
   case'lans':if(n)doAnswered(n);break;
@@ -1393,7 +1402,7 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const pl=n.plan&&c.type!=='day'&&(b.free?c.role!=='met':c.type!=='met')?`<b class="bpl${planDue(n)?' due':''}"${b.free?` data-act="bbell" data-id="${n.id}"`:''}>✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
  const mn=cardMoneyHTML(b,c,n,it);const wdb=b.free?freeWaitHTML(b,c,n):(wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'');const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
- return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${b.free&&c.role!=='met'?`<button class="bbell${n.plan?' on':''}" data-act="bbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:''}${ch}</div>`}
+ return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${n.pm?'':pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${b.free&&c.role!=='met'?`<button class="bbell${n.plan?' on':''}" data-act="bbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:''}${ch}${n.pm?`<div class="bpmw">${pmLine(n)}</div>`:''}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала и ждёшь ответ',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'Кто не ответил на 5 сообщений — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
  const sure=items.filter(x=>x.s).length;const sub=items.length+(c.type==='day'&&items.length?` · 💚${sure} 🤍${items.length-sure}`:'')+(isT?' · сегодня':tom?' · завтра':'');
@@ -1752,25 +1761,7 @@ async function makeBoard2026(manual){let b=boards().find(x=>x.title===B26);
 /* ----- sort people from collections into columns (asks first) ----- */
 const ymKey26=(ts,cols)=>{const y=new Date(ts).getFullYear();const k=y<2026?'<2026':ymOf(ts);return cols.some(c=>c.role==='lead'&&c.ym===k)?k:null};
 let SF=null;
-function sortFromCollections(b){const onBoard=new Set();b.cols.forEach(c=>c.items.forEach(i=>onBoard.add(i.id)));
- const startCol=b.cols.find(c=>c.title==='Старт')||b.cols.find(c=>!c.role)||b.cols[0];
- if(!startCol){toast('Сначала создай столбцы');return}
- const people=leads().filter(n=>!onBoard.has(n.id)).sort((x,y)=>(nameDate(x)||0)-(nameDate(y)||0));
- if(!people.length){toast('Все люди из коллекций уже на доске');return}
- SF={b,withMeets:true,items:people.map(n=>{const nd=nameDate(n);const key=nd?ymKey26(nd,b.cols):null;return{n,on:true,col:key?b.cols.find(c=>c.role==='lead'&&c.ym===key):startCol}})};sfShow()}
-function sfShow(){const {b,items}=SF;const cnt=()=>items.filter(x=>x.on).length;
- const el=sheet(`<h3>Из коллекций · ${items.length}</h3><div class="hint" style="text-align:left">Разложила по дате в имени: записан в январе — в «Январь лиды», до 2026 года — в «Лиды до 2026-го», без даты — в «Старт». Сними галочку с тех, кого сейчас не надо. Нажми на столбец справа, чтобы выбрать другой.</div>
-  <div class="chips"><button type="button" class="chip${SF.withMeets?' on':''}" id="sfm">Ещё положить в «Виделись» тех, у кого записаны встречи</button></div>
-  <div id="sfl">${items.map((x,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #eee"><i class="ck" data-ck="${i}" style="flex:none;width:26px;height:26px;border-radius:8px;border:2px solid #d4d4dc;display:grid;place-items:center;font-style:normal;font-weight:800;${x.on?'background:#b4f24f;border-color:#b4f24f':''}">${x.on?'✓':''}</i><span style="flex:1;min-width:0;font-weight:700;font-size:14px;word-break:break-word">${esc(nodeTitle(x.n))}</span><button type="button" class="pill sm ghost" data-ch="${i}" style="flex:none;max-width:40%">${esc(x.col.title)}</button></div>`).join('')}</div>
-  <div class="pmbar"><button class="btn pink wide" id="sfok">Добавить · ${cnt()}</button></div>`);
- const top=el.scrollTop;
- el.querySelectorAll('[data-ck]').forEach(c=>c.onclick=()=>{const x=items[+c.dataset.ck];x.on=!x.on;sfShow();const e2=document.querySelector('.sheet');if(e2)e2.scrollTop=top});
- el.querySelectorAll('[data-ch]').forEach(c=>c.onclick=()=>{const x=items[+c.dataset.ch];menuSheet('Куда положить?',b.cols.map(cc=>({ic:cc.role==='met'?'🤝':cc.role==='lead'?'📝':'📌',t:cc.title,fn:()=>{x.col=cc;sfShow()}})))});
- el.querySelector('#sfm').onclick=()=>{SF.withMeets=!SF.withMeets;sfShow()};
- el.querySelector('#sfok').onclick=()=>{let k=0;const put=(c,id)=>{if(c&&!c.items.some(i=>i.id===id)){c.items.push({id,s:0,tm:'',w:0,lt:0,at:Date.now()});return true}return false};
-  for(const x of items){if(!x.on)continue;if(put(x.col,x.n.id))k++;
-   if(SF.withMeets)for(const m of meetsOf(x.n)){if(!(m.amount>0))continue;const key=ymKey26(m.ts,b.cols);const mc=key?b.cols.find(c=>c.role==='met'&&c.ym===key):null;put(mc,x.n.id)}}
-  saveB();closeSheet();render();toast('Добавила на доску: '+k)}}
+
 
 /* ===== stage 8: contact icons, contact scan, photo swiping ===== */
 const CTSVG={
@@ -1952,6 +1943,51 @@ function wait5(n){return (n.wd||[]).slice(-5).map(dmy).join(' · ')}
 function freeWaitHTML(b,c,n){if(!b.free||c.role==='met')return '';const w=(n.wd||[]).length;
  return w?`<b class="bwd${wOld(n)?' old':''}" data-act="bwait" data-id="${n.id}">⏳ ${wait5(n)}</b>`:`<b class="bwd bwd0" data-act="bwait" data-id="${n.id}">⏳ Жду ответ</b>`}
 
+/* ===== stage 11 (v23): bell + status in lists, sort people into months with confirmation ===== */
+function statusPill(n){if(!isLead(n))return'';const w=(n.wd||[]).length;
+ if(w)return `<i class="pill sm wpill2${wOld(n)?' old':''}" data-act="lstat" data-id="${n.id}">⏳ ${wdates(n,3)}</i>`;
+ if(n.lk==='a'&&n.la)return `<i class="pill sm okpill" data-act="lstat" data-id="${n.id}">✅ ответил ${dmy(n.la)}</i>`;return''}
+const bellBtn=n=>isLead(n)&&n.parent?`<button class="bellb${n.plan?' on':''}" data-act="lbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:'';
+function statSheet(n){const w=(n.wd||[]).length;const rows=[{ic:'⏳',t:w?'Написала ещё раз':'Написала, жду ответ',sub:'добавлю сегодняшнюю дату',fn:()=>doWait(n)}];
+ if(w||n.lk!=='a')rows.push({ic:'✅',t:'Ответил',sub:'уберу «Жду ответ»',fn:()=>doAnswered(n)});
+ rows.push({ic:'🔔',t:'Когда написать',sub:n.plan?'сейчас: '+fmtPlan(n.plan):'выбрать дату и время',fn:()=>n.plan?planMenu(n):planDateSheet(n)});
+ rows.push({ic:'📌',t:'Пометка',fn:()=>pmSheet(n)});menuSheet(nodeTitle(n).slice(0,50),rows)}
+/* ----- sort people into months ----- */
+const ymKeyAny=ts=>new Date(ts).getFullYear()<2026?'<2026':ymOf(ts);
+const ymName=k=>k==='<2026'?'До 2026':ymLabel(k);
+function metDates(n){const s=new Map();for(const m of meetsOf(n))s.set(dkey(m.ts),m.ts);for(const x of scanLead(n))if(!s.has(dkey(x.ts)))s.set(dkey(x.ts),x.ts);return[...s.values()].sort((a,b)=>a-b)}
+function planDistribution(b){const items=[];const inLead=new Set();b.cols.forEach(c=>{if(c.role==='lead')c.items.forEach(i=>inLead.add(i.id))});
+ const cnt=(role,ym,id)=>{let k=0;b.cols.forEach(c=>{if(c.role===role&&c.ym===ym)c.items.forEach(i=>{if(i.id===id)k++})});return k};
+ const nodate=[];
+ for(const n of leads().sort((x,y)=>(nameDate(x)||0)-(nameDate(y)||0))){
+  const nd=nameDate(n);if(nd&&!inLead.has(n.id))items.push({n,role:'lead',ym:ymKeyAny(nd),ts:nd,on:true});else if(!nd&&!inLead.has(n.id)&&!b.cols.some(c=>c.items.some(i=>i.id===n.id)))nodate.push(n);
+  const ds=metDates(n);const by={};ds.forEach(t=>{(by[ymKeyAny(t)]=by[ymKeyAny(t)]||[]).push(t)});
+  for(const ym of Object.keys(by)){const need=by[ym].length,have=cnt('met',ym,n.id);for(let i=have;i<need;i++)items.push({n,role:'met',ym,ts:by[ym][i],on:true})}}
+ return{items,nodate}}
+function sortFromCollections(b){const P=planDistribution(b);const items=P.items;
+ if(!items.length){toast('Все люди с датами уже на доске ✓');return}
+ const scan=[];for(const n of leads())for(const x of scanLead(n))if(!x.dup&&x.a>0)scan.push(x);let wm=scan.length>0;
+ const groups=()=>{const g=new Map();items.forEach((x,i)=>{const k=x.role+'|'+x.ym;if(!g.has(k))g.set(k,{role:x.role,ym:x.ym,l:[]});g.get(k).l.push(i)});
+  return[...g.values()].sort((p,q)=>(p.ym==='<2026'?'0':p.ym).localeCompare(q.ym==='<2026'?'0':q.ym)||(p.role==='lead'?-1:1))};
+ const draw=()=>{const top=(document.querySelector('.sheet')||{}).scrollTop||0;const cnt=items.filter(x=>x.on).length;
+  const el=sheet(`<h3>Разложить по месяцам · ${items.length}</h3><div class="hint" style="text-align:left">Лиды: по дате в имени. Виделись: по датам встреч в заметках, на каждую встречу отдельная карточка. Кто уже на доске, пропускаю. Сними галочки с лишнего и нажми «Добавить».</div>
+  ${scan.length?`<div class="chips"><button type="button" class="chip${wm?' on':''}" id="dwm">Записать суммы встреч из заметок (${scan.length})</button></div>`:''}
+  ${groups().map((g,gi)=>`<div class="dgh"><b>${g.role==='lead'?'📝':'🤝'} ${esc(ymName(g.ym))}: ${g.role==='lead'?'лиды':'виделись'} · ${g.l.length}</b><button type="button" class="pill sm ghost" data-gt="${gi}">все/никого</button></div>`+g.l.map(i=>{const x=items[i];return `<div class="dgr"><i class="ck${x.on?' on':''}" data-ck="${i}">${x.on?'✓':''}</i><span>${esc(nodeTitle(x.n))}</span>${x.role==='met'?`<small>${dmy(x.ts)}</small>`:''}</div>`}).join('')).join('')}
+  ${P.nodate.length?`<div class="hint" style="text-align:left">Без даты в имени и не на доске: ${P.nodate.length}. Их не трогаю, разложишь вручную кнопкой «Из книжек».</div>`:''}
+  <div class="pmbar"><button class="btn pink wide" id="dok">Добавить · ${cnt}</button></div>`);
+  el.scrollTop=top;
+  el.querySelectorAll('[data-ck]').forEach(c=>c.onclick=()=>{const x=items[+c.dataset.ck];x.on=!x.on;draw()});
+  el.querySelectorAll('[data-gt]').forEach(c=>c.onclick=()=>{const g=groups()[+c.dataset.gt];const all=g.l.every(i=>items[i].on);g.l.forEach(i=>items[i].on=!all);draw()});
+  const dm=el.querySelector('#dwm');if(dm)dm.onclick=()=>{wm=!wm;draw()};
+  el.querySelector('#dok').onclick=async()=>{let k=0;const sorted=items.filter(x=>x.on).sort((p,q)=>p.ts-q.ts);
+   for(const x of sorted){let col=b.cols.find(c=>c.role===x.role&&c.ym===x.ym);if(!col){col=mkCol(x.role,x.ym);b.cols.push(col)}
+    if(x.role==='lead'&&b.cols.some(c=>c.role==='lead'&&c.items.some(i=>i.id===x.n.id)))continue;
+    col.items.push({id:x.n.id,s:0,tm:'',w:0,lt:0,at:Date.now()});k++}
+   let sm=0;if(wm){const by=new Map();for(const x of scan){const m={id:uid(),rDone:0,rSnooze:0,ts:x.ts,amount:x.a,cur:x.c,rw:SET.remW||3,rh:SET.remH||4,rOn:true,src:'note'};if(x.nt)m.nt=1;snap(m);if(dueOf(m)<Date.now())m.rDone=Date.now();(x.n.meets=x.n.meets||[]).push(m);if(!by.has(x.n))by.set(x.n,[]);by.get(x.n).push(m);sm++}
+    for(const [n,ms] of by){await saveNode(n,false)}dirty()}
+   saveB();closeSheet();render();toast('Добавила на доску: '+k+(sm?' · записала сумм: '+sm:''))}};
+ draw()}
+
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
 const ICON={back:sv('<path d="M15 5l-7 7 7 7"/>'),search:sv('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'),
@@ -2025,7 +2061,7 @@ function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;const ci=n.type==='col'&&n.parent&&isLead(n)?ctIcons(n,'li'):'';
  if(grid)return `<div class="card" ${attrs}>${ci?thumbHTML(n,1).replace(/<\/div>$/,ci.replace('cti li','cti gr')+'</div>'):thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
  const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
- return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${mn}</div>`}
+ return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
 function viewList(id){
  const n=id?N.get(id):null;const items=sortedKids(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
  let h=`<div class="wrap"><div class="topbar">${id?topBtn('back',ICON.back,id):'<span></span>'}<div class="ibs">${topBtn('search',ICON.search,id||'')}${topBtn('view',vm==='list'?ICON.grid:ICON.list)}${id?topBtn('nmenu',ICON.more,id):topBtn('settings',ICON.gear)}</div></div>`;
@@ -2214,7 +2250,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 22 · 23.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 23 · 24.10.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
