@@ -407,6 +407,8 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .dgh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 2px;font-size:14px}.dgr{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid #eee;font-size:14px;font-weight:600}.dgr span{flex:1;min-width:0;word-break:break-word}.dgr small{color:#888;flex:none}
 .dgr .ck{flex:none;width:24px;height:24px;border-radius:8px;border:2px solid #d4d4dc;display:grid;place-items:center;font-style:normal;font-weight:800}.dgr .ck.on{background:#b4f24f;border-color:#b4f24f}
 
+.rpm{margin-top:4px;padding:6px 9px;border-radius:12px;background:#fff6cf;color:#33333a;font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.rpm i{font-style:normal;font-weight:700;color:#8a6d00;margin-right:3px}
+
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
 <script src="jszip.min.js"></script>
@@ -601,7 +603,7 @@ function dayPanel(k,ev){const e=(ev||dayEvents())[k]||{m:[],r:[]};const [y,m,d]=
  return h+`<div class="row"><button class="pill c4" data-act="meetnew2" data-day="${k}">＋ Встреча в этот день</button></div>`}
 
 /* ----- meetings UI ----- */
-function pickPerson(title){return new Promise(res=>{const people=[...N.values()].filter(n=>!n.deleted&&n.type==='col'&&n.parent).sort((a,b)=>b.updated-a.updated);
+function pickPerson(title){return new Promise(res=>{const people=[...N.values()].filter(n=>!n.deleted&&n.type==='col'&&n.parent&&!n.fld).sort((a,b)=>b.updated-a.updated);
  const el=sheet(`<h3>${esc(title||'Кто?')}</h3><input class="inp" id="pq" placeholder="Найти по имени" autocomplete="off"><div id="pl" style="margin-top:8px"></div>`);
  const draw=()=>{const q=nq(el.querySelector('#pq').value.trim());const list=people.filter(n=>!q||nq(nodeTitle(n)).includes(q)).slice(0,40);
   el.querySelector('#pl').innerHTML=list.length?list.map((n,i)=>`<button class="act" data-i="${i}"><span class="ic" style="background:none;padding:0">${avatarHTML(n,38)}</span><span>${esc(nodeTitle(n))}<small>${esc(pathOf(n.id).slice(0,-1).map(nodeTitle).join(' › '))}</small></span></button>`).join(''):'<p class="hint">Пока нет коллекций. Создай коллекцию с именем человека.</p>';
@@ -724,7 +726,7 @@ const ymd=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 function relDay(ts){const k=Math.round((sod(ts)-sod(Date.now()))/864e5);return k===0?'сегодня':k===1?'завтра':k===-1?'вчера':k<0?(-k)+' дн. назад':'через '+k+' дн.'}
 
 /* ----- who is a lead ----- */
-const isLead=n=>n.type==='col'&&!!n.parent&&!n.deleted&&!kids(n.id).some(k=>k.type==='col');
+const isLead=n=>n.type==='col'&&!!n.parent&&!n.deleted&&!n.fld&&!kids(n.id).some(k=>k.type==='col');
 const leads=()=>[...N.values()].filter(isLead);
 function guessCity(n){const low=pathOf(n.id).map(x=>nq(nodeTitle(x)));for(const c of cityList()){const k=nq(c);if(low.some(t=>t.includes(k)))return c}return''}
 function citiesOf(n){if(n.cities&&n.cities.length)return n.cities;const g=guessCity(n);return g?[g]:[]}
@@ -1989,6 +1991,32 @@ function sortFromCollections(b){const P=planDistribution(b);const items=P.items;
    saveB();closeSheet();render();toast('Добавила на доску: '+k+(sm?' · записала сумм: '+sm:''))}};
  draw()}
 
+/* ===== v25: month folders in lead books, distribute leads, folders everywhere ===== */
+const MN_F=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const leadBook=n=>!!n&&n.type==='col'&&!n.parent&&!n.deleted&&/лид/i.test(n.title||'')&&!/видел|встреч/i.test(n.title||'');
+const foldersOf=bid=>allKids(bid).filter(f=>f.fld&&!f.deleted);
+function folderRank(f){const cur=ymOf(Date.now());const k=f.fk;if(!k)return[5,0];if(k==='pre')return[4,0];if(k===cur)return[0,0];if(k>cur)return[1,k>cur?1:0,k];return[3,0,k]}
+function folderSort(a,b){const ra=folderRank(a),rb=folderRank(b);if(ra[0]!==rb[0])return ra[0]-rb[0];
+ if(ra[0]===1)return a.fk<b.fk?-1:1;if(ra[0]===3)return a.fk<b.fk?1:-1;return (a.order||0)-(b.order||0)}
+function bookItems(id){const base=sortedKids(id);const nd=id?N.get(id):null;if(!nd||!isBook(nd))return base;
+ const fl=base.filter(x=>x.fld).sort(folderSort);return fl.concat(base.filter(x=>!x.fld))}
+function ensureLeadFolders(){let any=false;for(const b of [...N.values()]){if(!leadBook(b)||b.fm)continue;b.fm=1;any=true;
+  const mk=(title,fk,mark)=>{const x=newNode('col',b.id,{title,fld:1,fk,mark});saveNode(x,false)};
+  MN_F.forEach((m,i)=>mk(m+' 2026','2026-'+p2(i+1),'📅'));mk('До 2026 года','pre','🗄️');saveNode(b,false)}
+ if(any)dirty()}
+function folderFor(book,ts){const y=new Date(ts).getFullYear();const k=y<2026?'pre':(y===2026?ymOf(ts):null);if(!k)return null;return foldersOf(book.id).find(f=>f.fk===k)||null}
+function distrPlan(book){const loose=allKids(book.id).filter(n=>isLead(n)&&!n.deleted);const plan=[],nodate=[],nofold=[];
+ loose.forEach(n=>{const d=nameDate(n);if(!d){nodate.push(n);return}const f=folderFor(book,d);if(f)plan.push({n,f});else nofold.push(n)});return{plan,nodate,nofold,loose}}
+function distrSheet(book){const P=distrPlan(book);if(!P.plan.length){toast(P.loose.length?'У людей нет даты в названии (например 31.10.26)':'Всех уже разложили');return}
+ const by=new Map();P.plan.forEach(x=>{if(!by.has(x.f.id))by.set(x.f.id,{f:x.f,l:[]});by.get(x.f.id).l.push(x.n)});
+ const groups=[...by.values()].sort((a,b)=>folderSort(a.f,b.f));
+ const el=sheet(`<h3>📂 Разложить по папкам</h3><div class="hint" style="text-align:left">Смотрю на дату в названии (например «31.10.26»). Разложу ${P.plan.length} ${plural(P.plan.length,'человек','человека','человек')}.${P.nodate.length?` Без даты останутся на месте: ${P.nodate.length}.`:''}${P.nofold.length?` Дата не 2026 и не раньше: ${P.nofold.length}, тоже останутся.`:''}</div>
+ ${groups.map(g=>`<div class="ev"><span class="evt" style="flex:1"><b>${esc(g.f.mark||'')} ${esc(g.f.title)} · ${g.l.length}</b><span>${g.l.slice(0,6).map(n=>esc(nodeTitle(n).split(' ')[0])).join(', ')}${g.l.length>6?'…':''}</span></span></div>`).join('')}
+ <div class="row" style="margin-top:12px"><button class="btn pink" id="dgo" style="flex:1">Разложить</button><button class="btn ghost" id="dno">Отмена</button></div>`);
+ el.querySelector('#dno').onclick=closeSheet;
+ el.querySelector('#dgo').onclick=async()=>{closeSheet();for(const x of P.plan){x.n.parent=x.f.id;x.n.order=Math.max(0,...allKids(x.f.id).map(s=>s.order||0))+1;await saveNode(x.n,false)}dirty();render();toast('Разложено: '+P.plan.length)}}
+function folderSheet(parent){inputSheet({title:'Новая папка',value:'',ph:'Например, «Встречи октября»',ok:'Создать'}).then(async v=>{if(v===null)return;v=v.trim();if(!v)return;const x=newNode('col',parent,{title:v.slice(0,60),fld:1,mark:'📁'});await saveNode(x);render()})}
+
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
 const ICON={back:sv('<path d="M15 5l-7 7 7 7"/>'),search:sv('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'),
@@ -2059,14 +2087,16 @@ function thumbHTML(n,grid){
 function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=`data-act="open" data-id="${n.id}" ${isBook(n)?'':'data-drag="1"'} ${n.type==='col'?`data-drop="${n.id}"`:''}`;
  const mk=n.mark?`<span class="mark">${esc(n.mark)}</span>`:'';const pin=n.pinned?'<span class="pinb">📌</span>':'';
  let sub;if(n.type==='col'){sub=subText(n);const sm=sumNode(n.id);if(sm.c&&isLead(n)){const lm=lastMeet(n);const add=(lm?'встреча '+fmtDate(lm):'')+(sm.aed>0?' · '+nf0.format(Math.round(sm.aed))+' AED':'');sub=sub==='Пусто'?add.replace(/^ · /,''):sub+' · '+add.replace(/^ · /,'')}if(n.parent&&isLead(n)){const pr=[n.w&&n.w!=='ok'?WE[n.w]:'',n.st?ST[n.st].t:''].filter(Boolean).join(' ');const pp=planOf(n);const parts=[pr,sub==='Пусто'?'':sub,pp&&pp.ts?'✉ '+fmtPlan(pp.ts).replace(/^.{2}, /,''):''].filter(Boolean);sub=parts.join(' · ')||'Пусто'}}else if(n.type==='photo')sub=fmtDate(n.updated);else{const f=plainOf(n).split('\n').map(s=>s.trim()).filter(Boolean);sub=fmtDate(n.updated)+(f[1]?' · '+f[1]:(f[0]&&!n.title?'':f[0]?' · '+f[0]:''))}
+ if(n.fld){const k=allKids(n.id).filter(isLead).length;sub=k?k+' '+plural(k,'человек','человека','человек'):'Пусто'}
+ const pmr=n.type==='col'&&n.parent&&isLead(n)&&n.pm?`<div class="rpm" data-act="bpm" data-id="${n.id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</div>`:'';
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;const ci=n.type==='col'&&n.parent&&isLead(n)?ctIcons(n,'li'):'';
  if(grid)return `<div class="card" ${attrs}>${ci?thumbHTML(n,1).replace(/<\/div>$/,ci.replace('cti li','cti gr')+'</div>'):thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
  const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
- return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
+ return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}${pmr}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
 function viewList(id){
- const n=id?N.get(id):null;const items=sortedKids(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
+ const n=id?N.get(id):null;const items=bookItems(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
  let h=`<div class="wrap"><div class="topbar">${id?topBtn('back',ICON.back,id):'<span></span>'}<div class="ibs">${topBtn('search',ICON.search,id||'')}${topBtn('view',vm==='list'?ICON.grid:ICON.list)}${id?topBtn('nmenu',ICON.more,id):topBtn('settings',ICON.gear)}</div></div>`;
- const person=n&&n.type==='col'&&n.parent;
+ const person=n&&n.type==='col'&&n.parent&&!n.fld;
  if(person)h+=`<div class="hd">${avatarHTML(n,64)}<h1 class="tt" style="margin:0">${esc(n.mark)} ${esc(nodeTitle(n))}</h1></div>`;else h+=`<h1 class="tt">${n?esc(n.mark)+' '+esc(nodeTitle(n)):'Записные книжки'}</h1>`;
  if(n&&!person)h+=crumbHTML(id);
  const pills=[];if(!id){if(items.length)pills.push(`<span class="pill ghost">${items.length} ${plural(items.length,'книжка','книжки','книжек')}</span>`)}
@@ -2076,6 +2106,7 @@ function viewList(id){
  if(person){const nm=meetsOf(n).length;pills.push(`<button class="pill c4" data-act="meetnew" data-id="${id}">＋ Встреча</button>`);if(nm)pills.push(`<button class="pill ghost" data-act="meets" data-id="${id}">Встречи · ${nm}</button>`);}
  const prow=`<div class="row">${pills.join('')}<button class="pill ghost" data-act="sort">${ICON.sort} ${SORTS[sort]}</button>${id?`<button class="pill ghost" data-act="tpl" data-id="${id}"> Шаблоны${availTemplates(id).length?' · '+availTemplates(id).length:''}</button>`:''}</div>`;
  if(person)h+=leadHead(n,crumbHTML(id)+prow);else h+=prow;
+ if(n&&leadBook(n)){const np=distrPlan(n).plan.length;if(np)h+=`<button class="banner" data-act="distr" data-id="${id}">📂 <span>Разложить по папкам: ${np} ${plural(np,'человек','человека','человек')}</span></button>`}
  if(!id&&N.size>2&&Date.now()-SET.lastBackup>7*864e5)h+=`<button class="banner" data-go="/bk">💾 <span>Сделай резервную копию, чтобы не потерять записи</span></button>`;
  if(!items.length)h+=`<div class="empty"><img src="lidy.png" alt=""><b>${id?'Здесь пока пусто':'Пока нет книжек'}</b>${id?'Нажми «+», чтобы добавить заметку, коллекцию или фото':'Нажми «+», чтобы создать первую записную книжку'}</div>`;
  else h+=`<div class="${vm==='grid'?'grid':'list'}">${items.map(x=>itemHTML(x,vm)).join('')}</div>`;
@@ -2193,6 +2224,7 @@ function nodeMenu(n){const rows=[];
  rows.push({ic:'✏️',t:n.type==='photo'?'Подпись':'Переименовать',fn:async()=>{if(n.type==='col')editSheet(n,n.parent,'col');else if(n.type==='note'){const v=await inputSheet({title:'Название заметки',value:n.title,ph:'Название'});if(v!==null){n.title=v.trim();await saveNode(n);render()}}else{const v=await inputSheet({title:'Подпись к фото',value:n.caption||''});if(v!==null){n.caption=v.trim();await saveNode(n);render()}}}});
  if(n.type==='col'&&n.parent)rows.push({ic:'🖼️',t:'Фото коллекции',fn:()=>avatarMenu(n)},{ic:'📅',t:'Встречи и заработок',fn:()=>meetsSheet(n)});
  if(n.type==='col')rows.push({ic:'📄',t:'Шаблоны',fn:()=>tplSheet(n.id)});
+ if(leadBook(n))rows.push({ic:'📂',t:'Разложить по папкам',sub:'по дате в названии',fn:()=>distrSheet(n)});
  rows.push({ic:n.mark||'💚',t:'Метка',fn:()=>markSheet(n)});
  rows.push({ic:'📌',t:n.pinned?'Открепить':'Закрепить сверху',fn:async()=>{n.pinned=n.pinned?0:1;await saveNode(n,false);render()}});
  if(!isBook(n))rows.push({ic:'📂',t:'Переместить в…',fn:()=>moveSheet(n)});
@@ -2219,6 +2251,7 @@ function fabMenu(id){if(!id)return editSheet(null,null,'col');const tp=availTemp
  const rows=[{ic:'📝',t:'Заметка',fn:async()=>{const n=newNode('note',id,{html:''});await saveNode(n);go('/e/'+n.id)}}];
  tp.forEach(t=>rows.push({ic:'📄',t:'Заметка из шаблона',sub:t.name,fn:async()=>{const n=newNode('note',id,{html:tplHTML(t)});await saveNode(n);FOCUSN=n.id;go('/e/'+n.id)}}));
  rows.push({ic:'🗂️',t:'Коллекция',fn:()=>editSheet(null,id,'col')});
+ {const bk=N.get(id);if(bk&&isBook(bk))rows.push({ic:'📁',t:'Новая папка',sub:'например, по месяцам или городам',fn:()=>folderSheet(id)})}
  rows.push({ic:'👥',t:'Быстро добавить людей',sub:'Списком: имя на каждой строке',fn:()=>quickAdd(id)});
  if(!tp.length)rows.push({ic:'📄',t:'Создать шаблон заметки',sub:'Подписи вроде «Дата», «Условия»',fn:()=>tplSheet(id)});
  rows.push({ic:'🖼️',t:'Фото из галереи',sub:'Можно выбрать сразу несколько',fn:async()=>{const f=await pickFile(true);if(f.length)addPhotos(f,id)}});menuSheet('Добавить',rows)}
@@ -2251,7 +2284,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 24 · 01.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 25 · 01.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
@@ -2338,6 +2371,7 @@ document.addEventListener('click',async e=>{
  switch(act){
   case'open':if(!n)return;go(routeOf(n));break;
   case'back':go(n?parentRoute(n):(['bk','t'].includes(parseHash().k)?'/s':'/'));break;
+  case'distr':if(n)distrSheet(n);break;
   case'imenu':case'nmenu':if(n)nodeMenu(n);break;
   case'search':searchScreen(id||null);break;
   case'view':{const k=parseHash().id||'root';SET.views[k]=(SET.views[k]||SET.view)==='list'?'grid':'list';saveSet();render();break}
@@ -2385,7 +2419,7 @@ async function boot(){
  if(SET.pinHash)await unlock();
  if(!location.hash&&SET.last){const m=SET.last.split('/');const nd=N.get(m[1]);if(nd&&!nd.deleted)location.hash='#/'+SET.last}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadRates().then(ok=>{if(ok&&parseHash().k==='b')render()})});
- render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
+ ensureLeadFolders();render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 boot();
