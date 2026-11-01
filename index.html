@@ -1619,6 +1619,7 @@ function monthChipsBind(el,c){el.dataset.ym=c.ym||'';el.querySelectorAll('#cmm [
 function newBoardChooser(){menuSheet('Новая доска',[
  {ic:'📋',t:'Свободная доска',sub:'без города и дат: столбцы по месяцам, лиды, виделись, суммы',fn:()=>freeBoardEdit(null)},
  {ic:'🗓️',t:'Дубай: лиды и встречи 2026',sub:'готовая доска: «Старт», до 2026-го, затем по месяцам январь–декабрь',fn:()=>makeBoard2026(true)},
+ {ic:'🗓️',t:'Москва: лиды и встречи 2026',sub:'такая же доска для Москвы: «Старт», до 2026-го, месяцы январь–декабрь',fn:()=>makeBoard2026(true,'Москва')},
  {ic:'✈️',t:'Доска поездки',sub:'город, даты, столбики по дням',fn:()=>tripBoardEdit(null)}])}
 function freeBoardEdit(b0){const isNew=!b0;let mk=true;const cur=ymOf(Date.now());
  const draw=()=>{const nameV=draw.nv!=null?draw.nv:(b0?(b0.title||''):'');
@@ -1750,12 +1751,12 @@ function adviceSheet(b,n,cid){let txt='';const f=b?findItem(b,n.id,cid):null;
 /* ----- ready-made board: Дубай: лиды и встречи 2026 ----- */
 const B26='Дубай: лиды и встречи 2026';
 const MN_G=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-async function makeBoard2026(manual){let b=boards().find(x=>x.title===B26);
+async function makeBoard2026(manual,city){city=city||'Дубай';const B=city+': лиды и встречи 2026';let b=boards().find(x=>x.title===B);
  if(b&&manual){SET.board=b.id;saveB();render();toast('Такая доска уже есть');return b}
  const mk=(title,role,ym)=>({id:uid(),type:'own',role:role||'',ym:ym||'',title,date:0,items:[]});
  const cols=[mk('Старт'),mk('Лиды до 2026-го','lead','<2026'),mk('Виделись до 2026-го','met','<2026')];
  MN_G.forEach((m,i)=>{const ym='2026-'+p2(i+1);cols.push(mk(m+' лиды','lead',ym));cols.push(mk(m+' виделись','met',ym))});
- b={id:uid(),free:1,title:B26,city:'',from:sod(Date.now()),to:sod(Date.now()),cols};boards().push(b);SET.board=b.id;BS.sl=null;
+ b={id:uid(),free:1,title:B,city:'',from:sod(Date.now()),to:sod(Date.now()),cols};boards().push(b);SET.board=b.id;BS.sl=null;
  let k=0;
  saveB();if(manual!==false){if(parseHash().k!=='b')go('/b');else render();toast('Доска готова: «Старт», «до 2026-го» и месяцы январь–декабрь. Людей можно разобрать кнопкой «👥 Из коллекций»')}return b}
 /* ----- sort people from collections into columns (asks first) ----- */
@@ -1938,7 +1939,7 @@ async function migrateTinder(b){b.m21=1;const sv=b.cols.find(c=>!c.role&&/отк
  for(const c of b.cols)sortConsent(c);saveB()}
 function sortedCols(b){if(!b.free||!b.cols.some(c=>c.ym))return b.cols;const cur=ymOf(Date.now());
  const k=c=>{if(!c.ym)return 2;if(c.ym===cur)return 0+(c.role==='met'?.1:0);if(c.ym>cur&&c.ym[0]!=='<')return 1;return 3};
- return b.cols.map((c,i)=>({c,i})).sort((x,y)=>k(x.c)-k(y.c)||(k(x.c)===3?(y.c.ym>x.c.ym?1:y.c.ym<x.c.ym?-1:0):k(x.c)===1?(x.c.ym>y.c.ym?1:-1):0)||x.i-y.i).map(x=>x.c)}
+ return b.cols.map((c,i)=>({c,i})).sort((x,y)=>k(x.c)-k(y.c)||(k(x.c)===3?(y.c.ym>x.c.ym?1:y.c.ym<x.c.ym?-1:0):k(x.c)===1?(x.c.ym>y.c.ym?1:x.c.ym<y.c.ym?-1:0):0)||x.i-y.i).map(x=>x.c)}
 function wait5(n){return (n.wd||[]).slice(-5).map(dmy).join(' · ')}
 function freeWaitHTML(b,c,n){if(!b.free||c.role==='met')return '';const w=(n.wd||[]).length;
  return w?`<b class="bwd${wOld(n)?' old':''}" data-act="bwait" data-id="${n.id}">⏳ ${wait5(n)}</b>`:`<b class="bwd bwd0" data-act="bwait" data-id="${n.id}">⏳ Жду ответ</b>`}
@@ -2250,7 +2251,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 23 · 24.10.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 24 · 01.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
