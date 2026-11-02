@@ -409,6 +409,17 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 
 .rpm{margin-top:4px;padding:6px 9px;border-radius:12px;background:#fff6cf;color:#33333a;font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.rpm i{font-style:normal;font-weight:700;color:#8a6d00;margin-right:3px}
 
+.stb{display:inline-flex;align-items:center;font-style:normal;font-weight:700;font-size:12px;padding:3px 9px;border-radius:999px;cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;margin-top:4px;margin-right:4px}
+.stb.st-0{background:transparent;color:#b0204f;border:1.5px solid #e6a9c0}
+.stb.st-w{background:linear-gradient(135deg,#c2185b,#7a0f3d);color:#fff;box-shadow:0 0 8px rgba(194,24,91,.4)}
+.stb.st-w.old{animation:wpulse 1.4s ease-in-out infinite;box-shadow:0 0 0 3px rgba(194,24,91,.28),0 0 14px rgba(194,24,91,.7)}
+.stb.st-a{background:#d9f7e0;color:#17702e;border:1.5px solid #8fd9a3}
+.bct .stb{display:flex;width:fit-content}.bct .stb.st-w{color:#fff!important}.bct .stb.st-0{color:#b0204f!important;background:#fff!important}.bct .stb.st-a{color:#17702e!important}
+.wbig.st-0{background:#fff;color:#b0204f;border:2px solid #e6a9c0;box-shadow:none}
+.wbig.st-a{background:linear-gradient(135deg,#43a85f,#1b7a3a);box-shadow:0 0 0 3px rgba(40,160,80,.18),0 6px 18px rgba(40,160,80,.4)}
+.wbig.st-w.old{box-shadow:0 0 0 4px rgba(194,24,91,.32),0 8px 24px rgba(194,24,91,.7)}
+.wans.again{background:#fdeaf1;color:#b0204f;font-size:13px;line-height:1.15;max-width:34%}
+
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
 <script src="jszip.min.js"></script>
@@ -823,7 +834,7 @@ function planMenu(n){const p=planOf(n);const rows=[{ic:'✅',t:'Написала
 
 /* ----- lead card (header pills + sheet) ----- */
 const fmtShort=ts=>{const d=new Date(ts);return d.getDate()+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)};
-function leadRowPills(n){if(!isLead(n))return'';const ps=[];{const sp=statusPill(n);if(sp)ps.push(sp)}
+function leadRowPills(n){if(!isLead(n))return'';const ps=[];ps.push(statBtn(n));
  const w=n.w||'ok';if(n.st)ps.push(`<i class="pill sm ${ST[n.st].c}">${WE[w]} ${ST[n.st].t}</i>`);else if(w!=='ok')ps.push(`<i class="pill sm ghost">${WE[w]} ${WT[w]}</i>`);
  const ms=meetsOf(n).slice().sort((a,b)=>a.ts-b.ts);const sh=ms.slice(-6);if(ms.length>6)ps.push(`<i class="pill sm ghost">+${ms.length-6}</i>`);sh.forEach((m,i)=>ps.push(`<i class="pill sm c3">${fmtShort(m.ts)}</i>`));
  const ds=citiesOf(n).map(c=>n.dist&&n.dist[c]).filter(Boolean);if(ds.length)ps.push(`<i class="pill sm ghost">📍 ${esc(ds.join(', '))}</i>`);
@@ -853,16 +864,15 @@ function leadHead(n,extra){const p=planOf(n);const id=n.id,k=(n.chats||[]).lengt
  let h=`<div class="l4"><button class="l4b${late?' late2':''}" data-act="${hasD?'lplan':'lplanset'}" data-id="${id}"><i>✉</i><b>Когда написать</b>${hasD?`<small>${fmtPlan(p.ts)}</small>`:''}</button>`+
  `<button class="l4b" data-act="ldist" data-id="${id}"><i>📍</i>${d?(()=>{const l=distLabel(d).split('|');return `<b>${esc(l[0])}</b>${l[1]?`<small>${esc(l[1])}</small>`:''}`})():'<b>Район</b>'}</button>`+
  `<button class="l4b" data-act="chats" data-id="${id}"><i>💬</i><b>Переписки</b>${k?`<small>${k}</small>`:''}</button>`+
- `<button class="l4b" data-act="nuance" data-id="${id}"><i>📝</i><b>Нюансы</b>${n.nuance?'<small>есть</small>':''}</button></div>`;
+ `<button class="l4b" data-act="bpm" data-id="${id}"><i>📌</i><b>Пометка</b>${n.pm?'<small>есть</small>':''}</button></div>`;
  if(p&&p.src==='new')h+=`<div class="row lp"><span class="pill sm ghost">ещё не писала</span></div>`;
  const wd=n.wd||[];
- h+=`<div class="wrow"><button class="wbig${wOld(n)?' old':''}" data-act="lwait" data-id="${id}">⏳ Жду ответ${wd.length?`<small>${wdates(n,3)}</small>`:''}</button>${wd.length?`<button class="wans" data-act="lans" data-id="${id}">✅ Ответил</button>`:''}</div>`;
+ {const s=statState(n),old=s==='w'&&wOld(n);h+=`<div class="wrow"><button class="wbig st-${s||'0'}${old?' old':''}" data-act="lcyc" data-id="${id}">${s==='w'?(old?'⏳ Давно жду ответ':'⏳ Жду ответ'):s==='a'?'✅ Ответил':'⏳ Жду ответ'}</button>${s==='w'?`<button class="wans again" data-act="lwait" data-id="${id}">↻ Написала ещё раз</button>`:''}</div>`}
  h+=`<div class="pmrow">${pmLine(n)}</div>`;
  h+=ctRow(n);
  const open=LMORE.has(id);
  h+=`<div class="row lp"><button class="pill sm ghost" data-act="lmore" data-id="${id}">${open?'⌃ Скрыть':'⋯ Ещё'}</button><button class="pill sm ghost" data-act="lwhat" data-id="${id}">🔔 Что произошло?</button></div>`;
  if(open)h+=`<div class="lmore">${leadMore(n)}${extra||''}</div>`;
- if(n.nuance)h+=`<div class="nuance" data-act="nuance" data-id="${id}">${esc(n.nuance)}</div>`;
  return h}
 const chipsM=(id,opts,sel,fmt)=>`<div class="chips" id="${id}">${opts.map(o=>`<button type="button" class="chip${sel.includes(o)?' on':''}" data-v="${esc(o)}">${fmt?fmt(o):esc(o)}</button>`).join('')}</div>`;
 function chipsMBind(el,id,sel,cb){el.querySelector('#'+id).querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const v=b.dataset.v,i=sel.indexOf(v);if(i>=0)sel.splice(i,1);else sel.push(v);b.classList.toggle('on');cb&&cb()})}
@@ -903,7 +913,7 @@ function leadRow(x){const n=x.n,p=x.p,id=n.id;const cs=citiesOf(n);const loc=cs.
  const late=p.src!=='new'&&p.ts<sod(Date.now());
  const l1=[n.st?ST[n.st].t:'',loc,(n.wd&&n.wd.length)?'⏳ '+wdates(n,3):n.tc?n.tc+' без ответа':''].filter(Boolean).join(' · ')||'без статуса';
  const l2=(late?`<i class="late">${relDay(p.ts)}</i> · `:'')+esc(p.why)+(x.dm?' · <b>в твоём районе</b>':'');
- return `<div class="ev lead"><button class="evm" data-act="open" data-id="${id}">${avatarHTML(n,48)}<span class="evt"><b>${WE[n.w||'ok']} ${esc(nodeTitle(n))}</b><span>${l1}</span><span>${l2}</span>${n.pm?`<span class="bpm" data-act="bpm" data-id="${id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</span>`:''}</span></button>
+ return `<div class="ev lead"><button class="evm" data-act="open" data-id="${id}">${avatarHTML(n,48)}<span class="evt"><b>${WE[n.w||'ok']} ${esc(nodeTitle(n))}</b><span>${l1}</span><span>${l2}</span>${n.pm?`<span class="bpm" data-act="bpm" data-id="${id}">${esc(n.pm)}</span>`:''}</span></button>
  <div class="lacts"><button class="pill c2" data-act="ltouch" data-id="${id}">Написала</button><button class="pill c5" data-act="lans" data-id="${id}">Ответил</button><button class="pill c1" data-act="llater" data-id="${id}">Позже</button>${n.st?'':`<button class="pill ghost" data-act="lcard" data-id="${id}">Статус</button>`}</div></div>`}
 function viewToday(){const T=buildToday(),H=here();const total=dailyN()+TD.extra;
  let h=`<div class="wrap"><div class="topbar"><span></span><div class="ibs">${topBtn('search',ICON.search,'')}${topBtn('settings',ICON.gear)}</div></div><h1 class="tt">Сегодня</h1>
@@ -1029,6 +1039,8 @@ async function act3(act,a,id,n){
   case'lplan':if(n)planMenu(n);break;
   case'lbell':if(n){if(n.plan)planMenu(n);else planDateSheet(n)}break;
   case'lstat':if(n)statSheet(n);break;
+  case'lcyc':if(n&&!LPFIRED)cycStat(n);break;
+  case'nuance':if(n)pmSheet(n);break;
   case'lplanset':if(n)planDateSheet(n);break;
   case'ltouch':if(n)doTouch(n);break;
   case'lans':if(n)doAnswered(n);break;
@@ -1053,8 +1065,8 @@ async function act3(act,a,id,n){
 /* ===== stage 4: nuances, chats, monthly earnings ===== */
 const SRC={wa:'WhatsApp',tg:'Telegram',ig:'Instagram',ot:'Другое'};
 function chatHead(n){const k=(n.chats||[]).length,id=n.id;
- let h=`<div class="row lp"><button class="pill sm ghost" data-act="nuance" data-id="${id}">📝 Нюансы${n.nuance?'':' ＋'}</button><button class="pill sm ghost" data-act="chats" data-id="${id}">💬 Переписки${k?' · '+k:' ＋'}</button></div>`;
- if(n.nuance)h+=`<div class="nuance" data-act="nuance" data-id="${id}">${esc(n.nuance)}</div>`;return h}
+ let h=`<div class="row lp"><button class="pill sm ghost" data-act="bpm" data-id="${id}">📌 Пометка${n.pm?'':' ＋'}</button><button class="pill sm ghost" data-act="chats" data-id="${id}">💬 Переписки${k?' · '+k:' ＋'}</button></div>`;
+ return h}
 function nuanceSheet(n){const el=sheet(`<h3>📝 Нюансы</h3><div class="hint" style="text-align:left">Что важно помнить: что любит, о чём договаривались, чего избегать.</div><textarea class="inp" id="nu" style="min-height:220px">${esc(n.nuance||'')}</textarea><div class="row" style="margin-top:12px"><button class="btn pink wide" id="nus">Сохранить</button></div>`);
  const t=el.querySelector('#nu');setTimeout(()=>t.focus(),80);el.querySelector('#nus').onclick=async()=>{n.nuance=t.value.trim();await saveNode(n);closeSheet();render()}}
 function pickFiles(accept,multi){return new Promise(res=>{holdLock();const i=document.createElement('input');i.type='file';i.accept=accept;i.multiple=!!multi;i.style.display='none';document.body.appendChild(i);i.onchange=()=>{res([...i.files]);setTimeout(()=>i.remove(),500)};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
@@ -1142,7 +1154,7 @@ function streak(){const w=SET.wlog||{};let d=new Date();d.setHours(12,0,0,0);if(
 
 /* ----- contacts & templates ----- */
 function contactsOf(n){const hit=CTC.get(n.id);if(hit)return hit;
- const tx=[nodeTitle(n),n.nuance||'',...kids(n.id).filter(k=>k.type==='note').map(plainOf)].join('\n');
+ const tx=[nodeTitle(n),n.nuance||'',n.pm||'',...kids(n.id).filter(k=>k.type==='note').map(plainOf)].join('\n');
  let ph=(n.ph||'').replace(/\D/g,''),ig=n.igu||'',tg=n.tgu||'';const B='(?:^|[^A-Za-zА-Яа-яЁё])';
  if(!ph)ph=findPhone(tx);
  if(!ig){const m=tx.match(new RegExp(B+'(?:instagram|insta|inst|инстаграм|инста|инст|ig)\\s*[:\\-]?\\s*@?([A-Za-z0-9._]{2,30})','i'))||tx.match(/instagram\.com\/([A-Za-z0-9._]+)/i);if(m)ig=m[1].replace(/\.+$/,'')}
@@ -1403,7 +1415,7 @@ function cardHTML(b,c,it){const n=N.get(it.id);const tc=n.tc||0;const wt=['wait'
  const sure=c.type==='day'?(it.s?'💚 ':'🤍 '):'';const tm=c.type==='day'?(it.tm?`<b class="btm">${esc(it.tm)}</b>`:it.ht?`<b class="btm g">~${esc(it.ht)}</b>`:''):'';
  const pl=n.plan&&c.type!=='day'&&(b.free?c.role!=='met':c.type!=='met')?`<b class="bpl${planDue(n)?' due':''}"${b.free?` data-act="bbell" data-id="${n.id}"`:''}>✉ ${n.plan<=eod(Date.now())&&n.plan>=sod(Date.now())?'сегодня '+hhmm(n.plan):dmy(n.plan)+' '+hhmm(n.plan)}</b>`:'';
  const lc=lastChat(n);const ch=lc?`<button class="bchat" data-act="bchat" data-id="${n.id}" aria-label="Переписка">${lc.img?`<img data-chimg="${lc.img}" alt="">`:'<span>💬</span>'}${(n.chats||[]).length>1?`<i>${n.chats.length}</i>`:''}</button>`:'';
- const mn=cardMoneyHTML(b,c,n,it);const wdb=b.free?freeWaitHTML(b,c,n):(wdn&&c.type!=='day'?`<b class="bwd${wOld(n)?' old':''}">⏳ ${wdates(n,3)}</b>`:'');const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
+ const mn=cardMoneyHTML(b,c,n,it);const wdb=b.free?(c.role==='met'?'':statBtn(n)):(statState(n)&&c.type!=='day'?statBtn(n):'');const extra=(tm||pl||dots||ago||ms)?`<span>${tm}${pl}${dots}${ago}${ms?`<i>${ms}</i>`:''}</span>`:'';
  return `<div class="bcard${c.type==='day'&&!it.s?' g':''}" data-bc="${n.id}" data-act="bcard" data-id="${n.id}" data-cc="${c.id}" data-ii="${c.items.indexOf(it)}">${avatarHTML(n,64,'sq')}<div class="bct"><b>${sure}${esc(nodeTitle(n))}</b>${b.free?tagChip(n):''}${extra}${wdb}${n.pm?'':pmLine(n)}${mn}${ctIcons(n,'bc')}</div>${b.free&&c.role!=='met'?`<button class="bbell${n.plan?' on':''}" data-act="bbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:''}${ch}${n.pm?`<div class="bpmw">${pmLine(n)}</div>`:''}</div>`}
 const emptyT={todo:'Кому хочешь написать. Перетащи сюда людей из книжек 👥',wait:'Сюда — всех, кому написала и ждёшь ответ',day:'Перетащи сюда того, с кем видишься в этот день',next:'Кто сказал «в следующий раз»',met:'Перенеси сюда после встречи',rest:'Кто не ответил на 5 сообщений — сюда, отдохнуть',own:'Пусто',lead:'Сюда — кого раздобыла в этом месяце',metr:'Сюда — с кем виделась'};
 function colHTML(b,c){const items=liveItems(c);const t0=sod(Date.now());const isT=c.type==='day'&&sod(c.date)===t0,past=c.type==='day'&&eod(c.date)<Date.now(),tom=c.type==='day'&&sod(c.date)===addDays(t0,1);
@@ -1855,7 +1867,7 @@ function noteTouch(n){n.zs=0;n.wd=[...(n.wd||[]),Date.now()];if(!noSleep(n)&&sho
 function syncBoardsAfterTouch(n){let ch=false;for(const b of boards()){if(b.free)continue;const f=findItem(b,n.id);if(!f)continue;const wc=colOf(b,'wait'),rc=colOf(b,'rest');
  const to=n.zs?rc:(f.c.type==='todo'?wc:null);if(to&&to!==f.c){f.c.items.splice(f.i,1);f.it.s=0;f.it.tm='';to.items.push(f.it);ch=true}}if(ch)saveB()}
 async function doWait(n){const sn=snapLead(n);const m=noteTouch(n);n.tc=(n.tc||0)+(m?0:1);n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=m?n.plan:0;doneRem(n);logW();await saveNode(n,false);syncBoardsAfterTouch(n);render();
- toast(m?'В спящие. Напишешь '+fmtPlan(n.plan):'Жду ответ: '+nodeTitle(n)+' · '+dmy(Date.now()),'Отменить',()=>{undoLead(n,sn)})}
+ toast(m?'В спящие. Напишешь '+fmtPlan(n.plan):'Жду ответ: '+nodeTitle(n).slice(0,30),'Отменить',()=>{undoLead(n,sn)})}
 /* ----- zones ----- */
 const ZONES=['Dubai Marina','Business Bay'];
 const ZRX={'Dubai Marina':/(marina|марин)/,'Business Bay':/(business|бизнес|biznes|^bb\b|^бб\b)/};
@@ -1879,12 +1891,12 @@ function distSheet(n){const cs=citiesOf(n);const H=here();let c=cs[0]||(H&&H.cit
   const x=el.querySelector('#dcl');if(x)x.onclick=()=>save('')};draw()}
 /* ----- notes on cards ----- */
 const pmDate=n=>n.pmAt?(()=>{const d=new Date(n.pmAt);return p2(d.getDate())+'.'+p2(d.getMonth()+1)})():'';
-function pmSheet(n){const el=sheet(`<h3>📌 Где остановились · ${esc(nodeTitle(n).split(' ')[0])}</h3><div class="hint" style="text-align:left">Коротко: что было и что дальше. Эта запись видна на карточке.</div><textarea class="inp" id="pm" style="min-height:130px" placeholder="Например: хотел встретиться сегодня, в 21:00 ответил, что ещё на работе">${esc(n.pm||'')}</textarea>
+function pmSheet(n){const el=sheet(`<h3>📌 Пометка · ${esc(nodeTitle(n).split(' ')[0])}</h3><div class="hint" style="text-align:left">На каком моменте общения остановились, о чём договорились, что важно помнить. Видна в списках, на досках и в карточке.</div><textarea class="inp" id="pm" style="min-height:130px" placeholder="Например: хотел встретиться сегодня, в 21:00 ответил, что ещё на работе">${esc(n.pm||'')}</textarea>
  <div class="row" style="margin-top:12px"><button class="btn pink wide" id="pms">Сохранить</button></div>
  ${(n.pmh&&n.pmh.length)?`<div class="lbl">История</div>${n.pmh.slice().reverse().slice(0,30).map(h=>`<div class="pmh"><i>${fmtDate(h.t)}</i> ${esc(h.x)}</div>`).join('')}`:''}`);
  const t=el.querySelector('#pm');setTimeout(()=>t.focus(),80);
  el.querySelector('#pms').onclick=async()=>{const v=t.value.trim();if(v!==(n.pm||'')){if(n.pm)n.pmh=[...(n.pmh||[]),{t:n.pmAt||Date.now(),x:n.pm}];n.pm=v;n.pmAt=v?Date.now():0}await saveNode(n,false);closeSheet();render()}}
-const pmLine=n=>n.pm?`<span class="bpm" data-act="bpm" data-id="${n.id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</span>`:`<span class="bpm0" data-act="bpm" data-id="${n.id}">＋ пометка</span>`;
+const pmLine=n=>n.pm?`<span class="bpm" data-act="bpm" data-id="${n.id}">${esc(n.pm)}</span>`:`<span class="bpm0" data-act="bpm" data-id="${n.id}">📌 ＋ пометка</span>`;
 /* ----- sleepers ----- */
 const sleepers=()=>leads().filter(n=>n.zs&&n.st!=='stop').sort((a,b)=>(a.plan||0)-(b.plan||0));
 function sleepSheet(){const L=sleepers();const el=sheet(`<h3>😴 Спящие · ${L.length}</h3><div class="hint" style="text-align:left">Не отвечают. Приложение напомнит написать в указанный день: сначала через 2 месяца, потом через 3, потом через 6.</div>
@@ -1951,7 +1963,7 @@ function statusPill(n){if(!isLead(n))return'';const w=(n.wd||[]).length;
  if(w)return `<i class="pill sm wpill2${wOld(n)?' old':''}" data-act="lstat" data-id="${n.id}">⏳ ${wdates(n,3)}</i>`;
  if(n.lk==='a'&&n.la)return `<i class="pill sm okpill" data-act="lstat" data-id="${n.id}">✅ ответил ${dmy(n.la)}</i>`;return''}
 const bellBtn=n=>isLead(n)&&n.parent?`<button class="bellb${n.plan?' on':''}" data-act="lbell" data-id="${n.id}" aria-label="Когда написать">🔔</button>`:'';
-function statSheet(n){const w=(n.wd||[]).length;const rows=[{ic:'⏳',t:w?'Написала ещё раз':'Написала, жду ответ',sub:'добавлю сегодняшнюю дату',fn:()=>doWait(n)}];
+function statSheet(n){const w=(n.wd||[]).length;const rows=[{ic:'⏳',t:w?'Написала ещё раз':'Написала, жду ответ',sub:'посчитаю ещё одно сообщение',fn:()=>doWait(n)}];
  if(w||n.lk!=='a')rows.push({ic:'✅',t:'Ответил',sub:'уберу «Жду ответ»',fn:()=>doAnswered(n)});
  rows.push({ic:'🔔',t:'Когда написать',sub:n.plan?'сейчас: '+fmtPlan(n.plan):'выбрать дату и время',fn:()=>n.plan?planMenu(n):planDateSheet(n)});
  rows.push({ic:'📌',t:'Пометка',fn:()=>pmSheet(n)});menuSheet(nodeTitle(n).slice(0,50),rows)}
@@ -2016,6 +2028,22 @@ function distrSheet(book){const P=distrPlan(book);if(!P.plan.length){toast(P.loo
  el.querySelector('#dno').onclick=closeSheet;
  el.querySelector('#dgo').onclick=async()=>{closeSheet();for(const x of P.plan){x.n.parent=x.f.id;x.n.order=Math.max(0,...allKids(x.f.id).map(s=>s.order||0))+1;await saveNode(x.n,false)}dirty();render();toast('Разложено: '+P.plan.length)}}
 function folderSheet(parent){inputSheet({title:'Новая папка',value:'',ph:'Например, «Встречи октября»',ok:'Создать'}).then(async v=>{if(v===null)return;v=v.trim();if(!v)return;const x=newNode('col',parent,{title:v.slice(0,60),fld:1,mark:'📁'});await saveNode(x);render()})}
+
+/* ===== v26: «Пометка» everywhere, one-tap status «Жду ответ → Ответил → пусто» (no dates) ===== */
+function migratePm(){let any=false;for(const n of N.values()){if(n.nuance&&!n.nm){const a=(n.pm||'').trim(),b=String(n.nuance).trim();n.nuOld=n.nuance;n.pm=[a,b].filter(Boolean).join('\n');if(!n.pmAt)n.pmAt=Date.now();n.nuance='';n.nm=1;saveNode(n,false);any=true}}if(any)dirty()}
+const statState=n=>(n.wd||[]).length?'w':(n.lk==='a'&&n.la?'a':'');
+function statBtn(n){if(!isLead(n))return'';const s=statState(n),old=s==='w'&&wOld(n);
+ const t=s==='w'?(old?'⏳ Давно жду':'⏳ Жду ответ'):s==='a'?'✅ Ответил':'⏳ Жду ответ';
+ return `<i class="stb ${s?'st-'+s:'st-0'}${old?' old':''}" data-act="lcyc" data-id="${n.id}">${t}</i>`}
+async function cycStat(n){const s=statState(n);
+ if(!s)return doWait(n);if(s==='w')return doAnswered(n);
+ const sn=snapLead(n);n.lk='';n.la=0;await saveNode(n,false);render();toast('Статус сброшен','Отменить',()=>undoLead(n,sn))}
+let LPFIRED=false;
+(function(){let tm=null,sx=0,sy=0;
+ document.addEventListener('pointerdown',e=>{const a=e.target.closest&&e.target.closest('[data-act="lcyc"]');if(!a)return;sx=e.clientX;sy=e.clientY;clearTimeout(tm);
+  tm=setTimeout(()=>{const n=N.get(a.dataset.id);if(n){LPFIRED=true;statSheet(n);setTimeout(()=>LPFIRED=false,700)}},550)},true);
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>document.addEventListener(ev,()=>clearTimeout(tm),true));
+ document.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>12)clearTimeout(tm)},true)})();
 
 /* ===== icons ===== */
 const sv=p=>`<svg viewBox="0 0 24 24">${p}</svg>`;
@@ -2088,7 +2116,7 @@ function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=
  const mk=n.mark?`<span class="mark">${esc(n.mark)}</span>`:'';const pin=n.pinned?'<span class="pinb">📌</span>':'';
  let sub;if(n.type==='col'){sub=subText(n);const sm=sumNode(n.id);if(sm.c&&isLead(n)){const lm=lastMeet(n);const add=(lm?'встреча '+fmtDate(lm):'')+(sm.aed>0?' · '+nf0.format(Math.round(sm.aed))+' AED':'');sub=sub==='Пусто'?add.replace(/^ · /,''):sub+' · '+add.replace(/^ · /,'')}if(n.parent&&isLead(n)){const pr=[n.w&&n.w!=='ok'?WE[n.w]:'',n.st?ST[n.st].t:''].filter(Boolean).join(' ');const pp=planOf(n);const parts=[pr,sub==='Пусто'?'':sub,pp&&pp.ts?'✉ '+fmtPlan(pp.ts).replace(/^.{2}, /,''):''].filter(Boolean);sub=parts.join(' · ')||'Пусто'}}else if(n.type==='photo')sub=fmtDate(n.updated);else{const f=plainOf(n).split('\n').map(s=>s.trim()).filter(Boolean);sub=fmtDate(n.updated)+(f[1]?' · '+f[1]:(f[0]&&!n.title?'':f[0]?' · '+f[0]:''))}
  if(n.fld){const k=allKids(n.id).filter(isLead).length;sub=k?k+' '+plural(k,'человек','человека','человек'):'Пусто'}
- const pmr=n.type==='col'&&n.parent&&isLead(n)&&n.pm?`<div class="rpm" data-act="bpm" data-id="${n.id}"><i>${pmDate(n)}</i> ${esc(n.pm)}</div>`:'';
+ const pmr=n.type==='col'&&n.parent&&isLead(n)&&n.pm?`<div class="rpm" data-act="bpm" data-id="${n.id}">${esc(n.pm)}</div>`:'';
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;const ci=n.type==='col'&&n.parent&&isLead(n)?ctIcons(n,'li'):'';
  if(grid)return `<div class="card" ${attrs}>${ci?thumbHTML(n,1).replace(/<\/div>$/,ci.replace('cti li','cti gr')+'</div>'):thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
  const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
@@ -2269,7 +2297,7 @@ function searchScreen(scope){const el=document.createElement('div');el.className
  function run(){const raw=q.value.trim();if(!raw){rs.innerHTML='<div class="hint" style="margin-top:30px">Ищу по названиям, тексту заметок и подписям.<br>Телефон можно вводить в любом формате.</div>';return}
   const toks=nq(raw).split(/\s+/).filter(Boolean);const dg=raw.replace(/\D/g,'');const phone=dg.length>=4&&/^[\d\s+\-().]+$/.test(raw);const out=[];
   for(const n of N.values()){if(n.deleted)continue;if(!all&&n.id!==scope&&!isDesc(n.id,scope))continue;if(n.id===scope)continue;
-   const title=nodeTitle(n),pl=(n.type==='note'?plainOf(n):(n.caption||'')+(n.dist?' '+Object.values(n.dist).join(' '):'')+(n.nuance?' '+n.nuance:'')+(n.chats?' '+n.chats.map(c=>c.text||'').join(' '):'')).replace(/\s+/g,' ');const hay=nq(title+' \n '+pl);
+   const title=nodeTitle(n),pl=(n.type==='note'?plainOf(n):(n.caption||'')+(n.dist?' '+Object.values(n.dist).join(' '):'')+(n.nuance?' '+n.nuance:'')+(n.pm?' '+n.pm:'')+(n.chats?' '+n.chats.map(c=>c.text||'').join(' '):'')).replace(/\s+/g,' ');const hay=nq(title+' \n '+pl);
    let ok=toks.every(t=>hay.includes(t));let byPhone=false;if(!ok&&phone){ok=(title+' '+pl).replace(/\D/g,'').includes(dg);byPhone=ok}
    if(ok)out.push({n,title,pl,byPhone,tm:toks.every(t=>nq(title).includes(t))})}
   out.sort((a,b)=>(b.tm-a.tm)||b.n.updated-a.n.updated);
@@ -2284,7 +2312,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 25 · 01.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 26 · 02.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
@@ -2350,7 +2378,7 @@ function pinMenu(){const on=!!SET.pinHash;menuSheet('PIN-код',[{ic:'🔒',t:o
 let DR=null;let NOCLICK=0;
 function moveGhost(x,y){if(DR&&DR.g){DR.g.style.left=x+'px';DR.g.style.top=y+'px'}}
 function dropAt(x,y){const els=document.elementsFromPoint(x,y);for(const e of els){const d=e.closest&&e.closest('[data-drop]');if(d&&d.dataset.drop!==DR.id)return d}return null}
-document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('[data-drag]');if(!t||e.target.closest('.mn')||DR||LOCKED)return;if(e.pointerType==='mouse'&&e.button!==0)return;
+document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('[data-drag]');if(!t||e.target.closest('.mn,[data-act="lcyc"]')||DR||LOCKED)return;if(e.pointerType==='mouse'&&e.button!==0)return;
  const sx=e.clientX,sy=e.clientY,id=t.dataset.id;let started=false,moved=false,lx=sx,ly=sy,iv=null;
  const clean=()=>{clearTimeout(timer);clearInterval(iv);document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cx)};
  const end=()=>{if(DR){DR.g.remove();DR.el.classList.remove('dragging');document.querySelectorAll('.over').forEach(o=>o.classList.remove('over'));document.body.classList.remove('dragmode');DR=null}};
@@ -2419,7 +2447,7 @@ async function boot(){
  if(SET.pinHash)await unlock();
  if(!location.hash&&SET.last){const m=SET.last.split('/');const nd=N.get(m[1]);if(nd&&!nd.deleted)location.hash='#/'+SET.last}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadRates().then(ok=>{if(ok&&parseHash().k==='b')render()})});
- ensureLeadFolders();render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
+ migratePm();ensureLeadFolders();render();loadRates().then(ok=>{if(ok&&['s','cal'].includes(parseHash().k))render()});
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 boot();
