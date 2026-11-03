@@ -420,6 +420,8 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .wbig.st-w.old{box-shadow:0 0 0 4px rgba(194,24,91,.32),0 8px 24px rgba(194,24,91,.7)}
 .wans.again{background:#fdeaf1;color:#b0204f;font-size:13px;line-height:1.15;max-width:34%}
 
+.it.bk0 .tx{padding-left:2px}.it.bk0 .tx>b{font-size:19px}
+
 </style></head>
 <body><div id="app"></div><div id="priv" class="privacy" hidden></div>
 <script src="jszip.min.js"></script>
@@ -710,7 +712,7 @@ function remSettings(){const el=sheet(`<h3>Напоминания по умол�
 
 /* ===== stage 3: lead workflow (statuses, today list, "I'm in the city", plan calendar) ===== */
 const ST={self:{t:'Сам пишет',c:'c2'},some:{t:'Иногда отвечает',c:'c1'},never:{t:'Не отвечает',c:'c3'},half:{t:'Раз в полгода',c:'c4'},sleep:{t:'Спящий',c:'c5'},stop:{t:'Не писать',c:'ghost'}};
-const STK=Object.keys(ST);
+const STK=Object.keys(ST).filter(k=>k!=='some');
 const WE={hot:'🔥',ok:'🙂',cold:'❄️'},WT={hot:'Тёплый',ok:'Нормальный',cold:'Холодный'},WRANK={hot:0,ok:1,cold:2};
 const MSG={tg:'Telegram',ig:'Instagram',wa:'WhatsApp'},MSGS={tg:'TG',ig:'IG',wa:'WA'};
 const INTD={some:30,never:30,half:180,sleep:120,'':30},WFAC={hot:.7,ok:1,cold:1.5};
@@ -803,8 +805,7 @@ function doneRem(n){const r=remMapAll().get(n.id);if(r)r.m.rDone=Date.now()}
 async function undoLead(n,sn){restoreLead(n,sn);await saveNode(n,false);render()}
 async function doTouch(n){return doWait(n)}
 async function doAnswered(n){const sn=snapLead(n);n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.la=Date.now();n.lk='a';n.plan=0;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.zs=0;n.zc=0;doneRem(n);
- if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);render();
- toast('Ответил: '+nodeTitle(n),'Отменить',()=>undoLead(n,sn));
+ if(n.st==='never'||n.st==='sleep'||n.st==='some')n.st='';await saveNode(n,false);render();
  menuSheet('Что дальше с «'+nodeTitle(n)+'»?',[
   {ic:'📅',t:'Записать встречу',fn:()=>meetSheet(n,null)},
   {ic:'⏱️',t:'Написать снова через 3 дня',fn:()=>setPlan(n,atW(n,Date.now()+3*864e5))},
@@ -1193,7 +1194,7 @@ function tplMsgSheet(){const el=sheet(`<h3>Шаблоны сообщений</h3
 
 /* ----- lead updates from the board ----- */
 async function bTouch(n,it){n.tc=(n.tc||0)+1;n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=0;{const m=noteTouch(n);if(m)n.tc=0}doneRem(n);logW();if(it){it.w=(it.w||0)+1;it.lt=Date.now()}await saveNode(n,false)}
-async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.zs=0;n.zc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(!n.st||n.st==='never'||n.st==='sleep')n.st='some';await saveNode(n,false);return true}
+async function bAnswered(n){if(n.lk!=='w')return false;n.ansAt=[...(n.ansAt||[]),n.tc||0];n.tc=0;n.wh=[...(n.wh||[]),...(n.wd||[])];n.wd=[];n.zs=0;n.zc=0;n.la=Date.now();n.lk='a';n.plan=0;doneRem(n);if(n.st==='never'||n.st==='sleep'||n.st==='some')n.st='';await saveNode(n,false);return true}
 async function maybeRest(b,n){const f=findItem(b,n.id);if(!f||!n.zs||['rest','met'].includes(f.c.type)||f.c.type==='day')return;const r=colOf(b,'rest');if(!r)return;
  await placeItem(b,n.id,r.id,null,'Не отвечает — ушёл в «Спящие». Напишешь '+fmtPlan(n.plan))}
 async function placeItem(b,lid,toId,idx,why,opt){if(b.free)return placeFree(b,lid,toId,idx,opt);const n=N.get(lid),to=b.cols.find(c=>c.id===toId);if(!n||!to)return;
@@ -1734,7 +1735,7 @@ function analyzeChat(txt,n){const T=txt.toLowerCase();const has=r=>r.test(T);
  if(has(S.no)){out.lines.push('🛑 Похоже на отказ. Лучше не писать дальше.');out.acts.push({t:'Поставить «Не писать»',fn:async()=>{n.st='stop';await saveNode(n,false);toast('Метка: Не писать')}})}
  else if(has(S.meet)&&has(S.when)){out.lines.push('🔥 Хочет встретиться и назвал время. Это тёплый лид: подтверди встречу и добавь на доску в «виделись» после встречи.');out.acts.push({t:'Поставить «Тёплый 🔥»',fn:async()=>{n.w='hot';await saveNode(n,false);toast('Теплота: Тёплый')}});out.reply='Отлично, договорились! Подтверждаю, увидимся 😊'}
  else if(has(S.meet)){out.lines.push('🔥 Хочет встретиться, но день пока не назвал. Предложи два конкретных варианта: так проще ответить «да».');out.acts.push({t:'Поставить «Тёплый 🔥»',fn:async()=>{n.w='hot';await saveNode(n,false);toast('Теплота: Тёплый')}});out.reply='Я могу в четверг вечером или в пятницу днём. Что тебе удобнее? 😊'}
- else if(has(S.later)){out.lines.push('⏳ Откладывает. Не дави: напиши через неделю.');out.acts.push({t:'Напомнить через 7 дней',fn:async()=>{n.plan=sod(Date.now())+7*864e5+18*36e5;if(!n.st||n.st==='never')n.st='some';await saveNode(n,false);toast('Напомню через неделю')}});out.reply='Хорошо, без проблем! Напишу тебе через недельку 😊'}
+ else if(has(S.later)){out.lines.push('⏳ Откладывает. Не дави: напиши через неделю.');out.acts.push({t:'Напомнить через 7 дней',fn:async()=>{n.plan=sod(Date.now())+7*864e5+18*36e5;if(!n.st||n.st==='never')n.st='';await saveNode(n,false);toast('Напомню через неделю')}});out.reply='Хорошо, без проблем! Напишу тебе через недельку 😊'}
  else if(has(S.price)){out.lines.push('💬 Спрашивает цену. Ответь коротко и сразу предложи время, пока интерес горячий.')}
  else if(txt.trim())out.lines.push('🤔 Чёткого сигнала в тексте не вижу. Если последним писала ты — подожди 3 дня и напомни один раз.');
  if(tc>=3)out.lines.push('✉ Без ответа уже '+tc+' из '+sleepN()+' сообщений. Если дойдёт до '+sleepN()+' — лучше отложить на потом.');
@@ -1867,7 +1868,7 @@ function noteTouch(n){n.zs=0;n.wd=[...(n.wd||[]),Date.now()];if(!noSleep(n)&&sho
 function syncBoardsAfterTouch(n){let ch=false;for(const b of boards()){if(b.free)continue;const f=findItem(b,n.id);if(!f)continue;const wc=colOf(b,'wait'),rc=colOf(b,'rest');
  const to=n.zs?rc:(f.c.type==='todo'?wc:null);if(to&&to!==f.c){f.c.items.splice(f.i,1);f.it.s=0;f.it.tm='';to.items.push(f.it);ch=true}}if(ch)saveB()}
 async function doWait(n){const sn=snapLead(n);const m=noteTouch(n);n.tc=(n.tc||0)+(m?0:1);n.tot=(n.tot||0)+1;n.lt=Date.now();n.lk='w';n.plan=m?n.plan:0;doneRem(n);logW();await saveNode(n,false);syncBoardsAfterTouch(n);render();
- toast(m?'В спящие. Напишешь '+fmtPlan(n.plan):'Жду ответ: '+nodeTitle(n).slice(0,30),'Отменить',()=>{undoLead(n,sn)})}
+ toast(m?'В спящие. Напишешь '+fmtPlan(n.plan):'Жду ответ','Отменить',()=>{undoLead(n,sn)})}
 /* ----- zones ----- */
 const ZONES=['Dubai Marina','Business Bay'];
 const ZRX={'Dubai Marina':/(marina|марин)/,'Business Bay':/(business|бизнес|biznes|^bb\b|^бб\b)/};
@@ -2030,7 +2031,7 @@ function distrSheet(book){const P=distrPlan(book);if(!P.plan.length){toast(P.loo
 function folderSheet(parent){inputSheet({title:'Новая папка',value:'',ph:'Например, «Встречи октября»',ok:'Создать'}).then(async v=>{if(v===null)return;v=v.trim();if(!v)return;const x=newNode('col',parent,{title:v.slice(0,60),fld:1,mark:'📁'});await saveNode(x);render()})}
 
 /* ===== v26: «Пометка» everywhere, one-tap status «Жду ответ → Ответил → пусто» (no dates) ===== */
-function migratePm(){let any=false;for(const n of N.values()){if(n.nuance&&!n.nm){const a=(n.pm||'').trim(),b=String(n.nuance).trim();n.nuOld=n.nuance;n.pm=[a,b].filter(Boolean).join('\n');if(!n.pmAt)n.pmAt=Date.now();n.nuance='';n.nm=1;saveNode(n,false);any=true}}if(any)dirty()}
+function migratePm(){let any=false;for(const n of N.values()){if(n.st==='some'){n.st='';saveNode(n,false);any=true}}for(const n of N.values()){if(n.nuance&&!n.nm){const a=(n.pm||'').trim(),b=String(n.nuance).trim();n.nuOld=n.nuance;n.pm=[a,b].filter(Boolean).join('\n');if(!n.pmAt)n.pmAt=Date.now();n.nuance='';n.nm=1;saveNode(n,false);any=true}}if(any)dirty()}
 const statState=n=>(n.wd||[]).length?'w':(n.lk==='a'&&n.la?'a':'');
 function statBtn(n){if(!isLead(n))return'';const s=statState(n),old=s==='w'&&wOld(n);
  const t=s==='w'?(old?'⏳ Давно жду':'⏳ Жду ответ'):s==='a'?'✅ Ответил':'⏳ Жду ответ';
@@ -2120,7 +2121,7 @@ function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;const ci=n.type==='col'&&n.parent&&isLead(n)?ctIcons(n,'li'):'';
  if(grid)return `<div class="card" ${attrs}>${ci?thumbHTML(n,1).replace(/<\/div>$/,ci.replace('cti li','cti gr')+'</div>'):thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
  const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
- return `<div class="it" ${attrs}>${mk}${thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}${pmr}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
+ return `<div class="it${isBook(n)?' bk0':''}" ${attrs}>${mk}${isBook(n)?'':thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}${pmr}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
 function viewList(id){
  const n=id?N.get(id):null;const items=bookItems(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
  let h=`<div class="wrap"><div class="topbar">${id?topBtn('back',ICON.back,id):'<span></span>'}<div class="ibs">${topBtn('search',ICON.search,id||'')}${topBtn('view',vm==='list'?ICON.grid:ICON.list)}${id?topBtn('nmenu',ICON.more,id):topBtn('settings',ICON.gear)}</div></div>`;
@@ -2258,7 +2259,7 @@ function nodeMenu(n){const rows=[];
  if(!isBook(n))rows.push({ic:'📂',t:'Переместить в…',fn:()=>moveSheet(n)});
  if((SET.sorts[n.parent||'root']||(n.parent?'new':'manual'))==='manual'){rows.push({ic:'⬆️',t:'Выше',fn:()=>reorder(n,-1)});rows.push({ic:'⬇️',t:'Ниже',fn:()=>reorder(n,1)})}
  rows.push({ic:'🗑️',t:'В корзину',red:1,fn:()=>trashNode(n)});menuSheet(nodeTitle(n),rows)}
-function markSheet(n){const el=sheet(`<h3>Метка</h3><div class="marks">${['','💚','⭐','🔥','💜','❌','📌','🌸','✅','❓'].map(m=>`<button data-m="${m}">${m||'—'}</button>`).join('')}</div>`);
+function markSheet(n){const el=sheet(`<h3>Метка</h3><div class="marks">${['','🔥','💚','🩶','🫢','👺','⏳','🙂‍↔️','✅','⁉️','😍'].map(m=>`<button data-m="${m}">${m||'—'}</button>`).join('')}</div>`);
  el.querySelectorAll('[data-m]').forEach(b=>b.onclick=async()=>{n.mark=b.dataset.m;closeSheet();await saveNode(n,false);render()})}
 async function reorder(n,d){const g=x=>(x.pinned?1:0)+':'+(x.type==='col'?0:1);const arr=sortedKids(n.parent).filter(x=>g(x)===g(n));const i=arr.findIndex(x=>x.id===n.id),j=i+d;if(j<0||j>=arr.length)return;
  const a=arr[i],b=arr[j];if(a.order===b.order){arr.forEach((x,k)=>x.order=k+1)}else{const t=a.order;a.order=b.order;b.order=t}await saveNode(a,false);await saveNode(b,false);render()}
@@ -2312,7 +2313,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 26 · 02.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 27 · 02.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
