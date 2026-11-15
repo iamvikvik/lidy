@@ -420,7 +420,7 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .wbig.st-w.old{box-shadow:0 0 0 4px rgba(194,24,91,.32),0 8px 24px rgba(194,24,91,.7)}
 .wans.again{background:#fdeaf1;color:#b0204f;font-size:13px;line-height:1.15;max-width:34%}
 
-.it.bk0 .tx{padding-left:2px}.it.bk0.hc .tx{padding-left:0}.th.book.sq{width:64px;height:64px;border-radius:16px}.card .th.book.sq{width:100%;height:auto;aspect-ratio:1/1;border-radius:22px}#upc{width:86px!important}.it.bk0 .tx>b{font-size:19px}
+.it.bk0 .tx{padding-left:2px}.it.bk0.hc{padding:0;min-height:96px}.it.bk0.hc .tx{padding-left:0}.it.bk0.hc .th.book.sq{width:96px;height:96px;border-radius:0;box-shadow:none}.th.book.sq{width:64px;height:64px;border-radius:16px}.it.bkdrag,.card.bkdrag{opacity:.35}.it.bkov-t{box-shadow:inset 0 3px 0 #c2185b}.it.bkov-b{box-shadow:inset 0 -3px 0 #c2185b}.card.bkov-t,.card.bkov-b{outline:3px solid #c2185b;outline-offset:2px}.card .th.book.sq{width:100%;height:auto;aspect-ratio:1/1;border-radius:22px}#upc{width:86px!important}.it.bk0 .tx>b{font-size:19px}
 
 .btab.tdrag{opacity:.35}.btab.tover{box-shadow:inset 3px 0 0 #c2185b}
 .pickbar{position:fixed;left:10px;right:10px;bottom:82px;z-index:30;background:#fff;border-radius:20px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:6px}
@@ -2374,7 +2374,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 30 · 15.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 31 · 16.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
@@ -2451,6 +2451,27 @@ document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.c
  const cx=()=>{clean();end()};
  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cx)});
 document.addEventListener('touchmove',e=>{if(DR)e.preventDefault()},{passive:false});
+
+/* ===== перетаскивание книжек ===== */
+function bookSiblings(b){return sortedKids(null).filter(x=>isBook(x)&&!x.deleted&&!!x.pinned===!!b.pinned)}
+async function moveBook(id,tid){const a=N.get(id),t=N.get(tid);if(!a||!t||a===t||!!a.pinned!==!!t.pinned)return;
+ const all=sortedKids(null).filter(x=>isBook(x)&&!x.deleted),i=all.indexOf(a),j=all.indexOf(t);if(i<0||j<0)return;
+ all.splice(i,1);all.splice(all.indexOf(t)+(i<j?1:0),0,a);
+ for(let k=0;k<all.length;k++){if(all[k].order!==k+1){all[k].order=k+1;await saveNode(all[k],false)}}render()}
+document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('.list>.it.bk0,.grid>.card[data-act="open"]');if(!t||e.target.closest('.mn')||DR||BD||LOCKED)return;const id=t.dataset.id,bn=N.get(id);if(!bn||!isBook(bn))return;if(e.pointerType==='mouse'&&e.button!==0)return;
+ const sx=e.clientX,sy=e.clientY;let lx=sx,ly=sy,started=false,iv=null,over=null;
+ const marks=()=>document.querySelectorAll('.bkov-t,.bkov-b').forEach(o=>o.classList.remove('bkov-t','bkov-b'));
+ const clean=()=>{clearTimeout(timer);clearInterval(iv);document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cx)};
+ const end=()=>{if(DR&&DR.bk){DR.g.remove();t.classList.remove('bkdrag');marks();DR=null}};
+ const tgt=()=>{for(const el of document.elementsFromPoint(lx,ly)){const x=el.closest&&el.closest('.list>.it.bk0,.grid>.card[data-act="open"]');if(x&&x!==t){const o=N.get(x.dataset.id);if(o&&isBook(o)&&!!o.pinned===!!bn.pinned)return x}}return null};
+ const mark=()=>{marks();over=tgt();if(over){const ar=[...t.parentNode.children];over.classList.add(ar.indexOf(t)<ar.indexOf(over)?'bkov-b':'bkov-t')}};
+ const timer=setTimeout(()=>{if((SET.sorts.root||'manual')!=='manual'){clean();toast('Чтобы переставлять, включи сортировку «Вручную»');return}
+  started=true;const g=document.createElement('div');g.className='dragghost';g.textContent=nodeTitle(bn);document.body.appendChild(g);DR={id,el:t,g,bk:1};t.classList.add('bkdrag');moveGhost(sx,sy);navigator.vibrate&&navigator.vibrate(12);
+  iv=setInterval(()=>{if(ly<120)scrollBy(0,-14);else if(ly>innerHeight-120)scrollBy(0,14);mark()},30)},e.pointerType==='mouse'?180:380);
+ const mv=ev=>{lx=ev.clientX;ly=ev.clientY;if(!started){if(Math.hypot(lx-sx,ly-sy)>10)clean();return}moveGhost(lx,ly);mark()};
+ const up=()=>{const was=started,o=over;clean();end();if(!was)return;NOCLICK=Date.now()+500;if(o)moveBook(id,o.dataset.id)};
+ const cx=()=>{clean();end()};
+ document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cx)});
 document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('[data-drag],.card,.it'))e.preventDefault()});
 
 /* ===== global clicks ===== */
