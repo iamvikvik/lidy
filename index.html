@@ -420,7 +420,7 @@ textarea.inp.nmx{min-height:0;resize:none;overflow:auto;line-height:1.35;display
 .wbig.st-w.old{box-shadow:0 0 0 4px rgba(194,24,91,.32),0 8px 24px rgba(194,24,91,.7)}
 .wans.again{background:#fdeaf1;color:#b0204f;font-size:13px;line-height:1.15;max-width:34%}
 
-.it.bk0 .tx{padding-left:2px}.it.bk0 .tx>b{font-size:19px}
+.it.bk0 .tx{padding-left:2px}.it.bk0.hc .tx{padding-left:0}.th.book.sq{width:64px;height:64px;border-radius:16px}.card .th.book.sq{width:100%;height:auto;aspect-ratio:1/1;border-radius:22px}#upc{width:86px!important}.it.bk0 .tx>b{font-size:19px}
 
 .btab.tdrag{opacity:.35}.btab.tover{box-shadow:inset 3px 0 0 #c2185b}
 .pickbar{position:fixed;left:10px;right:10px;bottom:82px;z-index:30;background:#fff;border-radius:20px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:6px}
@@ -2165,7 +2165,7 @@ function crumbHTML(id){const p=pathOf(id).slice(0,-1);let h=`<div class="crumbs"
  p.forEach((x,i)=>{h+=`<span class="arrow">›</span><button class="pill ghost" data-go="/n/${x.id}" data-drop="${x.id}">${esc(x.mark)} ${esc(nodeTitle(x))}</button>`});return h+'</div>'}
 function subText(n){const c=counts(n.id);const a=[];if(c.col)a.push(c.col+' '+plural(c.col,'коллекция','коллекции','коллекций'));if(c.note)a.push(c.note+' '+plural(c.note,'заметка','заметки','заметок'));if(c.photo)a.push(c.photo+' фото');return a.join(' · ')||'Пусто'}
 function thumbHTML(n,grid){
- if(isBook(n))return `<div class="th book">${coverHTML(n)}</div>`;
+ if(isBook(n))return `<div class="th book${n.cover?' sq':''}">${coverHTML(n)}</div>`;
  if(n.type==='col'&&n.avatar)return `<div class="th"><img src="${bu(n.avatar)}" alt=""></div>`;
  if(n.type==='col'){const k=kids(n.id).filter(x=>x.type!=='col'||true).slice(0,4);if(!k.length)return `<div class="th empty" style="background:#eef3ff">🗂️</div>`;
   return `<div class="th"><div class="collage">${[0,1,2,3].map(i=>{const x=k[i];if(!x)return '<i></i>';if(x.type==='photo')return `<i><img src="${bu(x.thumb)}" alt=""></i>`;return `<i>${x.type==='col'?'🗂':'≡'}</i>`}).join('')}</div></div>`}
@@ -2179,7 +2179,7 @@ function itemHTML(n,vm){const grid=vm==='grid';const t=nodeTitle(n);const attrs=
  const mn=`<button class="mn" data-act="imenu" data-id="${n.id}">${ICON.more}</button>`;const ci=n.type==='col'&&n.parent&&isLead(n)?ctIcons(n,'li'):'';
  if(grid)return `<div class="card" ${attrs}>${ci?thumbHTML(n,1).replace(/<\/div>$/,ci.replace('cti li','cti gr')+'</div>'):thumbHTML(n,1)}${mk}${pin}${mn}<div class="nm">${esc(t)}</div><div class="sb">${esc(n.type==='col'?sub:'')}</div></div>`;
  const lp=n.type==='col'&&n.parent?leadRowPills(n):'';
- return `<div class="it${isBook(n)?' bk0':''}" ${attrs}>${mk}${isBook(n)?'':thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}${pmr}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
+ return `<div class="it${isBook(n)?' bk0':''}${isBook(n)&&n.cover?' hc':''}" ${attrs}>${mk}${isBook(n)&&!n.cover?'':thumbHTML(n)}<div class="tx"><b>${esc(t)}</b>${lp||`<span>${esc(sub)}</span>`}${pmr}</div>${n.pinned?'<span style="font-size:14px">📌</span>':''}${ci}${n.type==='col'&&n.parent?bellBtn(n):''}${mn}</div>`}
 function viewList(id){
  const n=id?N.get(id):null;const items=bookItems(id);const vm=SET.views[id||'root']||SET.view;const c=counts(id);const sort=SET.sorts[id||'root']||(id?'new':'manual');
  let h=`<div class="wrap"><div class="topbar">${id?topBtn('back',ICON.back,id):'<span></span>'}<div class="ibs">${topBtn('search',ICON.search,id||'')}${topBtn('view',vm==='list'?ICON.grid:ICON.list)}${id?topBtn('nmenu',ICON.more,id):topBtn('settings',ICON.gear)}</div></div>`;
@@ -2277,8 +2277,8 @@ async function recrop(n){const b=await getBlob(n.src);if(!b)return toast('Фот
  if(res){const as=await buildAssets(L.im,res.mode,res.rect);n.mode=res.mode;n.crop=res.rect;n.thumb=as.thumb;if(as.view){n.view=n.id+'_v';await putBlob(n.view,as.view)}else if(n.view){await dbDel('blobs',n.view);n.view=''}await saveNode(n,false)}
  URL.revokeObjectURL(L.u);render()}
 async function coverFromFile(file){const s=await makeSrc(file);const L=await loadImg(s.blob);
- const res=await cropScreen({srcUrl:L.u,title:'Обложка',allowFull:false,ar:.75,last:true});if(!res){URL.revokeObjectURL(L.u);return null}
- const iw=L.im.naturalWidth,ih=L.im.naturalHeight,r=res.rect;const b=await drawTo(L.im,r.x*iw,r.y*ih,r.w*iw,r.h*ih,600,800,.86);URL.revokeObjectURL(L.u);return b}
+ const res=await cropScreen({srcUrl:L.u,title:'Обложка',allowFull:false,ar:1,last:true});if(!res){URL.revokeObjectURL(L.u);return null}
+ const iw=L.im.naturalWidth,ih=L.im.naturalHeight,r=res.rect;const b=await drawTo(L.im,r.x*iw,r.y*ih,r.w*iw,r.h*ih,800,800,.86);URL.revokeObjectURL(L.u);return b}
 
 /* ===== create / edit ===== */
 function pickFile(multi){return new Promise(res=>{holdLock();const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=!!multi;i.style.display='none';document.body.appendChild(i);
@@ -2286,7 +2286,7 @@ function pickFile(multi){return new Promise(res=>{holdLock();const i=document.cr
 function growTA(t){if(!t)return;t.style.height='auto';t.style.height=Math.min(t.scrollHeight+2,window.innerHeight*.4)+'px'}
 function editSheet(n,parent,type){const book=n?isBook(n):(type==='col'&&!parent);let pal=n?(n.palN?(n.pal||0):0):0,cover=n?n.cover:null,avatar=n?n.avatar:null;
  const draw=()=>{const el=sheet(`<h3>${n?'Изменить':(book?'Новая книжка':'Новая коллекция')}</h3><textarea class="inp nmx" id="nm" rows="1" placeholder="${book?'Например: Москва':'Например: имя'}" maxlength="300">${esc(draw.title||(n?n.title:''))}</textarea>
-  ${book?`<div class="lbl">Обложка</div><div class="sw">${PALS.map((p,i)=>`<button class="c${!cover&&pal===i?' on':''}" data-p="${i}">${coverSVG(i)}</button>`).join('')}<button class="c up${cover?' on':''}" id="upc">${cover?`<img src="${bu(cover)}" alt="">`:'Своя<br>обложка'}</button></div>`:''}
+  ${book?`<div class="lbl">Обложка</div><div class="sw">${PALS.map((p,i)=>`<button class="c${!cover&&pal===i?' on':''}" data-p="${i}">${coverSVG(i)}</button>`).join('')}<button class="c up${cover?' on':''}" id="upc">${cover?`<img src="${bu(cover)}" alt="">`:'Своя<br>обложка<br>(квадрат)'}</button></div>`:''}
   ${!book&&!n?`<div class="row"><button type="button" class="pill c3" id="nbdb">🎂 ＋ День рождения${draw.bd?': '+draw.bd.split('-').reverse().join('.'):''}</button></div><div id="nbdbox" class="${draw.bdo?'':'hide'}"><input class="inp" type="date" id="nbd" value="${draw.bd||''}"><div class="chips" style="margin-top:8px"><button type="button" class="chip${draw.bny?' on':''}" id="nbdy">Год неизвестен</button></div></div>`:''}
   ${!book&&!n?`<div class="lbl">Когда написать (необязательно)</div><input class="inp" type="date" id="npd" value="${draw.pd||''}">`:''}
   ${!book?`<div class="lbl">Фото (необязательно)</div><div class="sw"><button class="c up${avatar?' on':''}" id="upa" style="height:64px">${avatar?`<img src="${bu(avatar)}" alt="">`:'Выбрать<br>фото'}</button></div>`:''}
@@ -2371,7 +2371,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 28 · 03.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 29 · 15.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
