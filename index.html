@@ -2267,8 +2267,8 @@ function cropScreen(o){return new Promise(res=>{
 /* ===== photos: add / recrop ===== */
 async function addPhotos(files,parent){files=[...files];let added=0;
  for(let i=0;i<files.length;i++){let u=null;try{const s=await makeSrc(files[i]);const L=await loadImg(s.blob);u=L.u;
-  const res=await cropScreen({srcUrl:u,title:files.length>1?`Фото ${i+1} из ${files.length}`:'Рамка фото',allowFull:true,mode:s.extreme?'full':(SET.lastMode||'square'),last:i===files.length-1});
-  if(!res)break;SET.lastMode=res.mode;saveSet();const as=await buildAssets(L.im,res.mode,res.rect);
+  const res={mode:'full',rect:null};
+  const as=await buildAssets(L.im,res.mode,res.rect);
   const n=newNode('photo',parent,{mode:res.mode,crop:res.rect,w:s.w,h:s.h,thumb:as.thumb,src:'',view:''});n.src=n.id+'_s';await putBlob(n.src,s.blob);if(as.view){n.view=n.id+'_v';await putBlob(n.view,as.view)}await saveNode(n);added++}
   catch(e){console.error(e);toast('Не получилось загрузить одно из фото')}finally{if(u)URL.revokeObjectURL(u)}}
  render();if(added)toast(added+' '+plural(added,'фото добавлено','фото добавлено','фото добавлено'))}
@@ -2374,7 +2374,7 @@ function viewSettings(){const pinOn=!!SET.pinHash;
  return `<div class="wrap set"><div class="topbar">${topBtn('back',ICON.back,'')}<span></span></div><h1 class="tt">Настройки</h1>
  <h2>Безопасность</h2><button class="act" data-act="pin"><span class="ic">🔒</span><span>PIN-код<small>${pinOn?'Включён. Просит код при каждом открытии':'Выключен'}</small></span></button>
  ${pinOn?`<button class="act" data-act="lockafter"><span class="ic">⏱️</span><span>Когда просить PIN<small>${SET.lockAfter===60000?'Через 1 минуту':SET.lockAfter===300000?'Через 5 минут':'Сразу, как только выйду из приложения'}</small></span></button><button class="act" data-act="locknow"><span class="ic">🔐</span><span>Заблокировать сейчас</span></button>`:''}
- <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 31 · 16.11.2026</div>
+ <h2>О приложении</h2><div class="hint" style="text-align:left;margin:0 0 8px">Версия 32 · 20.11.2026</div>
  <h2>Встречи и деньги</h2><button class="act" data-act="remsettings"><span class="ic">✉️</span><span>Напоминание написать<small>Через ${SET.remW||3} нед. после встречи, за ${SET.remH||4} ч до того же времени</small></span></button>
  <button class="act" data-act="rates"><span class="ic">💱</span><span>Курсы валют<small>1 AED ≈ ${nf2.format(conv(1,'AED','RUB'))} ₽ · обновлено ${RATES_T?fmtDate(RATES_T):'ещё нет (встроенные курсы)'}. Нажми, чтобы обновить</small></span></button>
  <h2>Лиды</h2><button class="act" data-act="dailyn"><span class="ic">⚡</span><span>Сколько людей в списке на день<small>${dailyN()}. В «Сегодня» можно взять ещё</small></span></button>
